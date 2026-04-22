@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "abolitionist-kb",
+  "compatibility_date": "2026-04-22",
+
+  // Static assets (Next.js export). Serve first; the Worker only runs
+  // for paths that don't match a file in out/ (namely /api/chat).
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page",
+    "binding": "ASSETS"
+  },
+
+  // Worker handler for /api/chat. Proxies to AI Search via binding so
+  // the browser never talks to the instance directly.
+  "main": "worker/index.ts",
+
+  // Instance binding for the AI Search RAG instance in the default
+  // namespace. Browser traffic comes in → Worker calls the binding →
+  // AI Search returns a streamed SSE response → Worker pipes it back.
+  "ai_search": [
+    {
+      "binding": "AI_SEARCH",
+      "instance_name": "abolitionist-r2"
+    }
+  ],
+
+  "routes": [
+    { "pattern": "abolitionist.ljs.app", "custom_domain": true }
+  ]
+}

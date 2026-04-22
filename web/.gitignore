@@ -4,3 +4,9 @@ node_modules
 next-env.d.ts
 *.tsbuildinfo
 .env*.local
+
+# Next.js static export — built fresh by `pnpm build` before each deploy.
+out
+
+# Wrangler-generated runtime types; regenerate with `wrangler types`.
+worker-configuration.d.ts

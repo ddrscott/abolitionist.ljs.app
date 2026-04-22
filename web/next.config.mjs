@@ -17,14 +17,17 @@ const config = {
   turbopack: {
     root: projectRoot,
   },
-  // Article bodies link to images served from the original WordPress sites.
-  // next/image requires hostnames to be allow-listed.
+  // Static-export the entire site so it deploys as flat HTML/CSS/JS to a
+  // CDN (Cloudflare Pages). The chat box, sidebar, and search index all
+  // run client-side or are pre-built; no server runtime needed.
+  output: 'export',
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'freethestates.org' },
-      { protocol: 'https', hostname: 'abolitionistsrising.com' },
-    ],
+    // The Next image optimizer needs a server. Static export uses raw URLs.
+    unoptimized: true,
   },
+  // Pages serves "/foo/" for the page emitted at "/foo" — cleaner URLs
+  // and avoids 404s on link-stripped paths.
+  trailingSlash: true,
 };
 
 export default withMDX(config);

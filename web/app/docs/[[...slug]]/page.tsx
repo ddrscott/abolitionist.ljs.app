@@ -36,7 +36,7 @@ export default async function Page(props: {
       ) : data.excerpt ? (
         <DocsDescription>{data.excerpt as string}</DocsDescription>
       ) : null}
-      <ArticleMeta data={data} />
+      <ArticleMeta data={data as unknown as Record<string, unknown>} />
       <DocsBody>
         <MDX components={getMDXComponents()} />
       </DocsBody>

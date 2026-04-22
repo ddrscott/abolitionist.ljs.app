@@ -1,15 +1,15 @@
 # Architecture
 
 How this repo is wired together and **why**. Read this before adding new
-sources, swapping the search backend, or wiring the planned chatbot.
+sources, changing the search/chat backend, or rewiring the deployment.
 
 ## What this project is
 
 A pipeline that turns two static WordPress site mirrors into a single
-canonical Markdown corpus, plus a Fumadocs-powered preview site for human
-browsing. The corpus is meant to be the substrate for downstream products —
-search, RAG-backed Q&A, agent context — with every article traceable back to
-its original URL.
+canonical Markdown corpus, plus a Fumadocs-powered preview site that
+serves both keyword browsing and RAG-backed Q&A. The whole thing runs as
+a single Cloudflare Worker at **abolitionist.ljs.app**. Every article and
+every chat citation traces back to its original URL.
 
 ```
                        ┌──────────────────────────────────┐
@@ -24,25 +24,42 @@ its original URL.
                                         ▼
                        ┌──────────────────────────────────┐
                        │  docs/                           │
-                       │  ├─ <site>/<slug>.md   (×207)    │   ← the canonical
+                       │  ├─ <site>/<slug>.md   (×207)    │   ← canonical
                        │  ├─ README.md (human TOC)        │     knowledge base
                        │  └─ index.json (machine manifest)│
                        └────────────────┬─────────────────┘
                                         │
-              ┌─────────────────────────┴────────────────────────┐
-              ▼                                                  ▼
-    ┌──────────────────────┐                      ┌──────────────────────────┐
-    │  web/  (Fumadocs)    │                      │  Cloudflare AutoRAG      │
-    │  Next.js 16 preview  │                      │  (planned, not built)    │
-    │  + static Orama      │                      │  R2 → Vectorize →        │
-    │  search at           │                      │  Workers AI Q&A with     │
-    │  /api/search         │                      │  citations back to       │
-    │                      │                      │  /docs/<site>/<slug>     │
-    └──────────────────────┘                      └──────────────────────────┘
+                  ┌─────────────────────┼─────────────────────┐
+                  ▼                     ▼                     ▼
+       ┌─────────────────┐   ┌────────────────────┐   ┌──────────────────┐
+       │ next build →    │   │ scripts/           │   │ ad-hoc agents,   │
+       │ web/out/        │   │ sync_to_r2.sh      │   │ scripts, etc.    │
+       │ (static HTML +  │   │ (wrangler r2 put)  │   │ (read frontmatter│
+       │  18 MB Orama    │   │                    │   │  + body directly)│
+       │  search index)  │   │                    │   └──────────────────┘
+       └────────┬────────┘   └─────────┬──────────┘
+                │                      │
+                │ wrangler deploy      ▼
+                │             ┌──────────────────┐
+                │             │ R2 bucket        │     auto-indexed by
+                │             │ "abolition-kb"   ├───► Cloudflare AI Search
+                │             └──────────────────┘     instance
+                │                                      "abolitionist-r2"
+                ▼                                              │
+   ┌─────────────────────────────────────────────┐             │
+   │ Cloudflare Worker  "abolitionist-kb"        │             │
+   │   - serves the static Next.js export        │             │
+   │     (catalog, articles, /api/search)        │             │
+   │   - POST /api/chat → env.AI_SEARCH ─────────┼─────────────┘
+   │     .chatCompletions(...) (Llama-3.3 70B)   │     service binding
+   │   - custom domain abolitionist.ljs.app      │     (no public endpoint,
+   └─────────────────────────────────────────────┘      no API token)
 ```
 
-The `docs/` directory is the load-bearing artifact: both the preview site
-and the future RAG pipeline read from it. Re-extraction is idempotent.
+The `docs/` directory is the load-bearing artifact. The deploy pipeline
+fans it into two destinations — Worker assets (for the website) and R2
+(for the RAG indexer) — but both pull from the same source of truth.
+Re-extraction is idempotent.
 
 ---
 
@@ -110,73 +127,80 @@ single comma-merged string mixing categories *and* tags — the extractor now
 splits and dedupes, but you can't separate true categories from inflated
 tags after the fact without retagging at the source).
 
-### 4. Static Orama search, not per-request indexing
+### 4. Static Orama search alongside semantic chat — not either/or
 
 **Choice.** `web/app/api/search/route.ts` exports `staticGET` (not `GET`)
 from `createFromSource(source)`, marked `dynamic = 'force-static'`. The
 client (`web/app/layout.tsx`) configures `RootProvider search.options.type
 = 'static'` so it downloads the index from `/api/search` once and runs
-queries in-browser via Orama.
+queries in-browser via Orama. Triggered with ⌘K. The semantic chat
+(decision #5) sits on top of this, not in place of it.
 
-**Why.** The default `GET` handler builds an in-memory Orama index lazily
-inside whichever Node process serves `/api/search`. Cheap on a long-lived
-server; expensive in a serverless-cold-start world. `staticGET` emits the
-pre-built index as a single JSON response that's cacheable at the CDN, eats
-zero runtime CPU, and works under `next build` static export.
+**Why.** Two complementary modes. Keyword search via Orama is the right
+tool for "find me the exact phrase X" or "list every article tagged Y";
+semantic chat is the right tool for "explain Z to me." The default
+runtime `GET` handler would build an in-memory Orama index per
+serverless-cold-start; `staticGET` emits the pre-built index as a single
+JSON response cached at the CDN — zero runtime CPU.
 
 The trade is index size: 207 articles in Orama's "advanced" (per-section)
-format produces ~18 MB raw / ~5 MB gzipped. Acceptable for this corpus
-(comparable to a video clip), bad if the corpus grows 10×. If that
-happens, drop to "simple" mode (whole-page records, ~1/4 the size) or
-switch to the planned semantic search via Cloudflare Vectorize anyway.
+format produces ~18 MB raw / ~5 MB gzipped. Acceptable here; bad if the
+corpus grows 10×. If that happens, drop to "simple" mode (whole-page
+records, ~1/4 the size) or rely on AI Search alone.
 
-### 5. Cloudflare AutoRAG is the intended next step for Q&A
+### 5. Cloudflare AI Search (managed RAG) for Q&A — chosen over DIY
 
-**Choice.** Not built yet. The plan is to push `docs/*/*.md` to a
-Cloudflare R2 bucket and let AutoRAG handle ingestion → chunking →
-embedding (Workers AI) → storage (Vectorize) → Q&A endpoint with citations.
-The frontmatter `source_url` and `source_post_id` are the citation anchors.
+**Choice.** `scripts/sync_to_r2.sh` uploads every `docs/<site>/<slug>.md`
+into the R2 bucket `abolition-kb`. The Cloudflare AI Search instance
+`abolitionist-r2` indexes that bucket automatically (chunk → embed via
+Workers AI → store in Vectorize). The Worker calls
+`env.AI_SEARCH.chatCompletions({ messages, stream: true, … })` to get a
+streamed Llama-3.3-70B answer plus citation chunks identifying which
+source files were retrieved. Citations carry `item.key` like
+`freethestates.org/treat-sb13-not-secession.md`, which the client maps
+1:1 to `/docs/freethestates.org/treat-sb13-not-secession`.
 
-**Why.** A Q&A chatbox needs *semantic* retrieval — keyword match (Orama)
-finds articles containing the question's exact words, not articles whose
-*meaning* answers it. AutoRAG bundles the whole RAG stack (chunk + embed +
-retrieve + generate + cite) behind one managed endpoint, so we get an
-end-to-end MVP without writing a chunker, an embedder, or a prompt
-template. If we outgrow it (custom chunking strategy, custom prompt format,
-multi-tenant isolation), the corpus is portable to a DIY Vectorize +
-Workers AI stack — the Markdown files don't change.
+**Why managed over DIY.** A from-scratch Vectorize + Workers AI pipeline
+is maybe 5× the code (custom chunker, embedder, retriever, prompt
+template, citation formatter). AI Search ships all of that behind one
+binding, and the Markdown corpus + frontmatter remains portable: if we
+outgrow the managed product, swapping in a custom pipeline doesn't touch
+`docs/`, the extractor, or the website.
 
-The static Orama index stays useful as a keyword fallback ("find the exact
-phrase") even after the chatbot ships.
+### 6. Worker binding for AI Search — not the public endpoint
 
----
+**Choice.** The Worker (`web/worker/index.ts`) talks to AI Search through
+the `ai_search` service binding declared in `web/wrangler.jsonc`. The
+browser only sees same-origin POSTs to `/api/chat`; the AI Search
+instance ID, the model, and any retrieval tuning never leak to the client.
 
-## Open decisions
+**Why.** AI Search has an optional **Public Endpoint** mode that lets the
+browser call it directly (no Worker needed) at
+`https://<uuid>.search.ai.cloudflare.com/chat/completions`. We
+deliberately don't use it: every visitor query would hit the AI Search
+instance directly, exposing the instance ID, making rate-limiting depend
+on the dashboard, and pinning the response shape to whatever AI Search
+emits. With the binding, the Worker is a thin facade — it adds the
+system prompt, sets retrieval options, and can later add caching, auth,
+or response shaping without any client change.
 
-These two haven't been made and shouldn't be pre-decided here:
+### 7. Static-export Next.js → Worker (with assets) — not Pages
 
-### AutoRAG vs DIY (Vectorize + Workers AI)
+**Choice.** `web/next.config.mjs` sets `output: 'export'` so `pnpm build`
+produces a flat `web/out/` of HTML/CSS/JS. `wrangler deploy` ships that
+directory plus the Worker code as a single Worker, with the custom
+domain `abolitionist.ljs.app` declared via `routes` in `wrangler.jsonc`.
 
-- **AutoRAG** — managed, one R2 bucket + one binding; less control over
-  chunking, prompt, and ranking. Beta as of writing.
-- **DIY** — explicit pipeline (R2 → ingestion worker → embed via Workers AI
-  → upsert into Vectorize → query worker → LLM call → cite). ~5× the code
-  but full control. AI Gateway can layer in caching + observability.
-
-The recommendation in the conversation that produced this doc was to start
-with AutoRAG to validate the experience and migrate later if needed. The
-Markdown corpus + frontmatter is the same input either way.
-
-### Where the chatbox lives
-
-- **Embedded widget** in the Fumadocs site (a floating "Ask the archive"
-  button), so the chat happens alongside the article you're reading.
-- **Dedicated `/chat` route**, full-page, more screen real estate for the
-  conversation + citations.
-- **Both.**
-
-No strong reason yet to pick one; depends on how readers actually want to
-use it.
+**Why over Pages.** Pages was tried first and worked, but attaching a
+custom domain on Pages requires creating a CNAME DNS record separately
+from the project deploy — and the OAuth scopes wrangler grants by
+default don't include zone DNS write. Worker custom-domain claims, by
+contrast, auto-create the proxied DNS record at deploy time when the
+zone is on the same Cloudflare account. One `wrangler deploy` does
+everything: bundle, upload assets, attach the domain, provision DNS,
+provision the cert. It also keeps the chat route (`/api/chat`) and the
+static site under one Worker — simpler than splitting between Pages and
+a separate Worker for the API.
 
 ---
 
@@ -184,25 +208,56 @@ use it.
 
 If you're going to touch the system, these are the files that matter:
 
-- **`scripts/extract_articles.py`** — the whole extraction pipeline. The
-  frontmatter schema is defined by the `Article` dataclass (~line 75); add
-  fields here when you need them. The taxonomy splitting/dedupe lives in
+- **`scripts/extract_articles.py`** — the extraction pipeline. The
+  frontmatter schema is the `Article` dataclass (~line 75); add fields
+  here when you need them. Taxonomy splitting/dedupe lives in
   `_normalize_taxonomy` and `classify_from_jsonld`.
-- **`web/source.config.ts`** — Fumadocs collection config. The `files:
-  ['*/*.md']` glob is what excludes the auto-generated `docs/README.md`
-  and `docs/index.json`. The `articleSchema` here mirrors the extractor's
+- **`scripts/sync_to_r2.sh`** — pushes `docs/<site>/<slug>.md` files into
+  the R2 bucket via `wrangler r2 object put` with `xargs -P 8`. Re-run
+  this after `extract_articles.py` to refresh what AI Search indexes.
+- **`web/source.config.ts`** — Fumadocs collection config. The
+  `files: ['*/*.md']` glob excludes the auto-generated `docs/README.md`
+  and `docs/index.json`. The `articleSchema` mirrors the extractor's
   frontmatter via `zod`.
+- **`web/wrangler.jsonc`** — single source of truth for the deploy:
+  Worker name, AI Search binding, asset directory, custom domain route.
+  Decisions #5/#6/#7 all live here in some form.
+- **`web/worker/index.ts`** — the chat handler. Owns POST `/api/chat`,
+  builds the messages list (with system prompt), calls
+  `env.AI_SEARCH.chatCompletions(...)` and pipes the SSE response
+  straight to the browser. Everything else falls through to assets.
+- **`web/components/chat-box.tsx`** — the homepage chat UI. Parses the
+  AI Search SSE stream (`event: chunks` for citations + OpenAI-shape
+  token deltas) and renders citation chips that resolve to
+  `/docs/<site>/<slug>`.
 - **`web/next.config.mjs`** — `turbopack.root` (decision #2),
-  `images.remotePatterns` (so article-body images served from the
-  original WP hosts work).
-- **`web/lib/category-tree.ts`** — the custom sidebar. Sort order, grouping
-  rules, and the "All Articles" link live here.
+  `output: 'export'` (decision #7), `images.unoptimized` (required by
+  the static export), `images.remotePatterns` (article-body images from
+  the original WP hosts).
+- **`web/lib/category-tree.ts`** — the custom sidebar. Sort order,
+  grouping rules, and the "All Articles" link live here.
 - **`web/app/api/search/route.ts`** + **`web/app/layout.tsx`** — the
   static-Orama wiring (decision #4). Server-side `staticGET` and
   client-side `RootProvider search.options.type = 'static'` are the two
   ends of the same configuration; change them together or not at all.
-- **`docs/index.json`** — the machine-readable manifest of every article
-  with its full frontmatter. Useful for any non-Fumadocs consumer (the
-  future RAG ingestion script will read this to know what to push to R2).
-- **`README.md`** — surface-level project orientation; defers to this doc
-  for the "why."
+- **`docs/index.json`** — machine-readable manifest of every article
+  with its full frontmatter. Useful for any non-Fumadocs consumer.
+- **`README.md`** — surface-level project orientation; defers to this
+  doc for the "why."
+
+## Day-2 ops
+
+- **Refreshing the corpus**: re-run the source-mirror download outside
+  this repo, then `uv run scripts/extract_articles.py -v` (writes to
+  `docs/`), then `bash scripts/sync_to_r2.sh` (uploads to R2; AI Search
+  picks up the changes on its next sync), then `pnpm build && wrangler
+  deploy` from `web/` to update the static site.
+- **Tuning chat behavior**: edit `SYSTEM_PROMPT` in
+  `web/worker/index.ts`, or pass different `ai_search_options` (e.g.
+  `retrieval.max_num_results`, `query_rewrite.enabled`) to
+  `chatCompletions(...)`. Re-deploy the Worker only — no rebuild needed.
+- **Required wrangler scopes** (one-time `wrangler login --scopes ...`):
+  `ai-search:write ai-search:run workers_scripts:write
+  workers_routes:write zone:read account:read user:read`. Without
+  `workers_routes:write` + `zone:read`, deploys still upload code but
+  the route-update step prints a red error.

@@ -10,6 +10,10 @@ then derive downstream products (search, summaries, agent context, etc.). Every
 article carries a `source_url` and `source_post_id` in its frontmatter so any
 generated artifact can be cross-referenced back to its origin.
 
+> **Why is the system built this way?** See [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+> for the design decisions, the data flow diagram, and the open questions
+> (Cloudflare AutoRAG vs DIY, where the chatbot lives, etc.).
+
 ## Layout
 
 ```

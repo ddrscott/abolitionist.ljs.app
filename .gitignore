@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Editor backups
+*~
+*.swp
+
+# Local Claude Code harness state (commit the queue itself, not the lock).
+.claude/scheduled_tasks.lock
+
+# Python — extractor runs via `uv run` with inline deps; no checked-in venv.
+__pycache__/
+*.pyc
+.venv/
+.python-version
+
+# web/.gitignore handles its own subtree (.next, .source, node_modules, etc.).

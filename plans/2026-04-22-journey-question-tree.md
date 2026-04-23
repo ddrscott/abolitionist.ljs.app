@@ -419,7 +419,7 @@ The corpus does not apologize for its doctrinal maximalism, and neither should t
 
 ## Part VI — Article Slug Index (cross-check)
 
-Every slug cited in this document exists in the corpus. Verified paths (all under `/Users/spierce/code/abolition.ljs.app/docs/`):
+Every slug cited in this document exists in the corpus. Verified paths (all under `/Users/spierce/code/abolitionist.ljs.app/docs/`):
 
 **abolitionistsrising.com/** — `abolitionism101.md`, `abolitionist-not-pro-life.md`, `immediatism.md`, `biblical-not-secular.md`, `no-exceptions.md`, `norman-statement.md`, `theology.md`, `criminalization.md`, `a-mother-is-a-magistrate-why-duress-is-no-defense-for-abortion.md`, `faq.md`, `fruits-of-abolitionism-is-true-repentance-necessary.md`, `kristan-hawkins-flawed-reasoning-vs-scripture.md`
 

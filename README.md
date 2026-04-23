@@ -1,4 +1,4 @@
-# abolition.ljs.app
+# abolitionist.ljs.app
 
 Knowledge base derived from two abolitionist WordPress sites:
 

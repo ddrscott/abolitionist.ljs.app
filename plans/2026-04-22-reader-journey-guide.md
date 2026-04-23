@@ -65,7 +65,7 @@ Create `docs/journey/index.mdx`:
 ---
 title: Reader Journey
 slug: index
-source_site: abolition.ljs.app
+source_site: abolitionist.ljs.app
 content_type: page
 categories: ["Reader Journey"]
 excerpt: A guided path from where you are to faithful abolitionism.
@@ -349,7 +349,7 @@ Replace the placeholder. Use this exact frontmatter + structure (fill in the flo
 ---
 title: Start Here - Your Reader Journey
 slug: index
-source_site: abolition.ljs.app
+source_site: abolitionist.ljs.app
 content_type: page
 categories: ["Reader Journey"]
 excerpt: A guided path from your current view of abortion to faithful abolitionism.
@@ -455,7 +455,7 @@ This is the second-most-common reader (after incrementalist) and has clean sourc
 ---
 title: If You Are Pro-Life But Support Exceptions
 slug: path-pro-life-with-exceptions
-source_site: abolition.ljs.app
+source_site: abolitionist.ljs.app
 content_type: page
 categories: ["Reader Journey"]
 excerpt: Why exceptions for rape, incest, and the mother's life betray the very principle they claim to defend.
@@ -702,7 +702,7 @@ Frontmatter + sections:
 ---
 title: Next Steps - You Are Here
 slug: next-steps
-source_site: abolition.ljs.app
+source_site: abolitionist.ljs.app
 content_type: page
 categories: ["Reader Journey"]
 excerpt: Concrete actions for someone who has arrived at the abolitionist position.

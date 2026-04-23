@@ -8,6 +8,8 @@ import {
   Handle,
   MarkerType,
   Position,
+  useEdgesState,
+  useNodesState,
   type Edge,
   type Node,
   type NodeProps,
@@ -349,7 +351,7 @@ export function JourneyMap() {
     setUserPositions((prev) => ({ ...prev, [node.id]: node.position }));
   }, []);
 
-  const { nodes, edges } = useMemo(() => {
+  const computed = useMemo(() => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
@@ -580,6 +582,24 @@ export function JourneyMap() {
     return { nodes, edges };
   }, [collapsed, toggleGate, isEditing, overrideFor]);
 
+  // Controlled mode: React Flow owns internal node state so it can
+  // repaint nodes + edges continuously during drag. Without this,
+  // React Flow sees the `nodes` prop replaced on every re-render and
+  // resets to the computed positions — the drag only appears committed
+  // on release (the bug the user caught).
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(computed.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(computed.edges);
+
+  // When the computed set changes (gate toggle, saved-file load, drag
+  // committed to userPositions), sync it into the controlled state.
+  // These writes do NOT happen mid-drag, so they won't interrupt.
+  useEffect(() => {
+    setNodes(computed.nodes);
+  }, [computed.nodes, setNodes]);
+  useEffect(() => {
+    setEdges(computed.edges);
+  }, [computed.edges, setEdges]);
+
   const exportLayout = useCallback(() => {
     // Grab EVERY node's current position (computed + overrides + drags)
     // so the exported JSON is a complete, self-contained layout the
@@ -606,6 +626,8 @@ export function JourneyMap() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={{
           type: 'smoothstep',

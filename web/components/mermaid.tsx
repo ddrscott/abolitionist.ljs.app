@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 export function Mermaid({ chart }: { chart: string }) {
   const id = useId().replace(/:/g, '');
-  const ref = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,7 +23,7 @@ export function Mermaid({ chart }: { chart: string }) {
         const { svg } = await mermaid.render(`m-${id}`, chart);
         if (!cancelled) setSvg(svg);
       } catch (err) {
-        if (!cancelled) setSvg(`<pre>${String(err)}</pre>`);
+        if (!cancelled) setSvg(`<pre>${escapeHtml(String(err))}</pre>`);
       }
     })();
     return () => {
@@ -30,7 +33,6 @@ export function Mermaid({ chart }: { chart: string }) {
 
   return (
     <div
-      ref={ref}
       className="not-prose my-6 overflow-x-auto rounded-lg border border-fd-border bg-fd-card p-4"
       dangerouslySetInnerHTML={svg ? { __html: svg } : undefined}
     >

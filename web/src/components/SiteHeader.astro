@@ -40,11 +40,19 @@
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    padding: 0.6rem 1.25rem;
+    padding: 0 1.25rem;
+    /* Match Starlight's default nav height (4rem / 64px) on the homepage
+       too so the bar is the same size on every route. */
+    min-height: var(--sl-nav-height, 4rem);
+    height: 100%;
+    box-sizing: border-box;
     background: linear-gradient(90deg, #430607 5%, #230102);
     color: #fde8e8;
     border-bottom: 1px solid #c49a6e;
     box-shadow: rgba(0, 0, 0, 0.7) 5px 5px 30px 1px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
   }
   .site-header .brand {
     display: inline-flex;
@@ -84,14 +92,23 @@
   .site-header .site-nav a.gh-link:hover { opacity: 1; color: #ffffff; }
 
   /* When rendered inside Starlight's layout, neutralize the default
-     site-title + link chrome so we don't double up. */
+     site-title + link chrome so we don't double up. Starlight's outer
+     <header class="header"> already pins fixed at top; we just need
+     to make sure our SiteHeader fills it cleanly and no extra
+     separator/hairline/shadow from Starlight leaks through. */
   :root .header > .site-header {
     flex: 1;
   }
   :root header.header {
     padding: 0 !important;
+    border-bottom: 0 !important;
+    background: transparent !important;
   }
   :root header.header > *:not(.site-header) {
     display: none !important;
   }
+  /* Starlight draws a 1px hairline under the nav via the `.header +
+     .main-frame` boundary; hide it so only our oxblood gradient edge
+     shows. */
+  :root .page > .main-frame { border-top: 0 !important; }
 </style>

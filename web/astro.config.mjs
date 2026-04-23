@@ -10,6 +10,13 @@ export default defineConfig({
   site: 'https://abolitionist.ljs.app',
   output: 'static',
   trailingSlash: 'always',
+  vite: {
+    // Mermaid's barrel has a deep dep tree (cytoscape, d3, dagre) that
+    // Vite's lazy dep-optimizer sometimes fails to pre-bundle on first
+    // client request, surfacing as "Failed to fetch dynamically imported
+    // module". Forcing inclusion commits the pre-bundle at dev start.
+    optimizeDeps: { include: ['mermaid'] },
+  },
   integrations: [
     react(),
     starlight({
@@ -23,6 +30,8 @@ export default defineConfig({
       // frontmatter categories. See src/components/CustomSidebar.astro.
       components: {
         Sidebar: './src/components/CustomSidebar.astro',
+        // Light-only site — no need for a light/dark picker.
+        ThemeSelect: './src/components/EmptyComponent.astro',
       },
       customCss: ['./src/styles/custom.css'],
       // Show-by-default the search UI (pagefind).

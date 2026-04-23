@@ -148,33 +148,37 @@ function baseElement(over) {
   };
 }
 
-function textOn(containerId, text, fontSize, color) {
-  const id = nextId('txt');
+// Bound-text elements need explicit x/y/width/height; Excalidraw does
+// NOT auto-place them just because `containerId` is set. If the text
+// element ships with width=0, the label is invisible (which is exactly
+// what I shipped first). Center the text inside its container here.
+function textOn(container, text, fontSize, color) {
+  const lines = text.split('\n');
+  const lineHeight = 1.25;
+  const heightPx = Math.round(lines.length * fontSize * lineHeight);
+  const widthPx = container.width - 20;
   return {
     ...baseElement({
-      id,
+      id: nextId('txt'),
       type: 'text',
-      // Excalidraw recomputes position for bound text on load; these
-      // are placeholder values that get replaced when the file opens.
-      x: 0,
-      y: 0,
-      width: 0,
-      height: fontSize * 1.25,
+      x: Math.round(container.x + (container.width - widthPx) / 2),
+      y: Math.round(container.y + (container.height - heightPx) / 2),
+      width: widthPx,
+      height: heightPx,
       strokeColor: color,
       backgroundColor: 'transparent',
     }),
     fontSize,
-    fontFamily: 5, // 5 = Excalifont (Excalidraw's default sketchy-sans);
-                   //     1 = Virgil (hand-drawn), 2 = Helvetica (clean),
-                   //     3 = Cascadia (mono). Helvetica reads closer to
-                   //     EB Garamond at small sizes; change as desired.
+    // 2 = Helvetica. Readily available, reliably rendered, no font-file
+    // round-trip before the labels paint.
+    fontFamily: 2,
     text,
     textAlign: 'center',
     verticalAlign: 'middle',
     baseline: Math.round(fontSize * 0.8),
-    containerId,
+    containerId: container.id,
     originalText: text,
-    lineHeight: 1.25,
+    lineHeight,
     autoResize: true,
   };
 }
@@ -194,7 +198,7 @@ function addShape({ id, type, x, y, width, height, text, fontSize, fill, stroke,
     boundElements: [],
   });
   if (text) {
-    const tx = textOn(id, text, fontSize ?? 18, textColor ?? INK);
+    const tx = textOn(shape, text, fontSize ?? 18, textColor ?? INK);
     shape.boundElements.push({ type: 'text', id: tx.id });
     elements.push(shape);
     elements.push(tx);
@@ -243,7 +247,32 @@ function addArrow({ from, to, label, dashed = false, strokeColor = INK, strokeWi
   }
 
   if (label) {
-    const tx = textOn(id, label, 14, strokeColor);
+    // Arrow labels still live at (0,0) — Excalidraw positions them
+    // along the midpoint of the arrow path at render time regardless
+    // of the stored x/y for arrow-bound text (this is the one case
+    // where the stored position IS overridden).
+    const tx = {
+      ...baseElement({
+        id: nextId('txt'),
+        type: 'text',
+        x: 0,
+        y: 0,
+        width: label.length * 10,
+        height: 18,
+        strokeColor,
+        backgroundColor: 'transparent',
+      }),
+      fontSize: 14,
+      fontFamily: 2,
+      text: label,
+      textAlign: 'center',
+      verticalAlign: 'middle',
+      baseline: 11,
+      containerId: id,
+      originalText: label,
+      lineHeight: 1.25,
+      autoResize: true,
+    };
     elements.push(tx);
     a.boundElements.push({ type: 'text', id: tx.id });
   }

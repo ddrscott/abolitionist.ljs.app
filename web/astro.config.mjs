@@ -28,6 +28,21 @@ export default defineConfig({
       title: 'Ask the Abolitionist',
       description:
         'Straight answers on abortion from the abolitionist movement. For street dialog and new readers.',
+      // Self-hosted Plausible at plausible.ljs.app — needs `data-api` since
+      // the default script ships to plausible.io. Injects into every
+      // Starlight-rendered route; the custom home/draw pages wire it up
+      // in their own <head>.
+      head: [
+        {
+          tag: 'script',
+          attrs: {
+            defer: true,
+            'data-domain': 'abolitionist.ljs.app',
+            'data-api': 'https://plausible.ljs.app/api/event',
+            src: 'https://plausible.ljs.app/js/script.js',
+          },
+        },
+      ],
       // Our homepage is a custom src/pages/index.astro (not a Starlight page).
       // Starlight only owns routes it sees as part of its content collection.
       disable404Route: true,

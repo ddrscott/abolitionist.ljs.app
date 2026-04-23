@@ -48,6 +48,20 @@ wrangler deploy      # bundles out/ + worker/index.ts, attaches custom domain
 There is no test suite and no linter wired up. "Build" is the only
 gate — `pnpm build` must succeed before `wrangler deploy`.
 
+### Dev server / build quirks
+
+- **First route hit after `pnpm dev` takes ~40s.** `web/.source/server.ts`
+  has one import per MDX file (currently 216), so any route that calls
+  `source.getPages()` pulls the whole corpus into its compile graph on
+  cold start. Turbopack caches in `.next/cache/` across restarts —
+  don't `rm -rf .next` casually; you'll pay the full compile again.
+- **Known build flake**: `pnpm build` intermittently fails with
+  `TypeError: Cannot read properties of null (reading 'useMemo')` at
+  `Image` during prerender of a `freethestates.org` article (the
+  specific article varies run-to-run). Pre-existing; not caused by
+  the pages/ rename. If you see it, retry before assuming your change
+  broke something.
+
 ## Architecture essentials
 
 - **`pages/`** is the load-bearing artifact. Schema lives in the

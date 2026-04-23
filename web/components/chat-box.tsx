@@ -27,10 +27,10 @@ type Message = {
 };
 
 const SAMPLE_QUESTIONS = [
-  'What is the abolitionist position on incremental pro-life laws?',
-  'Why do abolitionists oppose SB13?',
-  'How should Christians approach voting for pro-abortion candidates?',
-  'What is the difference between abolitionists and the pro-life movement?',
+  'What do abolitionists believe about abortion?',
+  "Someone tells me 'my body, my choice' — what's the response?",
+  "Why don't abolitionists support the pro-life movement?",
+  'What about rape, incest, or the mother’s life?',
 ];
 
 /** Strip the ".md" or ".mdx" extension and turn the R2 key into a relative /pages URL. */
@@ -250,7 +250,7 @@ export function ChatBox() {
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask the archive a question…"
+          placeholder="Ask a question — objections, Scripture, strategy…"
           rows={1}
           disabled={pending}
           onKeyDown={(e) => {
@@ -285,8 +285,9 @@ function Welcome({
   return (
     <div className="flex flex-col gap-3 text-fd-muted-foreground">
       <p className="text-sm">
-        Ask the archive — questions are answered using only the indexed
-        articles, with citations linking back to the source.
+        Ask a question. Answers come from the writings of the abolitionist
+        movement — every claim links back to the source so you can see
+        where it came from.
       </p>
       {!disabled && (
         <div className="flex flex-wrap gap-2 pt-2">

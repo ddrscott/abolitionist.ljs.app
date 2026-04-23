@@ -1,14 +1,18 @@
-# abolitionist.ljs.app
+# abolitionist.ljs.app — "Ask the Abolitionist"
 
-Knowledge base derived from two abolitionist WordPress sites:
+Site-facing brand: **Ask the Abolitionist**. The site is a research
+tool for abolitionists doing street dialog and for lay-people hearing
+about the movement for the first time. Under the hood it's a content
+pipeline derived from two abolitionist WordPress sites:
 
 - [`abolitionistsrising.com`](https://abolitionistsrising.com)
 - [`freethestates.org`](https://freethestates.org)
 
-The plan is to render the Markdown corpus in `pages/` with [Fumadocs](https://fumadocs.dev/),
-then derive downstream products (search, summaries, agent context, etc.). Every
-article carries a `source_url` and `source_post_id` in its frontmatter so any
-generated artifact can be cross-referenced back to its origin.
+The pipeline extracts both sites into Markdown under `pages/`,
+Fumadocs renders them, and a Cloudflare AI Search binding answers
+chat questions with citations back to the source. Every article
+carries a `source_url` and `source_post_id` so any derived artifact
+(search index, chat citation, AI embedding) can be traced to origin.
 
 > **Why is the system built this way?** See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 > for the design decisions, the data flow diagram, and the open questions

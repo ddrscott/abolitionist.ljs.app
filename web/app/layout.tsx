@@ -3,9 +3,9 @@ import { RootProvider } from 'fumadocs-ui/provider/next';
 import type { ReactNode } from 'react';
 
 export const metadata = {
-  title: 'Abolition Knowledge Base',
+  title: 'Ask the Abolitionist',
   description:
-    'Searchable archive of articles from abolitionistsrising.com and freethestates.org.',
+    'Straight answers on abortion from the abolitionist movement. For street dialog and new readers.',
 };
 
 export default function Layout({ children }: { children: ReactNode }) {

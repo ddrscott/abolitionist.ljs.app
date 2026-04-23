@@ -58,7 +58,7 @@ function DocsIndex() {
     <DocsPage>
       <DocsTitle>All Articles</DocsTitle>
       <DocsDescription>
-        {pages.length} articles extracted from{' '}
+        {pages.length} articles from{' '}
         {[...bySite.keys()].sort().join(' and ')}.
       </DocsDescription>
       <DocsBody>
@@ -109,7 +109,8 @@ export async function generateMetadata(props: {
   if (slug.length === 0) {
     return {
       title: 'All Articles',
-      description: 'Searchable archive of every extracted article.',
+      description:
+        'Every article from abolitionistsrising.com and freethestates.org.',
     };
   }
   const page = source.getPage(slug);

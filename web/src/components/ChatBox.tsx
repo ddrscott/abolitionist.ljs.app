@@ -66,6 +66,36 @@ export function ChatBox() {
   const fuseRef = useRef<Fuse<IndexedQA> | null>(null);
   const [suggestions, setSuggestions] = useState<IndexedQA[]>([]);
   const [selectedIdx, setSelectedIdx] = useState(-1);
+  /** messageIndex → feedback state ("up" | "down" | null) */
+  const [feedback, setFeedback] = useState<Record<number, 'up' | 'down'>>({});
+
+  const sendFeedback = async (
+    messageIndex: number,
+    rating: 1 | -1,
+    m: Message,
+    userQuestion: string,
+  ) => {
+    if (feedback[messageIndex] || !userQuestion) return;
+    // optimistic local state so the buttons stop responding immediately
+    setFeedback((prev) => ({
+      ...prev,
+      [messageIndex]: rating === 1 ? 'up' : 'down',
+    }));
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          rating,
+          question: userQuestion,
+          answer: m.content,
+          source: m.fromIndex ? 'index' : 'ai',
+        }),
+      });
+    } catch {
+      // don't block the user if the write fails
+    }
+  };
 
   useEffect(() => {
     transcriptRef.current?.scrollTo({
@@ -284,6 +314,38 @@ export function ChatBox() {
                     })}
                   </div>
                 )}
+                {m.role === 'assistant' && !m.error && m.content && !(pending && i === messages.length - 1) && (
+                  <div className="feedback" role="group" aria-label="Was this answer helpful?">
+                    {feedback[i] ? (
+                      <span className="feedback-thanks">thanks — noted</span>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          title="This answer was helpful"
+                          aria-label="Thumbs up"
+                          onClick={() => {
+                            const q = findQuestionFor(messages, i);
+                            if (q) sendFeedback(i, 1, m, q);
+                          }}
+                        >
+                          👍
+                        </button>
+                        <button
+                          type="button"
+                          title="This answer missed the mark"
+                          aria-label="Thumbs down"
+                          onClick={() => {
+                            const q = findQuestionFor(messages, i);
+                            if (q) sendFeedback(i, -1, m, q);
+                          }}
+                        >
+                          👎
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -362,6 +424,15 @@ export function ChatBox() {
       </form>
     </div>
   );
+}
+
+/** Walk backward from an assistant message to find the user question
+ *  it answers, so feedback rows carry both sides of the exchange. */
+function findQuestionFor(messages: Message[], assistantIdx: number): string | null {
+  for (let k = assistantIdx - 1; k >= 0; k -= 1) {
+    if (messages[k].role === 'user') return messages[k].content;
+  }
+  return null;
 }
 
 function Welcome({ onPick }: { onPick: (q: string) => void }) {

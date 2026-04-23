@@ -209,6 +209,36 @@ main > footer code {
   cursor: help;
 }
 
+/* Thumbs-up / thumbs-down feedback buttons under assistant messages. */
+.chatbox .feedback {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+.chatbox .feedback button {
+  border: 1px solid var(--ar-secondary);
+  background: var(--ar-paper);
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  transition: background var(--ar-duration-fast) var(--ar-ease),
+              border-color var(--ar-duration-fast) var(--ar-ease);
+}
+.chatbox .feedback button:hover {
+  background: var(--ar-secondary-cream);
+  border-color: var(--ar-primary);
+}
+.chatbox .feedback-thanks {
+  font-family: var(--ar-font-caps);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ar-secondary);
+}
+
 /* Suggestion combo-box: shows top Fuse.js matches as the user types.
    Sits between the transcript and the composer form. */
 .chatbox .suggestions {

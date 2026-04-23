@@ -22,6 +22,21 @@ interface Env {
     }) => Promise<ReadableStream<Uint8Array>>;
   };
   ASSETS: Fetcher;
+  // D1 database binding for POST /api/feedback writes. Defined in
+  // wrangler.jsonc under `d1_databases`. Schema in
+  // web/migrations/0001_feedback.sql.
+  FEEDBACK_DB: D1Database;
+}
+
+// Minimal D1Database typing — enough for the `.prepare().bind().run()`
+// usage below. The real type lives in @cloudflare/workers-types but we
+// don't install it here.
+interface D1Database {
+  prepare(query: string): D1PreparedStatement;
+}
+interface D1PreparedStatement {
+  bind(...values: unknown[]): D1PreparedStatement;
+  run(): Promise<{ success: boolean; meta?: unknown }>;
 }
 
 // The model tends to mirror the register of the retrieved articles, which
@@ -62,6 +77,10 @@ const SYSTEM_PROMPT = [
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    if (url.pathname === '/api/feedback') {
+      return handleFeedback(request, env);
+    }
 
     if (url.pathname !== '/api/chat') {
       // Defensive: with `run_worker_first: false` (default) this branch
@@ -121,3 +140,58 @@ export default {
     }
   },
 };
+
+// POST /api/feedback — record a thumbs-up (rating=1) or thumbs-down
+// (rating=-1) against a (question, answer) pair so the team can review
+// where the AI is helpful or off-base.
+//
+// Body: { rating: 1 | -1, question: string, answer: string, source?: 'ai' | 'index' }
+async function handleFeedback(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return new Response('method not allowed', {
+      status: 405,
+      headers: { allow: 'POST' },
+    });
+  }
+  let body: {
+    rating?: number;
+    question?: string;
+    answer?: string;
+    source?: string;
+  };
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('invalid JSON', { status: 400 });
+  }
+  const { rating, question, answer } = body;
+  const source = body.source === 'index' ? 'index' : 'ai';
+  if (rating !== 1 && rating !== -1) {
+    return new Response('bad rating (must be 1 or -1)', { status: 400 });
+  }
+  if (typeof question !== 'string' || !question.trim()) {
+    return new Response('missing question', { status: 400 });
+  }
+  if (typeof answer !== 'string' || !answer.trim()) {
+    return new Response('missing answer', { status: 400 });
+  }
+  try {
+    await env.FEEDBACK_DB.prepare(
+      'INSERT INTO feedback (rating, question, answer, source) VALUES (?, ?, ?, ?)',
+    )
+      .bind(rating, question.slice(0, 2000), answer.slice(0, 10_000), source)
+      .run();
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'no-store',
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'db write failed';
+    return new Response(JSON.stringify({ ok: false, error: message }), {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+}

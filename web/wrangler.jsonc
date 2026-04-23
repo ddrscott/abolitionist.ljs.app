@@ -25,6 +25,17 @@
     }
   ],
 
+  // D1 database for /api/feedback writes. The `database_id` value is
+  // filled in after running `wrangler d1 create abolitionist-feedback`.
+  // Schema: web/migrations/0001_feedback.sql.
+  "d1_databases": [
+    {
+      "binding": "FEEDBACK_DB",
+      "database_name": "abolitionist-feedback",
+      "database_id": "REPLACE_ME_WITH_REAL_D1_ID"
+    }
+  ],
+
   "routes": [
     { "pattern": "abolitionist.ljs.app", "custom_domain": true }
   ]

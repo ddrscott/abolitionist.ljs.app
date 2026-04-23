@@ -36,14 +36,25 @@
               border-color var(--ar-duration-fast) var(--ar-ease);
 }
 
-/* Make handles visible so diagnosing edge issues doesn't require a
-   debugger — plus they serve as small "connection beads" visually. */
+/* Handles — small tan beads that double as visible "connection points".
+   Positions come from React Flow. */
 .jm-wrap .react-flow__handle {
   width: 8px;
   height: 8px;
   background: var(--ar-secondary);
   border: 1px solid var(--ar-paper);
   opacity: 0.9;
+}
+
+/* CRITICAL: React Flow v12's .react-flow__edges container ships with
+   only `position: absolute` in the base stylesheet (no width/height).
+   Inside a transformed viewport, Chromium refuses to paint SVG paths
+   that extend outside a zero-size root, even with `overflow: visible`.
+   Without this rule, every edge path renders into the DOM correctly
+   but paints as invisible. */
+.jm-wrap .react-flow__edges {
+  width: 100%;
+  height: 100%;
 }
 
 a.jm-node { cursor: pointer; }

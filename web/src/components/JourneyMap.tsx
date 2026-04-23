@@ -41,14 +41,18 @@ import '@/styles/journey-map.css';
 const GRID = {
   colStep: 180,
   rowStart: 0,
-  rowEntries: 160,
-  rowGate1: 380,
-  rowGateStep: 260,
-  rowTerminal: 380 + 6 * 260 + 120, // after Gate 6 + action fan
-  objColStart: 560,
-  objColStep: 230,
-  objRowStep: 56,
-  gospelCol: 1450,
+  rowEntries: 180,
+  rowGate1: 400,
+  rowGateStep: 300,
+  // Distance from the trunk center (trunkX) to where the objection
+  // column starts on each side. Gate node is ~260 wide; this puts the
+  // objections well outside with a comfortable reading gap.
+  objRightStart: 230,
+  objLeftStart: 230,
+  objRowStep: 66,
+  // Gospel gate sits to the right of the main trunk at the SAME
+  // y-baseline as Gate 1 — visually a sibling, not an afterthought.
+  gospelOffsetX: 720,
 };
 
 type Position = {
@@ -79,9 +83,6 @@ type Gate = {
   order: number; // 0-based vertical position in the main trunk
   question: string;
   objections: Objection[];
-  /** Which side of the trunk the objections fan out to. Alternating reduces
-   *  overall diagram width. */
-  side: 'left' | 'right';
 };
 
 const GATES: Gate[] = [
@@ -89,7 +90,6 @@ const GATES: Gate[] = [
     id: 'G1',
     order: 0,
     question: 'Is abortion the unjust killing of a human being?',
-    side: 'right',
     objections: [
       { id: 'O1a', label: "'It's just a clump\nof cells'", href: '/pages/abolitionistsrising.com/faq/' },
       { id: 'O1b', label: "'Human, but\nnot a person yet'", href: '/pages/abolitionistsrising.com/faq/' },
@@ -103,7 +103,7 @@ const GATES: Gate[] = [
     id: 'G2',
     order: 1,
     question: 'By what authority do you decide?',
-    side: 'left',
+
     objections: [
       { id: 'O2a', label: "'You can't\nlegislate morality'", href: '/pages/abolitionistsrising.com/faq/' },
       { id: 'O2b', label: "'That's a\nreligious view'", href: '/pages/abolitionistsrising.com/faq/' },
@@ -117,7 +117,7 @@ const GATES: Gate[] = [
     id: 'G3',
     order: 2,
     question: "Is 'less iniquity' acceptable?",
-    side: 'right',
+
     objections: [
       { id: 'O3a', label: "'Heartbeat bills\nsave some babies'", href: '/pages/abolitionistsrising.com/immediatism/' },
       { id: 'O3b', label: "'Abolition is\npolitically impossible'", href: '/pages/abolitionistsrising.com/immediatism/' },
@@ -130,7 +130,7 @@ const GATES: Gate[] = [
     id: 'G4',
     order: 3,
     question: 'Are exceptions acceptable?',
-    side: 'left',
+
     objections: [
       { id: 'O4a', label: "'What about rape?'", href: '/pages/abolitionistsrising.com/no-exceptions/' },
       { id: 'O4b', label: "'What about incest?'", href: '/pages/abolitionistsrising.com/no-exceptions/' },
@@ -143,7 +143,7 @@ const GATES: Gate[] = [
     id: 'G5',
     order: 4,
     question: 'Is belief without action sufficient?',
-    side: 'right',
+
     objections: [
       { id: 'O5a', label: "'It's not my\ncalling / gift'", href: '/pages/freethestates.org/all-about-the-church/' },
       { id: 'O5b', label: "'Pro-life orgs\nhandle this'", href: '/pages/abolitionistsrising.com/abolitionist-not-pro-life/' },
@@ -156,7 +156,7 @@ const GATES: Gate[] = [
     id: 'G6',
     order: 5,
     question: 'How does action manifest?',
-    side: 'right',
+
     objections: [
       { id: 'A1', label: 'Prayer', href: '/pages/abolitionistsrising.com/stay-steeped-in-prayer-as-you-seek-to-abolish-abortion/' },
       { id: 'A2', label: 'Repentance', href: '/pages/abolitionistsrising.com/fruits-of-abolitionism-is-true-repentance-necessary/' },
@@ -208,6 +208,9 @@ function StartNode({ data }: NodeProps<Node<StartData>>) {
   return (
     <div className="jm-node jm-start">
       <Handle type="source" position={Position.Bottom} id="b" />
+      {/* Target handle for the T_GOSPEL loopback — "after conversion,
+          re-enter the map". */}
+      <Handle type="target" position={Position.Top} id="t" />
       {data.label}
     </div>
   );
@@ -353,33 +356,37 @@ export function JourneyMap() {
       });
 
       if (!collapsed.has(g.id)) {
-        const startX =
-          g.side === 'right'
-            ? trunkX + GRID.objColStart
-            : trunkX - GRID.objColStart - GRID.objColStep;
+        // Split the objections half-and-half across the two sides of the
+        // trunk. Balanced composition beats the old alternating-side
+        // approach, which made every other gate feel lopsided.
+        const half = Math.ceil(g.objections.length / 2);
+        const rightCount = half;
+        const leftCount = g.objections.length - half;
         g.objections.forEach((o, i) => {
-          // Lay out in 2 columns if >=5 objections, else 1.
-          const useTwoCols = g.objections.length >= 5;
-          const col = useTwoCols ? i % 2 : 0;
-          const row = useTwoCols ? Math.floor(i / 2) : i;
-          const rowCount = useTwoCols ? Math.ceil(g.objections.length / 2) : g.objections.length;
-          const xOffset = g.side === 'right' ? col * GRID.objColStep : -col * GRID.objColStep;
-          const yOffset = (row - (rowCount - 1) / 2) * GRID.objRowStep;
+          const onRight = i < rightCount;
+          const sideIndex = onRight ? i : i - rightCount;
+          const sideCount = onRight ? rightCount : leftCount;
+          const x = onRight
+            ? trunkX + GRID.objRightStart
+            : trunkX - GRID.objLeftStart - 200;
+          const yOffset = (sideIndex - (sideCount - 1) / 2) * GRID.objRowStep;
           nodes.push({
             id: o.id,
             type: 'objection',
-            position: { x: startX + xOffset, y: gy + yOffset },
+            position: { x, y: gy + yOffset },
             data: { label: o.label, href: o.href },
             draggable: false,
           });
           edges.push({
             id: `${g.id}-${o.id}`,
             source: g.id,
-            sourceHandle: g.side === 'right' ? 'r' : 'l',
+            sourceHandle: onRight ? 'r' : 'l',
             target: o.id,
-            targetHandle: g.side === 'right' ? 'l' : 'r',
+            targetHandle: onRight ? 'l' : 'r',
             type: 'smoothstep',
-            label: i === 0 ? 'no' : undefined,
+            // Anchor "no" label on the first objection of each side so the
+            // flowchart semantic reads clearly whichever way the eye moves.
+            label: sideIndex === 0 ? 'no' : undefined,
             labelStyle: { fontSize: 10, fill: '#CC3206', fontWeight: 700 },
             labelBgStyle: { fill: '#FFFFFF' },
             style: { stroke: '#CC3206', strokeWidth: 1, strokeDasharray: '4 3' },
@@ -423,10 +430,13 @@ export function JourneyMap() {
 
     // Gospel gate (off to the right of the main trunk)
     const gospelY = GRID.rowGate1;
+    // Gospel gate sits to the right of the main trunk at the same y as
+    // Gate 1 — visually a sibling branch, not an orphan.
+    const gospelX = trunkX + GRID.gospelOffsetX;
     nodes.push({
       id: GOSPEL_GATE.id,
       type: 'gate',
-      position: { x: GRID.gospelCol, y: gospelY },
+      position: { x: gospelX, y: gospelY },
       data: {
         label: GOSPEL_GATE.question,
         expanded: !collapsed.has(GOSPEL_GATE.id),
@@ -441,7 +451,7 @@ export function JourneyMap() {
           id: o.id,
           type: 'objection',
           position: {
-            x: GRID.gospelCol + GRID.objColStart - 200,
+            x: gospelX + GRID.objRightStart,
             y: gospelY + (i - 1) * GRID.objRowStep,
           },
           data: { label: o.label, href: o.href },
@@ -487,7 +497,7 @@ export function JourneyMap() {
     nodes.push({
       id: 'T_GOSPEL',
       type: 'terminal',
-      position: { x: GRID.gospelCol, y: gospelTerminalY },
+      position: { x: gospelX, y: gospelTerminalY },
       data: {
         label: 'The gospel\nprecedes abolition',
         variant: 'gospel',

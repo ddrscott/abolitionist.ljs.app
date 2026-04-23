@@ -1,0 +1,66 @@
+---
+title: Privacy
+description: What this site collects, what it doesn't, and why. Plain language.
+sidebar:
+  hidden: true
+---
+
+This is short on purpose.
+
+## What we collect
+
+**Feedback on AI answers.** When you click 👍 or 👎 on a chat answer,
+we store four things in a Cloudflare D1 database:
+
+- The rating (`1` for up, `-1` for down).
+- The question you typed.
+- The answer the AI gave.
+- A timestamp.
+
+We don't store your name, email, IP address, or any identifier that
+could link the row back to you — because we never collect those in
+the first place. Feedback exists so we can find where the AI gives
+bad answers and improve the underlying writings or retrieval.
+
+**Aggregate web analytics.** We run a self-hosted
+[Plausible](https://plausible.io) instance at
+`plausible.ljs.app`. Plausible is cookie-free and does not build
+cross-site user profiles. We see page-view counts, referrers, and
+scroll-depth percentages — aggregated, not per-person. We use this to
+figure out which articles and journey paths people actually read, so
+we know what to polish.
+
+## What we don't collect
+
+- **No accounts.** There is no login. There is nothing to log in to.
+- **No cookies** for tracking. The site does not set any cookies at
+  all for analytics or advertising.
+- **No chat transcripts** beyond the feedback rows above. Questions
+  you ask the chat flow through a Cloudflare Worker to Cloudflare AI
+  Search and the answer streams back. Nothing is written to a
+  database unless you explicitly rate the answer.
+- **No third-party trackers.** No Google Analytics, Meta Pixel,
+  TikTok, Segment, anything.
+- **No selling, no sharing.** We don't sell data. There is no data
+  to sell.
+
+## Where things live
+
+Everything — the static site, the Worker, the D1 feedback database,
+and the AI Search instance — runs on Cloudflare, which operates from
+the United States. Cloudflare's own privacy terms apply at the
+infrastructure layer.
+
+## Who sees it
+
+The maintainers of this site, for the purpose of improving answers
+and fixing gaps. That's it.
+
+## Beta
+
+This site is in beta. If how we handle data changes materially, this
+page changes with it. The date at the bottom is the last update.
+
+---
+
+*Last updated: 2026-04-23.*

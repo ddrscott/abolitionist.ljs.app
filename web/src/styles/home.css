@@ -171,6 +171,14 @@ main > footer .disclaimer {
   max-width: var(--ar-reading-max);
   line-height: 1.45;
 }
+main > footer .footer-row.legal {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+main > footer .footer-row.legal a {
+  color: var(--ar-secondary);
+  text-decoration: underline;
+}
 main > footer a {
   color: var(--ar-tertiary);
   text-decoration: underline;

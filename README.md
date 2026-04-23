@@ -97,3 +97,21 @@ distinct WordPress themes:
   posts have `<div class="brxe-post-content">`, pages use `<main id="brx-content">`.
 
 Both expose Yoast SEO JSON-LD, which is the primary metadata source.
+
+## License and attribution
+
+The source code in this repository is released under the [MIT License](./LICENSE)
+— extraction scripts, the Astro web app, the Cloudflare Worker, build tooling,
+and the authored MDX under `pages/journey/` and `pages/legal/`.
+
+The MIT license **does not** apply to article content drawn from
+`abolitionistsrising.com` or `freethestates.org`. Those writings remain the
+copyright of their respective authors and publishers. This repository
+intentionally excludes the extracted article corpus from version control
+(see `.gitignore`); regenerate it locally by running the extraction pipeline
+against your own mirrors of the two sites.
+
+Ask the Abolitionist is an independent project produced by
+[askscottpierce.com](https://askscottpierce.com) and
+[Left Join Studio](https://leftjoinstudio.com). It is not affiliated with or
+endorsed by the two source publications.

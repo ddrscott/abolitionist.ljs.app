@@ -37,59 +37,78 @@ const INK = '#000000';
 const PAPER = '#FFFFFF';
 
 // ---------------------------------------------------------------------------
-// Data — the structural skeleton of the map. Objections are omitted
-// from the starter file on purpose; add them in Excalidraw if you want
-// them on the board, or keep them in the JourneyMap component.
+// The map, modeled as a proper flowchart (diamonds for decisions,
+// rectangles for reading steps). Each decision is an assertion the
+// reader might hold about abortion; YES sends them to a challenging
+// article, NO advances to the next assertion. Readers work downward
+// until they hit a NO they can't honestly give — that's where they
+// stop and read.
 
-const POSITIONS = [
-  { id: 'P1', label: 'I support legal abortion', href: '/pages/journey/path-secular-pro-choice/' },
-  { id: 'P2', label: "I'm a Christian\nbut pro-choice", href: '/pages/journey/path-christian-pro-choice/' },
-  { id: 'P3', label: 'Personally opposed,\nnot illegal', href: '/pages/journey/path-personally-opposed/' },
-  { id: 'P4', label: 'Pro-life\nwith exceptions', href: '/pages/journey/path-pro-life-with-exceptions/' },
-  { id: 'P5', label: 'Pro-life\nincrementalist', href: '/pages/journey/path-pro-life-incrementalist/' },
-  { id: 'P6', label: 'Believes wrong,\nnot acting', href: '/pages/journey/path-apathetic-christian/' },
-  { id: 'P7', label: 'Anti-abortion,\nnot Christian', href: '/pages/journey/path-anti-abortion-non-christian/' },
+const FLOW = [
+  {
+    id: 'D1',
+    question: 'Abortion should\nbe legal.',
+    read: {
+      id: 'R1',
+      label: 'Read: Equal Protection\n+ FAQ on bodily autonomy',
+      href: '/pages/abolitionistsrising.com/criminalization/',
+    },
+  },
+  {
+    id: 'D2',
+    question: 'Exceptions for rape,\nincest, or the mother\'s life\nare acceptable.',
+    read: {
+      id: 'R2',
+      label: 'Read: No Exceptions',
+      href: '/pages/abolitionistsrising.com/no-exceptions/',
+    },
+  },
+  {
+    id: 'D3',
+    question: 'Incremental laws\nthat save some babies\nare a win.',
+    read: {
+      id: 'R3',
+      label: 'Read: Immediatism +\nAbolitionist, Not Pro-Life',
+      href: '/pages/abolitionistsrising.com/immediatism/',
+    },
+  },
+  {
+    id: 'D4',
+    question: 'I believe abortion\nis wrong, but I\ndon\'t need to act.',
+    read: {
+      id: 'R4',
+      label: "Read: All About the Church\n+ Stay Steeped in Prayer",
+      href: '/pages/freethestates.org/all-about-the-church/',
+    },
+  },
+  {
+    id: 'D5',
+    question: 'Abolition work\ndoesn\'t require\nthe gospel of Christ.',
+    read: {
+      id: 'R5',
+      label: 'Read: Norman Statement\n+ Theological Foundations',
+      href: '/pages/abolitionistsrising.com/norman-statement/',
+    },
+  },
 ];
-
-const GATES = [
-  { id: 'G1', label: 'Is abortion the unjust\nkilling of a human being?' },
-  { id: 'G2', label: 'By what authority\ndo you decide?' },
-  { id: 'G3', label: "Is 'less iniquity'\nacceptable?" },
-  { id: 'G4', label: 'Are exceptions\nacceptable?' },
-  { id: 'G5', label: 'Is belief without\naction sufficient?' },
-  { id: 'G6', label: 'How does action\nmanifest?' },
-];
-
-// P → first gate mapping (where each starter enters the trunk).
-const ROUTES = {
-  P1: 'G1',
-  P2: 'G2',
-  P3: 'G1',
-  P4: 'G4',
-  P5: 'G3',
-  P6: 'G5',
-  P7: 'GG',
-};
 
 // ---------------------------------------------------------------------------
-// Layout geometry. Spaced for legibility in Excalidraw's default zoom.
+// Layout geometry. Flowchart runs top-to-bottom in one column; the
+// "read this article" rectangles hang to the right of each decision.
 
-const POS_W = 200;
-const POS_H = 80;
-const POS_GAP = 40;
-const POS_ROW_Y = 40;
+const TRUNK_X = 400;        // x of the decision column (diamond TL corner)
+const ARTICLE_X = 900;      // x of the article column (rect TL corner)
 
-const GATE_W = 280;
-const GATE_H = 120;
-const GATE_COL_X = 1200;      // centered with respect to the 7 positions
-const GATE_FIRST_Y = 280;
-const GATE_ROW_GAP = 220;
+const DECISION_W = 260;
+const DECISION_H = 160;
+const ARTICLE_W = 320;
+const ARTICLE_H = 100;
+const TERMINAL_W = 300;
+const TERMINAL_H = 90;
 
-const GOSPEL_OFFSET_X = 600;
-const GOSPEL_Y = GATE_FIRST_Y;
-
-const TERMINAL_W = 320;
-const TERMINAL_H = 100;
+const ROW_STEP = 260;       // vertical spacing between successive rows
+const START_Y = 0;
+const DECISIONS_Y = START_Y + 160;
 
 // Random-ish IDs — Excalidraw just needs unique strings, not real UUIDs.
 let counter = 0;
@@ -321,117 +340,71 @@ function addArrow({ from, to, label, dashed = false, strokeColor = INK, strokeWi
 }
 
 // ---------------------------------------------------------------------------
-// Build the map.
+// Build the flowchart.
 
-// Start node — a rounded rectangle, top-center of the position row.
-const totalPosWidth = POSITIONS.length * POS_W + (POSITIONS.length - 1) * POS_GAP;
-const posLeft = 0;
-const posCenterX = posLeft + totalPosWidth / 2;
+const trunkCX = TRUNK_X + DECISION_W / 2;
 
+// START terminator — rounded rectangle, top of the flow.
 addShape({
   id: 'start',
   type: 'rectangle',
-  x: posCenterX - 110,
-  y: POS_ROW_Y - 140,
-  width: 220,
-  height: 80,
-  text: 'Where are you\nnow?',
+  x: trunkCX - TERMINAL_W / 2,
+  y: START_Y,
+  width: TERMINAL_W,
+  height: TERMINAL_H,
+  text: 'Ask the\nAbolitionist',
   fontSize: 22,
   fill: PAPER,
   stroke: INK,
   roundness: { type: 3 },
 });
 
-// Entry positions — cream rectangles with tan border, deep-linked.
-POSITIONS.forEach((p, i) => {
+// Decision diamonds + their associated "read this" rectangles.
+FLOW.forEach((step, i) => {
+  const y = DECISIONS_Y + i * ROW_STEP;
+
+  // Decision (diamond, oxblood fill, pale text).
   addShape({
-    id: p.id,
+    id: step.id,
+    type: 'diamond',
+    x: TRUNK_X,
+    y,
+    width: DECISION_W,
+    height: DECISION_H,
+    text: step.question,
+    fontSize: 16,
+    fill: PRIMARY,
+    stroke: PRIMARY,
+    textColor: PRIMARY_SOFT,
+  });
+
+  // "Read this" rectangle, offset to the right, deep-linked.
+  addShape({
+    id: step.read.id,
     type: 'rectangle',
-    x: posLeft + i * (POS_W + POS_GAP),
-    y: POS_ROW_Y,
-    width: POS_W,
-    height: POS_H,
-    text: p.label,
+    x: ARTICLE_X,
+    y: y + (DECISION_H - ARTICLE_H) / 2,
+    width: ARTICLE_W,
+    height: ARTICLE_H,
+    text: step.read.label,
     fontSize: 16,
     fill: SECONDARY_SOFT,
     stroke: SECONDARY,
     roundness: { type: 3 },
-    link: p.href,
+    link: step.read.href,
   });
 });
 
-// Arrow from Start to each position.
-POSITIONS.forEach((p) => {
-  addArrow({ from: 'start', to: p.id, strokeColor: SECONDARY, strokeWidth: 1, withArrowhead: false });
-});
-
-// Gates — oxblood diamonds down the center. (Using rectangles here for
-// legible multi-line text; switch `type: 'diamond'` if you prefer the
-// classic decision-point shape — diamonds need bigger dimensions to fit
-// two lines of label text.)
-const gateCenterX = posCenterX;
-GATES.forEach((g, i) => {
-  addShape({
-    id: g.id,
-    type: 'rectangle',
-    x: gateCenterX - GATE_W / 2,
-    y: GATE_FIRST_Y + i * GATE_ROW_GAP,
-    width: GATE_W,
-    height: GATE_H,
-    text: g.label,
-    fontSize: 18,
-    fill: PRIMARY,
-    stroke: PRIMARY,
-    textColor: PRIMARY_SOFT,
-    roundness: { type: 3 },
-  });
-});
-
-// Gate-to-gate trunk arrows, labeled "yes".
-for (let i = 0; i < GATES.length - 1; i += 1) {
-  addArrow({
-    from: GATES[i].id,
-    to: GATES[i + 1].id,
-    label: 'yes',
-    strokeColor: PRIMARY,
-    strokeWidth: 3,
-  });
-}
-
-// Position → first-gate arrows.
-for (const [pId, gId] of Object.entries(ROUTES)) {
-  if (gId === 'GG') continue; // handled below after GG exists
-  addArrow({ from: pId, to: gId, strokeColor: PRIMARY, strokeWidth: 1.5 });
-}
-
-// Gospel gate — sibling branch on the right, same y as Gate 1.
-const gospelX = gateCenterX + GOSPEL_OFFSET_X;
-addShape({
-  id: 'GG',
-  type: 'rectangle',
-  x: gospelX - GATE_W / 2,
-  y: GOSPEL_Y,
-  width: GATE_W,
-  height: GATE_H,
-  text: 'The gospel must\nprecede abolition.',
-  fontSize: 18,
-  fill: FOOTER,
-  stroke: FOOTER,
-  textColor: PRIMARY_SOFT,
-  roundness: { type: 3 },
-});
-addArrow({ from: 'P7', to: 'GG', strokeColor: PRIMARY, strokeWidth: 1.5 });
-
-// Terminals.
-const faithfulY = GATE_FIRST_Y + GATES.length * GATE_ROW_GAP - 60;
+// Final terminator — "Faithful Abolitionist", gold-bordered fire CTA.
+const terminalY = DECISIONS_Y + FLOW.length * ROW_STEP;
 addShape({
   id: 'T_FA',
   type: 'rectangle',
-  x: gateCenterX - TERMINAL_W / 2,
-  y: faithfulY,
+  x: trunkCX - TERMINAL_W / 2,
+  y: terminalY,
   width: TERMINAL_W,
   height: TERMINAL_H,
-  text: 'Faithful Abolitionist\nimmediate · total · biblical · active',
+  text: 'Faithful Abolitionist\nread the next steps',
   fontSize: 18,
   fill: PRIMARY,
   stroke: GOLD,
@@ -439,36 +412,67 @@ addShape({
   roundness: { type: 3 },
   link: '/pages/journey/next-steps/',
 });
+
+// Arrows.
+// START → D1 (the initial flow in).
 addArrow({
-  from: GATES[GATES.length - 1].id,
-  to: 'T_FA',
+  from: 'start',
+  to: FLOW[0].id,
   strokeColor: PRIMARY,
-  strokeWidth: 4,
+  strokeWidth: 2,
 });
 
-const gospelTerminalY = GOSPEL_Y + GATE_ROW_GAP;
-addShape({
-  id: 'T_GOSPEL',
-  type: 'rectangle',
-  x: gospelX - TERMINAL_W / 2,
-  y: gospelTerminalY,
-  width: TERMINAL_W,
-  height: TERMINAL_H,
-  text: 'The gospel\nprecedes abolition',
-  fontSize: 18,
-  fill: FOOTER,
-  stroke: SECONDARY,
-  textColor: PRIMARY_SOFT,
-  roundness: { type: 3 },
-});
-addArrow({ from: 'GG', to: 'T_GOSPEL', label: 'yes', strokeColor: PRIMARY, strokeWidth: 2 });
-addArrow({
-  from: 'T_GOSPEL',
-  to: 'start',
-  label: 'after conversion,\nre-enter',
-  strokeColor: PRIMARY,
-  strokeWidth: 1,
-  dashed: true,
+// For each decision: YES to the article on its right, NO to the next
+// decision (or the terminal for the last one). After reading, the
+// article's bottom points at the next decision so the loop is explicit
+// and the reader sees "read, then continue."
+FLOW.forEach((step, i) => {
+  const next = FLOW[i + 1];
+  // YES branch — diamond → article.
+  addArrow({
+    from: step.id,
+    to: step.read.id,
+    label: 'yes',
+    strokeColor: TERTIARY,
+    strokeWidth: 2,
+  });
+  if (next) {
+    // NO branch — diamond → next decision (main trunk).
+    addArrow({
+      from: step.id,
+      to: next.id,
+      label: 'no',
+      strokeColor: PRIMARY,
+      strokeWidth: 2.5,
+    });
+    // After-reading arrow — article → next decision (re-joins trunk).
+    addArrow({
+      from: step.read.id,
+      to: next.id,
+      strokeColor: SECONDARY,
+      strokeWidth: 1,
+      dashed: true,
+      withArrowhead: true,
+    });
+  } else {
+    // Last decision's NO → the terminal.
+    addArrow({
+      from: step.id,
+      to: 'T_FA',
+      label: 'no',
+      strokeColor: PRIMARY,
+      strokeWidth: 3,
+    });
+    // After-reading on the final decision rejoins the terminal too.
+    addArrow({
+      from: step.read.id,
+      to: 'T_FA',
+      strokeColor: SECONDARY,
+      strokeWidth: 1,
+      dashed: true,
+      withArrowhead: true,
+    });
+  }
 });
 
 // ---------------------------------------------------------------------------

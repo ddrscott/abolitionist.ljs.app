@@ -1,0 +1,37 @@
+---
+// In-app Excalidraw editor — full viewport, no Starlight chrome.
+// Pre-loaded with web/public/journey-map.excalidraw. Use File →
+// Save to Disk to export your edits; overwrite the file in the repo
+// and rebuild to make them the new starter.
+import { ExcalidrawEditor } from '@/components/ExcalidrawEditor';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Journey Diagram Editor — Ask the Abolitionist</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/icon-full.png" type="image/png" />
+    <style>
+      html,
+      body,
+      #excalidraw-root {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #ffffff;
+      }
+      body {
+        font-family: 'EB Garamond', Georgia, serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="excalidraw-root">
+      <ExcalidrawEditor client:only="react" />
+    </div>
+  </body>
+</html>

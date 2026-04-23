@@ -16,6 +16,7 @@
 
 /* Node base */
 .jm-node {
+  position: relative; /* handle anchor */
   font-family: var(--ar-font-body);
   line-height: 1.15;
   color: var(--ar-ink);
@@ -33,6 +34,16 @@
   transition: background var(--ar-duration-fast) var(--ar-ease),
               color var(--ar-duration-fast) var(--ar-ease),
               border-color var(--ar-duration-fast) var(--ar-ease);
+}
+
+/* Make handles visible so diagnosing edge issues doesn't require a
+   debugger — plus they serve as small "connection beads" visually. */
+.jm-wrap .react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background: var(--ar-secondary);
+  border: 1px solid var(--ar-paper);
+  opacity: 0.9;
 }
 
 a.jm-node { cursor: pointer; }

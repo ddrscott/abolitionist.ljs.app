@@ -5,6 +5,7 @@ import {
   Controls,
   MiniMap,
   Handle,
+  MarkerType,
   Position,
   type Edge,
   type Node,
@@ -402,7 +403,7 @@ export function JourneyMap() {
         labelBgStyle: { fill: '#FFFFFF', fillOpacity: 0.95 },
         labelBgPadding: [4, 2],
         style: { stroke: '#430607', strokeWidth: 2.5 },
-        markerEnd: { type: 'arrowclosed', color: '#430607', width: 18, height: 18 } as const,
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#430607', width: 18, height: 18 },
       });
     }
 
@@ -416,7 +417,7 @@ export function JourneyMap() {
         targetHandle: 't',
         type: 'smoothstep',
         style: { stroke: '#430607', strokeWidth: 1.5 },
-        markerEnd: { type: 'arrowclosed', color: '#430607', width: 14, height: 14 } as const,
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#430607', width: 14, height: 14 },
       });
     }
 
@@ -479,7 +480,7 @@ export function JourneyMap() {
       targetHandle: 't',
       type: 'smoothstep',
       style: { stroke: '#430607', strokeWidth: 3 },
-      markerEnd: { type: 'arrowclosed', color: '#430607', width: 20, height: 20 } as const,
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#430607', width: 20, height: 20 },
     });
 
     const gospelTerminalY = gospelY + 260;
@@ -505,7 +506,7 @@ export function JourneyMap() {
       labelBgStyle: { fill: '#FFFFFF', fillOpacity: 0.95 },
       labelBgPadding: [4, 2],
       style: { stroke: '#430607', strokeWidth: 2 },
-      markerEnd: { type: 'arrowclosed', color: '#430607', width: 18, height: 18 } as const,
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#430607', width: 18, height: 18 },
     });
     // After conversion, re-enter the map at Start
     edges.push({

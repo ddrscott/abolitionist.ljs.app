@@ -208,26 +208,62 @@ function addShape({ id, type, x, y, width, height, text, fontSize, fill, stroke,
   return shape;
 }
 
+// Pick the edge-midpoint on `shape` that faces (tgtCx, tgtCy). This
+// lets the arrow exit the correct side (top/bottom/left/right) based
+// on the target's direction instead of always using a fixed edge.
+function edgePointToward(shape, tgtCx, tgtCy) {
+  const cx = shape.x + shape.width / 2;
+  const cy = shape.y + shape.height / 2;
+  const dx = tgtCx - cx;
+  const dy = tgtCy - cy;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    return dx > 0
+      ? { x: shape.x + shape.width, y: cy } // right edge
+      : { x: shape.x, y: cy };              // left edge
+  }
+  return dy > 0
+    ? { x: cx, y: shape.y + shape.height }  // bottom edge
+    : { x: cx, y: shape.y };                // top edge
+}
+
 function addArrow({ from, to, label, dashed = false, strokeColor = INK, strokeWidth = 2, withArrowhead = true }) {
+  // Look up the bound shapes so we can draw the arrow geometrically
+  // between them. Bindings alone do NOT auto-route — the arrow must
+  // already connect the two shapes at authoring time, else Excalidraw
+  // renders it at its stored (x,y,points) which is (0,0,flat) for a
+  // generator that trusted bindings. See the Apr 23 debug session.
+  const src = elements.find((e) => e.id === from);
+  const tgt = elements.find((e) => e.id === to);
+  if (!src || !tgt) {
+    throw new Error(`addArrow: missing endpoint (from=${from}, to=${to})`);
+  }
+  const srcCx = src.x + src.width / 2;
+  const srcCy = src.y + src.height / 2;
+  const tgtCx = tgt.x + tgt.width / 2;
+  const tgtCy = tgt.y + tgt.height / 2;
+  const sp = edgePointToward(src, tgtCx, tgtCy);
+  const ep = edgePointToward(tgt, srcCx, srcCy);
+  const dx = ep.x - sp.x;
+  const dy = ep.y - sp.y;
+
   const id = nextId('arr');
   const a = baseElement({
     id,
     type: 'arrow',
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
+    x: sp.x,
+    y: sp.y,
+    width: Math.abs(dx),
+    height: Math.abs(dy),
     strokeColor,
     strokeWidth,
     strokeStyle: dashed ? 'dashed' : 'solid',
     backgroundColor: 'transparent',
     boundElements: [],
   });
-  // Excalidraw arrows carry a `points` array of [dx, dy] pairs
-  // relative to the arrow's own (x,y). With start/end bindings the
-  // two endpoints are re-computed on load, so the initial path just
-  // needs to be two reasonable points.
-  a.points = [[0, 0], [100, 0]];
+  a.points = [
+    [0, 0],
+    [dx, dy],
+  ];
   a.lastCommittedPoint = null;
   a.startBinding = { elementId: from, focus: 0, gap: 4 };
   a.endBinding = { elementId: to, focus: 0, gap: 4 };
@@ -247,27 +283,32 @@ function addArrow({ from, to, label, dashed = false, strokeColor = INK, strokeWi
   }
 
   if (label) {
-    // Arrow labels still live at (0,0) — Excalidraw positions them
-    // along the midpoint of the arrow path at render time regardless
-    // of the stored x/y for arrow-bound text (this is the one case
-    // where the stored position IS overridden).
+    // Arrow label — Excalidraw does NOT auto-position container text
+    // for arrows either. Place at the geometric midpoint of the
+    // segment with size estimated from label length.
+    const fontSize = 14;
+    const lines = label.split('\n');
+    const widthPx = Math.max(...lines.map((l) => l.length)) * fontSize * 0.6;
+    const heightPx = lines.length * fontSize * 1.25;
+    const midX = sp.x + dx / 2;
+    const midY = sp.y + dy / 2;
     const tx = {
       ...baseElement({
         id: nextId('txt'),
         type: 'text',
-        x: 0,
-        y: 0,
-        width: label.length * 10,
-        height: 18,
+        x: Math.round(midX - widthPx / 2),
+        y: Math.round(midY - heightPx / 2),
+        width: Math.round(widthPx),
+        height: Math.round(heightPx),
         strokeColor,
-        backgroundColor: 'transparent',
+        backgroundColor: '#FFFFFF', // opaque so the arrow doesn't show through
       }),
-      fontSize: 14,
+      fontSize,
       fontFamily: 2,
       text: label,
       textAlign: 'center',
       verticalAlign: 'middle',
-      baseline: 11,
+      baseline: Math.round(fontSize * 0.8),
       containerId: id,
       originalText: label,
       lineHeight: 1.25,

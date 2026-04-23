@@ -33,7 +33,7 @@ const SAMPLE_QUESTIONS = [
   'What is the difference between abolitionists and the pro-life movement?',
 ];
 
-/** Strip ".md" and turn the R2 key into a relative /docs URL. */
+/** Strip the ".md" or ".mdx" extension and turn the R2 key into a relative /docs URL. */
 function citationToHref(filename: string): string {
   const slug = filename.replace(/\.mdx?$/i, '');
   return `/docs/${slug}`;

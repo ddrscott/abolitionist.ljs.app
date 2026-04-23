@@ -33,7 +33,7 @@ mapfile -t files < <(find "$DOCS_DIR" -mindepth 2 -maxdepth 2 \( -name '*.md' -o
 total="${#files[@]}"
 
 if [[ "$total" -eq 0 ]]; then
-  echo "no .md files found under $DOCS_DIR/<site>/" >&2
+  echo "no .md or .mdx files found under $DOCS_DIR/<site>/" >&2
   exit 1
 fi
 

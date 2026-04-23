@@ -14,4 +14,16 @@ __pycache__/
 .venv/
 .python-version
 
-# web/.gitignore handles its own subtree (.next, .source, node_modules, etc.).
+# web/.gitignore handles its own subtree (.source, node_modules, dist, etc.).
+
+# Scraped / derivative article content — the two source publications'
+# writings and everything mined from them. Their copyright belongs to
+# the original publishers; we keep them out of git so re-distribution
+# stays limited to the live site. Regenerate locally by running the
+# extraction pipeline (see scripts/extract_articles.py) against your
+# own mirrors of the two sites.
+pages/abolitionistsrising.com/
+pages/freethestates.org/
+pages/index.json
+pages/README.md
+web/public/questions-index.json

@@ -85,6 +85,24 @@ main {
   color: var(--ar-primary);
   margin: 0 0 0.75rem;
   line-height: 1.1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.hero .beta-badge {
+  font-family: var(--ar-font-caps);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ar-blush);
+  background: var(--ar-tertiary);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  vertical-align: middle;
+  cursor: help;
+  position: relative;
+  top: -0.35em;
 }
 .hero .subhead {
   color: var(--ar-ink);
@@ -137,12 +155,21 @@ main > footer {
   margin-top: 3rem;
   padding-top: 1.5rem;
   border-top: var(--ar-border-hair);
+  color: var(--ar-ink);
+  font-size: 0.95rem;
+}
+main > footer .footer-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  color: var(--ar-ink);
-  font-size: 0.95rem;
+}
+main > footer .disclaimer {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ar-secondary);
+  max-width: var(--ar-reading-max);
+  line-height: 1.45;
 }
 main > footer a {
   color: var(--ar-tertiary);

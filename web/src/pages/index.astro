@@ -12,8 +12,16 @@ import '@/styles/home.css';
     <title>Ask the Abolitionist</title>
     <meta
       name="description"
-      content="Straight answers on abortion from the abolitionist movement. For street dialog and new readers."
+      content="Beta. Straight answers on abortion from the abolitionist movement. An independent project — not affiliated with abolitionistsrising.com or freethestates.org, whose writings it draws from."
     />
+    <meta property="og:title" content="Ask the Abolitionist (Beta)" />
+    <meta
+      property="og:description"
+      content="Beta. Straight answers on abortion from the abolitionist movement. An independent project — not affiliated with abolitionistsrising.com or freethestates.org."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://abolitionist.ljs.app/" />
+    <meta name="twitter:card" content="summary" />
     <link rel="icon" href="/icon-full.png" type="image/png" />
     <link rel="apple-touch-icon" href="/icon-full.png" />
     <script
@@ -27,7 +35,10 @@ import '@/styles/home.css';
 
     <main>
       <section class="hero">
-        <h1>Ask the Abolitionist</h1>
+        <h1>
+          Ask the Abolitionist
+          <span class="beta-badge" title="Beta — expect rough edges. Feedback welcome via the 👍/👎 on answers.">Beta</span>
+        </h1>
         <p class="subhead">
           Straight answers on abortion, grounded in the writings of the
           abolitionist movement to abolish it. For street dialog, for
@@ -50,10 +61,18 @@ import '@/styles/home.css';
       </section>
 
       <footer>
-        <a href="/pages/">Browse every article →</a>
-        <span aria-hidden="true">·</span>
-        <code>abolitionistsrising.com</code>
-        <code>freethestates.org</code>
+        <div class="footer-row">
+          <a href="/pages/">Browse every article →</a>
+          <span aria-hidden="true">·</span>
+          <code>abolitionistsrising.com</code>
+          <code>freethestates.org</code>
+        </div>
+        <p class="disclaimer">
+          Independent project. Not affiliated with or endorsed by
+          abolitionistsrising.com or freethestates.org &mdash; this
+          site collects and indexes their public writings so readers
+          can search and ask questions across both corpora.
+        </p>
       </footer>
     </main>
   </body>

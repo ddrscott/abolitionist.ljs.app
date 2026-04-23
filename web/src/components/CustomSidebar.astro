@@ -1,0 +1,198 @@
+---
+/**
+ * Overrides Starlight's default sidebar with a programmatic tree built
+ * from the docs collection's `categories` frontmatter. Pins the Reader
+ * Journey group at the top (labeled "Journey"), lists everything else
+ * alphabetically, and sinks "Uncategorized" to the bottom — mirrors the
+ * behavior the site shipped with under Fumadocs.
+ */
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+const UNCATEGORIZED = 'Uncategorized';
+const JOURNEY = 'Reader Journey';
+
+const JOURNEY_SLUG_ORDER = [
+  'pages/journey/index',
+  'pages/journey/path-secular-pro-choice',
+  'pages/journey/path-christian-pro-choice',
+  'pages/journey/path-personally-opposed',
+  'pages/journey/path-pro-life-with-exceptions',
+  'pages/journey/path-pro-life-incrementalist',
+  'pages/journey/path-apathetic-christian',
+  'pages/journey/path-anti-abortion-non-christian',
+  'pages/journey/next-steps',
+];
+
+type Entry = CollectionEntry<'docs'>;
+
+const entries = await getCollection('docs');
+
+const buckets = new Map<string, Entry[]>();
+for (const entry of entries) {
+  const cats = (entry.data.categories as string[] | undefined) ?? [];
+  const targets = cats.length > 0 ? cats : [UNCATEGORIZED];
+  for (const cat of targets) {
+    const list = buckets.get(cat) ?? [];
+    list.push(entry);
+    buckets.set(cat, list);
+  }
+}
+
+const sortedCategories = [...buckets.keys()]
+  .filter((c) => c !== JOURNEY)
+  .sort((a, b) => {
+    if (a === UNCATEGORIZED) return 1;
+    if (b === UNCATEGORIZED) return -1;
+    return a.localeCompare(b);
+  });
+
+const byPublishedDesc = (a: Entry, b: Entry) =>
+  String((b.data as { published?: string }).published ?? '').localeCompare(
+    String((a.data as { published?: string }).published ?? ''),
+  );
+
+const journeyEntries = buckets.get(JOURNEY)?.slice().sort((a, b) => {
+  const ai = JOURNEY_SLUG_ORDER.indexOf(a.id);
+  const bi = JOURNEY_SLUG_ORDER.indexOf(b.id);
+  const ax = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
+  const bx = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
+  if (ax !== bx) return ax - bx;
+  return a.id.localeCompare(b.id);
+});
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '');
+
+function isCurrent(id: string): boolean {
+  return currentPath === `/${id}`;
+}
+---
+
+<nav class="abolition-sidebar" aria-label="Articles">
+  <ul class="top-level">
+    {journeyEntries && journeyEntries.length > 0 && (
+      <li class="group pinned">
+        <details open>
+          <summary>
+            <strong>Journey</strong>
+            <span class="count">({journeyEntries.length})</span>
+          </summary>
+          <ul>
+            {journeyEntries.map((e) => (
+              <li>
+                <a
+                  href={`/${e.id}/`}
+                  aria-current={isCurrent(e.id) ? 'page' : undefined}
+                >
+                  {e.data.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+      </li>
+    )}
+    <li class="all-articles">
+      <a
+        href="/pages/"
+        aria-current={currentPath === '/pages' ? 'page' : undefined}
+      >
+        All Articles
+      </a>
+    </li>
+  </ul>
+
+  <div class="section-label">By Category</div>
+  <ul class="categories">
+    {sortedCategories.map((cat) => {
+      const items = buckets.get(cat)!.slice().sort(byPublishedDesc);
+      return (
+        <li class="group">
+          <details>
+            <summary>
+              {cat}
+              <span class="count">({items.length})</span>
+            </summary>
+            <ul>
+              {items.map((e) => (
+                <li>
+                  <a
+                    href={`/${e.id}/`}
+                    aria-current={isCurrent(e.id) ? 'page' : undefined}
+                  >
+                    {e.data.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </li>
+      );
+    })}
+  </ul>
+</nav>
+
+<style>
+  .abolition-sidebar {
+    font-size: 0.875rem;
+    padding: 1rem 0.5rem;
+    line-height: 1.4;
+  }
+  .abolition-sidebar ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  .abolition-sidebar ul ul {
+    padding-left: 0.75rem;
+    margin-top: 0.25rem;
+    border-left: 1px solid var(--sl-color-gray-5);
+  }
+  .abolition-sidebar li {
+    margin: 0.125rem 0;
+  }
+  .abolition-sidebar summary {
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+    user-select: none;
+  }
+  .abolition-sidebar summary:hover {
+    background: var(--sl-color-gray-6);
+  }
+  .abolition-sidebar a {
+    display: block;
+    padding: 0.25rem 0.5rem;
+    color: var(--sl-color-gray-2);
+    text-decoration: none;
+    border-radius: 0.25rem;
+  }
+  .abolition-sidebar a:hover {
+    background: var(--sl-color-gray-6);
+    color: var(--sl-color-white);
+  }
+  .abolition-sidebar a[aria-current='page'] {
+    color: var(--sl-color-accent-high);
+    background: var(--sl-color-accent-low);
+    font-weight: 600;
+  }
+  .abolition-sidebar .count {
+    color: var(--sl-color-gray-3);
+    font-weight: 400;
+    font-size: 0.8rem;
+    margin-left: 0.25rem;
+  }
+  .abolition-sidebar .section-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sl-color-gray-3);
+    margin: 1rem 0 0.25rem 0.5rem;
+  }
+  .abolition-sidebar .pinned summary {
+    color: var(--sl-color-accent-high);
+  }
+  .abolition-sidebar .all-articles a {
+    font-weight: 500;
+  }
+</style>

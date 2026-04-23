@@ -1,0 +1,63 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+type Entry = CollectionEntry<'docs'>;
+
+const entries = await getCollection('docs');
+
+// Group by source_site, newest first within each.
+const bySite = new Map<string, Entry[]>();
+for (const e of entries) {
+  const site = (e.data.source_site as string | undefined) ?? 'unknown';
+  const list = bySite.get(site) ?? [];
+  list.push(e);
+  bySite.set(site, list);
+}
+
+const siteEntries: [string, Entry[]][] = [...bySite.entries()].sort((a, b) =>
+  a[0].localeCompare(b[0]),
+);
+for (const [, items] of siteEntries) {
+  items.sort((a, b) =>
+    String((b.data as { published?: string }).published ?? '').localeCompare(
+      String((a.data as { published?: string }).published ?? ''),
+    ),
+  );
+}
+
+const total = entries.length;
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'All Articles',
+    description: `${total} articles from abolitionistsrising.com and freethestates.org.`,
+  }}
+>
+  <p>
+    {total} articles from {[...bySite.keys()].sort().join(' and ')}.
+  </p>
+
+  {siteEntries.map(([site, items]) => (
+    <section>
+      <h2>{site}</h2>
+      <ul>
+        {items.map((e) => {
+          const published = (e.data as { published?: string }).published ?? '';
+          const date = published.slice(0, 10);
+          return (
+            <li>
+              <a href={`/${e.id}/`}>{e.data.title}</a>
+              {date && <span class="date"> · {date}</span>}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  ))}
+</StarlightPage>
+
+<style>
+  .date { color: var(--sl-color-gray-3); font-size: 0.875rem; }
+</style>

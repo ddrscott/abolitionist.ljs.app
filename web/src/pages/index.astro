@@ -1,0 +1,59 @@
+---
+import { ChatBox } from '@/components/ChatBox';
+import '@/styles/home.css';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ask the Abolitionist</title>
+    <meta
+      name="description"
+      content="Straight answers on abortion from the abolitionist movement. For street dialog and new readers."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <header class="nav">
+      <a href="/" class="brand">Ask the Abolitionist</a>
+      <nav>
+        <a href="/pages/">Articles</a>
+        <a href="/pages/journey/">Journey</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Ask the Abolitionist</h1>
+        <p class="subhead">
+          Straight answers on abortion, grounded in the writings of the
+          abolitionist movement to abolish it. For street dialog, for
+          conversations with skeptics, or if you&rsquo;re hearing about
+          us for the first time.
+        </p>
+      </section>
+
+      <ChatBox client:load />
+
+      <section class="journey-cta">
+        <h2>New to all this? Start where you are.</h2>
+        <p>
+          The Journey is a short reading path tailored to the position you
+          hold today. Seven starting points &mdash; from &ldquo;abortion
+          should be legal&rdquo; to &ldquo;I believe it&rsquo;s wrong but
+          I&rsquo;m not doing anything.&rdquo; Pick yours.
+        </p>
+        <a href="/pages/journey/" class="button">Find your starting point →</a>
+      </section>
+
+      <footer>
+        <a href="/pages/">Browse every article →</a>
+        <span aria-hidden="true">·</span>
+        <code>abolitionistsrising.com</code>
+        <code>freethestates.org</code>
+      </footer>
+    </main>
+  </body>
+</html>

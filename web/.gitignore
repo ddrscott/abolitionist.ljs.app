@@ -1,12 +1,10 @@
 node_modules
-.next
-.source
-next-env.d.ts
 *.tsbuildinfo
 .env*.local
 
-# Next.js static export — built fresh by `pnpm build` before each deploy.
-out
+# Astro build artifacts — generated fresh by `pnpm build` before each deploy.
+dist
+.astro
 
 # Wrangler-generated runtime types; regenerate with `wrangler types`.
 worker-configuration.d.ts

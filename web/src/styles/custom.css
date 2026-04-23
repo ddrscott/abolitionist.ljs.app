@@ -1,0 +1,13 @@
+/* Starlight theme overrides. Signal-orange accent matches the homepage. */
+
+:root {
+  --sl-color-accent-low: #43260b;
+  --sl-color-accent: #f59e0b;
+  --sl-color-accent-high: #fcd34d;
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #fde68a;
+  --sl-color-accent: #b45309;
+  --sl-color-accent-high: #78350f;
+}

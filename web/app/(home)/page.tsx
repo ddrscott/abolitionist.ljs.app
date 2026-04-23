@@ -23,6 +23,21 @@ export default function HomePage() {
         </p>
       </header>
 
+      <section className="mb-8 rounded-lg border border-fd-primary/40 bg-fd-primary/5 p-6">
+        <h2 className="mb-2 text-xl font-semibold">New here? Start the reader journey.</h2>
+        <p className="mb-4 text-fd-muted-foreground">
+          Seven guided paths that take you from your current view of abortion to
+          the abolitionist position this archive defends. Pick the one that fits
+          you.
+        </p>
+        <Link
+          href="/docs/journey"
+          className="inline-block rounded-md bg-fd-primary px-4 py-2 font-medium text-fd-primary-foreground hover:bg-fd-primary/90"
+        >
+          Start the journey →
+        </Link>
+      </section>
+
       <ChatBox />
 
       <footer className="mt-8 flex flex-wrap items-center gap-3 text-sm text-fd-muted-foreground">

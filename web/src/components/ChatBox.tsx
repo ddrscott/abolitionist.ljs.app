@@ -35,9 +35,8 @@ type IndexedQA = {
   qt?: string; // supporting quote from the article
 };
 
-// Fuse score is 0.0 (perfect) → 1.0 (no match). Below this we treat
-// the pre-curated answer as confident enough to skip the AI call.
-const INDEX_MATCH_THRESHOLD = 0.4;
+// Max suggestions shown in the combo-box dropdown as the user types.
+const MAX_SUGGESTIONS = 6;
 
 const SAMPLE_QUESTIONS = [
   'What do abolitionists believe about abortion?',
@@ -65,6 +64,8 @@ export function ChatBox() {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const fuseRef = useRef<Fuse<IndexedQA> | null>(null);
+  const [suggestions, setSuggestions] = useState<IndexedQA[]>([]);
+  const [selectedIdx, setSelectedIdx] = useState(-1);
 
   useEffect(() => {
     transcriptRef.current?.scrollTo({
@@ -83,14 +84,12 @@ export function ChatBox() {
         const items = raw as IndexedQA[] | null;
         if (!items || !Array.isArray(items) || items.length === 0) return;
         fuseRef.current = new Fuse(items, {
-          keys: [
-            { name: 'q', weight: 1.0 },
-            { name: 'a', weight: 0.25 }, // body gets a lighter weight
-          ],
+          keys: [{ name: 'q', weight: 1.0 }],
           includeScore: true,
           ignoreLocation: true, // match anywhere in the string
-          threshold: INDEX_MATCH_THRESHOLD,
-          minMatchCharLength: 3,
+          threshold: 0.6, // forgiving — the combo-box lets the user pick,
+          // so false positives in the suggestion list are fine
+          minMatchCharLength: 2,
         });
       })
       .catch(() => {
@@ -107,33 +106,41 @@ export function ChatBox() {
     return { filename, text: hit.qt };
   }
 
-  async function ask(question: string) {
+  /** Recompute suggestion candidates as the user types. */
+  function updateSuggestions(value: string) {
+    if (!fuseRef.current || value.trim().length < 2) {
+      setSuggestions([]);
+      setSelectedIdx(-1);
+      return;
+    }
+    const hits = fuseRef.current.search(value, { limit: MAX_SUGGESTIONS });
+    setSuggestions(hits.map((h) => h.item));
+    setSelectedIdx(-1);
+  }
+
+  /** Render a pre-curated Q&A answer. Used when the user picks a
+   *  suggestion from the dropdown — no AI call, no streaming. */
+  function pickSuggestion(hit: IndexedQA) {
+    if (pending) return;
+    const userMsg: Message = { role: 'user', content: hit.q };
+    const answer: Message = {
+      role: 'assistant',
+      content: hit.a,
+      citations: [indexHitCitation(hit)],
+      fromIndex: true,
+    };
+    setMessages((prev) => [...prev, userMsg, answer]);
+    setInput('');
+    setSuggestions([]);
+    setSelectedIdx(-1);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  async function askAI(question: string) {
     if (!question.trim() || pending) return;
     setPending(true);
 
     const userMsg: Message = { role: 'user', content: question };
-
-    // Try the fuzzy index first. If we find a confident match, render
-    // the pre-curated answer immediately and skip the AI call.
-    if (fuseRef.current) {
-      const results = fuseRef.current.search(question, { limit: 1 });
-      const top = results[0];
-      if (top && (top.score ?? 1) <= INDEX_MATCH_THRESHOLD) {
-        const hit = top.item;
-        const answer: Message = {
-          role: 'assistant',
-          content: hit.a,
-          citations: [indexHitCitation(hit)],
-          fromIndex: true,
-        };
-        setMessages((prev) => [...prev, userMsg, answer]);
-        setPending(false);
-        setTimeout(() => inputRef.current?.focus(), 0);
-        return;
-      }
-    }
-
-    // No good match — fall through to the streaming AI.
     const assistantMsg: Message = { role: 'assistant', content: '' };
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
 
@@ -238,7 +245,7 @@ export function ChatBox() {
     <div className="chatbox">
       <div ref={transcriptRef} className="transcript">
         {messages.length === 0 ? (
-          <Welcome onPick={ask} />
+          <Welcome onPick={askAI} />
         ) : (
           <ul>
             {messages.map((m, i) => (
@@ -283,32 +290,74 @@ export function ChatBox() {
         )}
       </div>
 
+      {suggestions.length > 0 && (
+        <ul className="suggestions" role="listbox" aria-label="Matching questions">
+          {suggestions.map((s, i) => (
+            <li
+              key={`${s.u}-${i}`}
+              role="option"
+              aria-selected={i === selectedIdx}
+              className={i === selectedIdx ? 'sel' : ''}
+              onMouseEnter={() => setSelectedIdx(i)}
+              onMouseDown={(e) => {
+                // mousedown (not click) so the textarea doesn't blur and
+                // close the list before the handler fires
+                e.preventDefault();
+                pickSuggestion(s);
+              }}
+            >
+              <div className="suggestion-q">{s.q}</div>
+              <div className="suggestion-t">{s.t}</div>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
           const q = input;
           setInput('');
-          ask(q);
+          setSuggestions([]);
+          askAI(q);
         }}
       >
         <textarea
           ref={inputRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question — objections, Scripture, strategy…"
+          onChange={(e) => {
+            setInput(e.target.value);
+            updateSuggestions(e.target.value);
+          }}
+          placeholder="Ask a question — pick a match below, or type your own for the AI"
           rows={1}
           disabled={pending}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === 'ArrowDown' && suggestions.length > 0) {
               e.preventDefault();
-              const q = input;
-              setInput('');
-              ask(q);
+              setSelectedIdx((i) => Math.min(i + 1, suggestions.length - 1));
+            } else if (e.key === 'ArrowUp' && suggestions.length > 0) {
+              e.preventDefault();
+              setSelectedIdx((i) => Math.max(i - 1, -1));
+            } else if (e.key === 'Escape' && suggestions.length > 0) {
+              e.preventDefault();
+              setSuggestions([]);
+              setSelectedIdx(-1);
+            } else if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              if (selectedIdx >= 0 && suggestions[selectedIdx]) {
+                pickSuggestion(suggestions[selectedIdx]);
+              } else {
+                const q = input;
+                setInput('');
+                setSuggestions([]);
+                askAI(q);
+              }
             }
           }}
         />
         <button type="submit" disabled={pending || !input.trim()}>
-          {pending ? '…' : 'Ask'}
+          {pending ? '…' : 'Ask AI'}
         </button>
       </form>
     </div>
@@ -316,6 +365,9 @@ export function ChatBox() {
 }
 
 function Welcome({ onPick }: { onPick: (q: string) => void }) {
+  // the Welcome panel still uses the AI path — the sample questions
+  // aren't in the index (they're aspirational framings). Users can
+  // always then refine by typing and picking from the dropdown.
   return (
     <div className="welcome">
       <p>

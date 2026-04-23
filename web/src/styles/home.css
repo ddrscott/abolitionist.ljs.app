@@ -208,6 +208,41 @@ main > footer code {
   margin-bottom: 0.35rem;
   cursor: help;
 }
+
+/* Suggestion combo-box: shows top Fuse.js matches as the user types.
+   Sits between the transcript and the composer form. */
+.chatbox .suggestions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--ar-secondary);
+  background: var(--ar-paper);
+  max-height: 260px;
+  overflow-y: auto;
+}
+.chatbox .suggestions li {
+  padding: 0.5rem 0.85rem;
+  border-bottom: 1px solid var(--ar-secondary-cream);
+  cursor: pointer;
+}
+.chatbox .suggestions li:last-child {
+  border-bottom: none;
+}
+.chatbox .suggestions li.sel,
+.chatbox .suggestions li:hover {
+  background: var(--ar-secondary-cream);
+}
+.chatbox .suggestion-q {
+  color: var(--ar-ink);
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+.chatbox .suggestion-t {
+  color: var(--ar-secondary);
+  font-size: 0.75rem;
+  margin-top: 0.2rem;
+  font-style: italic;
+}
 .chatbox p { margin: 0; white-space: pre-wrap; }
 .chatbox .error { color: var(--ar-tertiary); }
 .chatbox .caret {

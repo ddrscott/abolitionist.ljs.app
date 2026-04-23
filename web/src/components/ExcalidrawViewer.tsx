@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import '@excalidraw/excalidraw/index.css';
 
 // Excalidraw's module touches `window` at the top level, which crashes
@@ -28,9 +28,33 @@ function Placeholder({ children }: { children: React.ReactNode }) {
   );
 }
 
+// The map is authored as a tall vertical flowchart, so fitting the
+// whole thing to the viewport collapses it past readable. Instead we
+// compute the zoom that makes the diagram's WIDTH match the container
+// width (with a little padding) and scroll to the top of the scene.
+// The reader can then scroll / swipe vertically to traverse.
+type ExcalidrawAPI = {
+  getSceneElements: () => ReadonlyArray<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    isDeleted?: boolean;
+  }>;
+  updateScene: (input: {
+    appState: {
+      zoom: { value: number };
+      scrollX: number;
+      scrollY: number;
+    };
+  }) => void;
+};
+
 export function ExcalidrawViewer() {
   const [initialData, setInitialData] = useState<InitialData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const apiRef = useRef<ExcalidrawAPI | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetch('/journey-map.excalidraw', { cache: 'no-store' })
@@ -56,6 +80,55 @@ export function ExcalidrawViewer() {
       });
   }, []);
 
+  const fitToWidth = useCallback(() => {
+    const api = apiRef.current;
+    const container = containerRef.current;
+    if (!api || !container) return;
+    const elements = api
+      .getSceneElements()
+      .filter((el) => !el.isDeleted && Number.isFinite(el.x));
+    if (elements.length === 0) return;
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    for (const el of elements) {
+      if (el.x < minX) minX = el.x;
+      if (el.x + el.width > maxX) maxX = el.x + el.width;
+      if (el.y < minY) minY = el.y;
+    }
+    const contentWidth = maxX - minX;
+    const viewportWidth = container.clientWidth;
+    const padding = 24;
+    if (contentWidth <= 0 || viewportWidth <= padding * 2) return;
+
+    const zoom = (viewportWidth - padding * 2) / contentWidth;
+    // Excalidraw transforms scene coords to screen via
+    //   screen = (scene + scroll) * zoom
+    // so to place the diagram's top-left at (padding, padding):
+    //   scroll = padding/zoom - min
+    const scrollX = padding / zoom - minX;
+    const scrollY = padding / zoom - minY;
+
+    api.updateScene({
+      appState: { zoom: { value: zoom }, scrollX, scrollY },
+    });
+  }, []);
+
+  // Refit once the API is ready + on viewport resize.
+  useEffect(() => {
+    if (!initialData) return;
+    // One retry after a tick in case the canvas is still sizing up on
+    // first mount.
+    const timers = [setTimeout(fitToWidth, 50), setTimeout(fitToWidth, 250)];
+    const onResize = () => fitToWidth();
+    window.addEventListener('resize', onResize);
+    return () => {
+      for (const t of timers) clearTimeout(t);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [initialData, fitToWidth]);
+
   if (error) {
     return <Placeholder>Couldn&rsquo;t load the journey map: {error}</Placeholder>;
   }
@@ -65,6 +138,7 @@ export function ExcalidrawViewer() {
 
   return (
     <div
+      ref={containerRef}
       style={{
         height: '80vh',
         width: '100%',
@@ -79,6 +153,13 @@ export function ExcalidrawViewer() {
           theme="light"
           viewModeEnabled
           zenModeEnabled
+          excalidrawAPI={(api: ExcalidrawAPI) => {
+            apiRef.current = api;
+            // Run the initial fit after the API hands us control. The
+            // useEffect above also runs a pair of delayed fits to cover
+            // slower mounts.
+            setTimeout(fitToWidth, 0);
+          }}
           UIOptions={{
             canvasActions: {
               loadScene: false,

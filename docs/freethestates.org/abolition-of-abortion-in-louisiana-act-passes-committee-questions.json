@@ -1,0 +1,91 @@
+{
+  "source_article": "abolition-of-abortion-in-louisiana-act-passes-committee.md",
+  "source_url": "https://freethestates.org/2022/05/abolition-of-abortion-in-louisiana-act-passes-committee/",
+  "title": "Abolition of Abortion in Louisiana Act Passes Committee!",
+  "author": "James Silberman",
+  "published": "2022-05-04T19:29:39+00:00",
+  "generated_at": "2026-04-22",
+  "orientation": "A May 2022 news brief reporting that the Louisiana House Criminal Justice Committee voted 7-2 to advance HB813, the Abolition of Abortion in Louisiana Act, marking the first time a bill to immediately abolish abortion cleared a committee. The article summarizes the bill's redefinition of personhood, its anti-supremacy clause against federal interference, its judicial impeachment provision, and a call for readers to lobby House leadership for a floor vote.",
+  "audiences": [
+    "Abolitionist activists tracking state legislative milestones",
+    "Pro-life voters weighing immediatist vs. incrementalist strategy",
+    "Constitutional law observers interested in nullification and federal supremacy",
+    "Louisiana constituents being asked to contact lawmakers",
+    "State legislators considering similar equal protection bills"
+  ],
+  "questions": [
+    {
+      "question": "Why does the article describe the committee vote as a historic first?",
+      "audience": "Abolitionist activists tracking state legislative milestones",
+      "answer": "Because no prior bill seeking the immediate abolition of abortion (as opposed to incremental restrictions) had ever made it out of a legislative committee. HB813's 7-to-2 passage in the Louisiana House Criminal Justice Committee broke that ceiling.",
+      "quote": "For the first time, a bill to immediately abolish abortion has passed committee!"
+    },
+    {
+      "question": "How does HB813 attempt to classify abortion as homicide under existing Louisiana law?",
+      "audience": "State legislators considering similar equal protection bills",
+      "answer": "By amending the homicide code's definitions of 'unborn child' and 'person' to extend protection to human beings from fertilization, thereby pulling preborn children inside the existing murder statutes rather than creating a new standalone abortion crime.",
+      "quote": "HB813, filed by State Rep. Danny McCormick, amends the Louisiana homicide codes to define “unborn child” as “an individual human being from fertilization until birth,” and “person” as “a human being from the moment of fertilization.” These redefinitions would classify abortion as homicide by including preborn children among those protected by the laws against murder."
+    },
+    {
+      "question": "What does the bill say about federal authority that contradicts its provisions?",
+      "audience": "Constitutional law observers interested in nullification and federal supremacy",
+      "answer": "It declares that any conflicting federal action—statute, regulation, treaty, executive order, or court ruling—is itself unconstitutional and void, rather than treating Louisiana's law as preempted. This is a textbook nullification posture.",
+      "quote": "Any federal statute, regulation, treaty, executive order, or court ruling that purports to supersede, stay, or overrule this Section shall be in violation of the United States Constitution and the Constitution of Louisiana and is therefore void."
+    },
+    {
+      "question": "How does HB813 try to discipline state judges who might block enforcement?",
+      "audience": "Constitutional law observers interested in nullification and federal supremacy",
+      "answer": "It invokes the Louisiana Constitution's impeachment authority to make any state judge who enjoins, stays, overrules, or voids the section subject to impeachment or removal—an explicit pushback against judicial supremacy.",
+      "quote": "Pursuant to the powers granted to the Legislature by Article X, Part III, of the Constitution of Louisiana, any judge of this state who purports to enjoin, stay, overrule, or void any provision of this Section shall be subject to impeachment or removal."
+    },
+    {
+      "question": "What concrete action does the article ask readers to take next?",
+      "audience": "Louisiana constituents being asked to contact lawmakers",
+      "answer": "Call and email Speaker Clay Schexnayder and Speaker Pro Tem Tanner Magee to request that HB813 be granted a hearing on the House floor; phone numbers and email addresses for both are provided.",
+      "quote": "Please call and email Louisiana House Speaker Clay Schexnayder and Speaker Pro Tem Tanner Magee to respectfully request a floor hearing for HB813, the Abolition of Abortion in Louisiana Act."
+    },
+    {
+      "question": "Why would an immediatist abolitionist see HB813 as different from a typical pro-life restriction?",
+      "audience": "Pro-life voters weighing immediatist vs. incrementalist strategy",
+      "answer": "Because it doesn't regulate, delay, or carve exceptions around abortion—it reclassifies it as homicide by treating the preborn as legal persons from fertilization, with no incremental limits attached.",
+      "quote": "These redefinitions would classify abortion as homicide by including preborn children among those protected by the laws against murder."
+    }
+  ],
+  "related": [
+    {
+      "title": "Rep. Alan Seabaugh and the Louisiana House Ensure Murder by Abortion Continues",
+      "path": "./alan-seabaugh-louisiana-house-gut-bill-to-abolish-abortion.md",
+      "reason": "Direct sequel covering what happened to HB813 on the Louisiana House floor after this committee win."
+    },
+    {
+      "title": "Hearing for Abolition of Abortion in Missouri Act Scheduled For Wednesday 3/10",
+      "path": "./hearing-for-abolition-of-abortion-in-missouri-act-scheduled-for-wednesday-3-10.md",
+      "reason": "Parallel state-level abolition bill receiving a committee hearing, useful for comparing legislative trajectories."
+    },
+    {
+      "title": "Reps. Curt Nisly, John Jacob Author the Bill to Abolish Abortion in Indiana",
+      "path": "./reps-curt-nisly-john-jacob-author-the-bill-to-abolish-abortion-in-indiana.md",
+      "reason": "Companion example of a state-level abolition bill in the same legislative wave with similar equal-protection framing."
+    },
+    {
+      "title": "110,000 Lives Hang In the Balance As Abolition of Abortion in Texas Act Gets April 8th Hearing",
+      "path": "./110000-lives-hang-in-the-balance-as-abolition-of-abortion-in-texas-act-gets-april-8th-hearing.md",
+      "reason": "Earlier Texas analogue of the same bill template, providing the precedent McCormick's bill follows."
+    },
+    {
+      "title": "Are Nullification’s Advocates the “Villains” of American History?",
+      "path": "./are-nullifications-advocates-the-villains-of-american-history.md",
+      "reason": "Defends the nullification doctrine that HB813 enacts via its anti-supremacy clause."
+    },
+    {
+      "title": "Pro-Life Idaho State Rep: \"We all know nullification doesn't happen in reality.\"",
+      "path": "./pro-life-idaho-state-rep-nullification-doesnt-happen-reality.md",
+      "reason": "Engages the central pro-life objection to bills like HB813 that defy adverse federal rulings."
+    },
+    {
+      "title": "Nullification",
+      "path": "../abolitionistsrising.com/nullification.md",
+      "reason": "Movement reference page explaining the constitutional theory underlying HB813's federal-supremacy and judicial-impeachment provisions."
+    }
+  ]
+}

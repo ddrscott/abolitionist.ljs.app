@@ -7,26 +7,82 @@ categories: ["Reader Journey"]
 excerpt: A guided path from your current view of abortion to faithful abolitionism.
 ---
 
+import { MermaidChart } from '@/components/MermaidChart';
+
 # Start Here
 
 This site exists for one reason: to help you see that abortion is the murder of a human being made in the image of God, and to walk you from wherever you stand today into the position that abortion must be abolished immediately, totally, and in the name of Jesus Christ.
 
 We are not trying to win a debate. We are asking you to let Scripture come into conflict with whatever you currently believe about this subject.
 
-## Find your starting point
+## The map
 
-Pick the description that fits you best. Each path is a short reading order through the Movement's writings — three to six articles, in the order that will make the next one make sense.
+Pick the box that best describes you today. Each path is a short reading order through this archive — three to six articles, in the order that will make the next one make sense. Every Christian path converges on the same destination: the position laid out in the Norman Statement. The non-Christian path does not. It terminates at the gospel.
 
-## Pick the one that fits you
+<MermaidChart client:only="react" caption="Seven starting points, six decision gates, two destinations. Click a starting point to open its reading path." chart={`flowchart TD
+  S(("Where are<br/>you now?"))
 
-- **[I support legal abortion](/pages/journey/path-secular-pro-choice)** — the full journey, starting with whether the preborn child is a human being.
-- **[I'm a Christian but pro-choice](/pages/journey/path-christian-pro-choice)** — where Scripture and your current position conflict.
-- **[I'm personally opposed but don't want it illegal](/pages/journey/path-personally-opposed)** — why "you can't legislate morality" is a category error.
-- **[I'm pro-life but support exceptions](/pages/journey/path-pro-life-with-exceptions)** — the rape/incest/mother's-life objections addressed directly.
-- **[I'm pro-life and support incremental laws](/pages/journey/path-pro-life-incrementalist)** — the heaviest lift in the archive, and the path the movement exists to challenge.
-- **[I know abortion is wrong but I'm not doing anything](/pages/journey/path-apathetic-christian)** — why belief without action is the church's great sin on this matter.
-- **[I oppose abortion but I'm not a Christian](/pages/journey/path-anti-abortion-non-christian)** — read this first. The gospel is not optional.
+  S --> P1["I support<br/>legal abortion"]
+  S --> P2["I'm a Christian<br/>but pro-choice"]
+  S --> P3["I'm personally opposed<br/>but don't want it<br/>illegal"]
+  S --> P4["Pro-life,<br/>with exceptions<br/>(rape / incest /<br/>mother's life)"]
+  S --> P5["Pro-life<br/>incrementalist<br/>('small wins matter')"]
+  S --> P6["I know it's wrong<br/>but I'm not<br/>doing anything"]
+  S --> P7["I oppose abortion<br/>but I'm not<br/>a Christian"]
+
+  P1 --> G1{{"Gate 1<br/>Is abortion the<br/>unjust killing of<br/>a human being?"}}
+  P3 --> G1
+  P4 --> G4
+  P2 --> G2{{"Gate 2<br/>By what authority<br/>do you decide?"}}
+  P5 --> G3{{"Gate 3<br/>Is 'less iniquity'<br/>acceptable?"}}
+  P6 --> G5{{"Gate 5<br/>Is belief without<br/>action sufficient?"}}
+  P7 --> GOSPEL
+
+  G4{{"Gate 4<br/>Are exceptions<br/>acceptable?"}}
+  G6{{"Gate 6<br/>How does action<br/>manifest?"}}
+
+  G1 --> G2
+  G2 --> G3
+  G3 --> G4
+  G4 --> G5
+  G5 --> G6
+  G6 --> FA(["Faithful abolitionist<br/>immediate · total · biblical · active"])
+
+  GOSPEL(["The gospel<br/>precedes abolition"])
+  GOSPEL -.->|after conversion,<br/>re-enter at P2 or P6| S
+
+  click P1 "/pages/journey/path-secular-pro-choice/" "Secular pro-choice path"
+  click P2 "/pages/journey/path-christian-pro-choice/" "Christian pro-choice path"
+  click P3 "/pages/journey/path-personally-opposed/" "Personally-opposed path"
+  click P4 "/pages/journey/path-pro-life-with-exceptions/" "Pro-life with exceptions"
+  click P5 "/pages/journey/path-pro-life-incrementalist/" "Pro-life incrementalist"
+  click P6 "/pages/journey/path-apathetic-christian/" "Apathetic Christian path"
+  click P7 "/pages/journey/path-anti-abortion-non-christian/" "Anti-abortion non-Christian path"
+  click FA "/pages/journey/next-steps/" "Next steps"
+
+  classDef entry fill:#fef3c7,stroke:#92400e,color:#1a1a1a,font-weight:600
+  classDef gate fill:#e0e7ff,stroke:#3730a3,color:#1a1a1a
+  classDef terminal fill:#dcfce7,stroke:#166534,color:#1a1a1a,font-weight:700
+  classDef start fill:#fff,stroke:#1a1a1a,stroke-width:2px,color:#1a1a1a
+
+  class S start
+  class P1,P2,P3,P4,P5,P6,P7 entry
+  class G1,G2,G3,G4,G5,G6 gate
+  class FA,GOSPEL terminal
+`} />
+
+## Find your starting point (text version)
+
+If the diagram isn't rendering for you, or if you just prefer a list:
+
+- **[I support legal abortion](/pages/journey/path-secular-pro-choice/)** — the longest journey, starting with whether the preborn child is a human being.
+- **[I'm a Christian but pro-choice](/pages/journey/path-christian-pro-choice/)** — where Scripture and your current position conflict.
+- **[I'm personally opposed but don't want it illegal](/pages/journey/path-personally-opposed/)** — why "you can't legislate morality" is a category error.
+- **[I'm pro-life but support exceptions](/pages/journey/path-pro-life-with-exceptions/)** — the rape / incest / mother's-life objections addressed directly.
+- **[I'm pro-life and support incremental laws](/pages/journey/path-pro-life-incrementalist/)** — the heaviest lift in the archive, and the path the movement exists to challenge.
+- **[I know abortion is wrong but I'm not doing anything](/pages/journey/path-apathetic-christian/)** — why belief without action is the church's great sin on this matter.
+- **[I oppose abortion but I'm not a Christian](/pages/journey/path-anti-abortion-non-christian/)** — read this first. The gospel is not optional.
 
 ## When you've arrived
 
-When you agree that abortion is the murder of a human being and must be abolished immediately, totally, and by the authority of Scripture — **[read the next steps](/pages/journey/next-steps).**
+When you agree that abortion is the murder of a human being and must be abolished immediately, totally, and by the authority of Scripture — **[read the next steps](/pages/journey/next-steps/).**

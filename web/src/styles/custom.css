@@ -127,6 +127,39 @@ article h1 {
   font-size: 0.9em;
 }
 
+/* Theme toggle chip on the oxblood header. Starlight's default styling
+   assumes a neutral header background, so the select control goes
+   invisible on oxblood. Give it a tan/cream chip and paper text so it
+   reads as a control, not camouflage. */
+starlight-theme-select select,
+.sl-select select,
+[data-theme-select] select,
+header select {
+  background: var(--ar-secondary-cream);
+  color: var(--ar-ink);
+  border: 1px solid var(--ar-secondary);
+  border-radius: var(--ar-radius-btn);
+  padding: 0.3rem 1.75rem 0.3rem 0.6rem;
+  font-family: var(--ar-font-body);
+}
+starlight-theme-select select:hover,
+starlight-theme-select select:focus,
+.sl-select select:hover,
+.sl-select select:focus {
+  background: var(--ar-paper);
+  border-color: var(--ar-paper);
+}
+starlight-theme-select svg,
+.sl-select svg {
+  color: var(--ar-ink);
+  opacity: 1;
+}
+/* The caret arrow next to the select. */
+starlight-theme-select .caret,
+.sl-select .caret {
+  color: var(--ar-ink);
+}
+
 /* Pagefind search UI — make its chrome read as AR, not Starlight default. */
 #starlight__search,
 .pagefind-ui {

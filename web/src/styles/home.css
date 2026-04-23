@@ -194,6 +194,20 @@ main > footer code {
   align-self: flex-start;
   font-size: 1rem;
 }
+.chatbox .source-badge {
+  display: inline-block;
+  font-family: var(--ar-font-caps);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ar-secondary);
+  background: var(--ar-secondary-cream);
+  border: 1px solid var(--ar-secondary);
+  padding: 0.1rem 0.45rem;
+  border-radius: 3px;
+  margin-bottom: 0.35rem;
+  cursor: help;
+}
 .chatbox p { margin: 0; white-space: pre-wrap; }
 .chatbox .error { color: var(--ar-tertiary); }
 .chatbox .caret {

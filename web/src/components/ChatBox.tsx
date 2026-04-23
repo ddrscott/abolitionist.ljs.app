@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import Fuse from 'fuse.js';
 
 type Citation = {
   /** AI Search chunk shape: `item.key` is the R2 object key, e.g.
@@ -19,7 +20,24 @@ type Message = {
   content: string;
   citations?: Citation[];
   error?: string;
+  /** When true, this answer came from our pre-curated Q&A index
+   *  instead of the AI. Marked visually so readers can tell. */
+  fromIndex?: boolean;
 };
+
+// Flat shape of each pre-curated Q&A emitted by
+// scripts/build-questions-index.mjs.
+type IndexedQA = {
+  q: string;   // the question
+  a: string;   // the pre-curated answer
+  t: string;   // article title
+  u: string;   // article URL (/pages/<site>/<slug>/)
+  qt?: string; // supporting quote from the article
+};
+
+// Fuse score is 0.0 (perfect) → 1.0 (no match). Below this we treat
+// the pre-curated answer as confident enough to skip the AI call.
+const INDEX_MATCH_THRESHOLD = 0.4;
 
 const SAMPLE_QUESTIONS = [
   'What do abolitionists believe about abortion?',
@@ -46,6 +64,7 @@ export function ChatBox() {
   const [pending, setPending] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
+  const fuseRef = useRef<Fuse<IndexedQA> | null>(null);
 
   useEffect(() => {
     transcriptRef.current?.scrollTo({
@@ -54,11 +73,67 @@ export function ChatBox() {
     });
   }, [messages]);
 
+  // Load the pre-curated Q&A index once on mount. If the fetch fails
+  // (missing file, offline), we silently fall back to the AI path for
+  // every query.
+  useEffect(() => {
+    fetch('/questions-index.json', { cache: 'force-cache' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((raw: unknown) => {
+        const items = raw as IndexedQA[] | null;
+        if (!items || !Array.isArray(items) || items.length === 0) return;
+        fuseRef.current = new Fuse(items, {
+          keys: [
+            { name: 'q', weight: 1.0 },
+            { name: 'a', weight: 0.25 }, // body gets a lighter weight
+          ],
+          includeScore: true,
+          ignoreLocation: true, // match anywhere in the string
+          threshold: INDEX_MATCH_THRESHOLD,
+          minMatchCharLength: 3,
+        });
+      })
+      .catch(() => {
+        /* noop — index is optional */
+      });
+  }, []);
+
+  /** Slice of the Q&A index → Citation shape so it renders identically
+   *  to AI-sourced citations (chip links at the bottom of the message). */
+  function indexHitCitation(hit: IndexedQA): Citation {
+    // hit.u is "/pages/<site>/<slug>/"; strip the /pages/ prefix and
+    // trailing slash, append .md to match the existing filename convention.
+    const filename = hit.u.replace(/^\/pages\//, '').replace(/\/$/, '') + '.md';
+    return { filename, text: hit.qt };
+  }
+
   async function ask(question: string) {
     if (!question.trim() || pending) return;
     setPending(true);
 
     const userMsg: Message = { role: 'user', content: question };
+
+    // Try the fuzzy index first. If we find a confident match, render
+    // the pre-curated answer immediately and skip the AI call.
+    if (fuseRef.current) {
+      const results = fuseRef.current.search(question, { limit: 1 });
+      const top = results[0];
+      if (top && (top.score ?? 1) <= INDEX_MATCH_THRESHOLD) {
+        const hit = top.item;
+        const answer: Message = {
+          role: 'assistant',
+          content: hit.a,
+          citations: [indexHitCitation(hit)],
+          fromIndex: true,
+        };
+        setMessages((prev) => [...prev, userMsg, answer]);
+        setPending(false);
+        setTimeout(() => inputRef.current?.focus(), 0);
+        return;
+      }
+    }
+
+    // No good match — fall through to the streaming AI.
     const assistantMsg: Message = { role: 'assistant', content: '' };
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
 
@@ -171,12 +246,19 @@ export function ChatBox() {
                 {m.error ? (
                   <p className="error">Error: {m.error}</p>
                 ) : (
-                  <p>
-                    {m.content}
-                    {pending && i === messages.length - 1 && m.role === 'assistant' && (
-                      <span className="caret" />
+                  <>
+                    {m.fromIndex && (
+                      <div className="source-badge" title="Answered from our pre-curated Q&A index — no AI call.">
+                        from our Q&amp;A
+                      </div>
                     )}
-                  </p>
+                    <p>
+                      {m.content}
+                      {pending && i === messages.length - 1 && m.role === 'assistant' && (
+                        <span className="caret" />
+                      )}
+                    </p>
+                  </>
                 )}
                 {m.citations && m.citations.length > 0 && (
                   <div className="citations">

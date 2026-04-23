@@ -11,11 +11,16 @@ export default defineConfig({
   output: 'static',
   trailingSlash: 'always',
   vite: {
-    // Mermaid's barrel has a deep dep tree (cytoscape, d3, dagre) that
-    // Vite's lazy dep-optimizer sometimes fails to pre-bundle on first
-    // client request, surfacing as "Failed to fetch dynamically imported
-    // module". Forcing inclusion commits the pre-bundle at dev start.
-    optimizeDeps: { include: ['mermaid'] },
+    ssr: {
+      // Excalidraw does `import 'roughjs/bin/rough'` — a sub-path that
+      // Node's native ESM resolver rejects because roughjs's exports
+      // map doesn't expose it. Forcing Vite to bundle (noExternal)
+      // routes the import through Vite's resolver, which handles the
+      // sub-path fine. Needed even though the component is
+      // `client:only` because Astro/Starlight still walks the import
+      // chain during MDX prerender.
+      noExternal: ['@excalidraw/excalidraw', 'roughjs'],
+    },
   },
   integrations: [
     react(),

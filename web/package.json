@@ -15,7 +15,6 @@
     "@astrojs/react": "^4.1.0",
     "@astrojs/starlight": "^0.34.0",
     "@excalidraw/excalidraw": "^0.18.1",
-    "@xyflow/react": "^12.10.2",
     "astro": "^5.8.0",
     "mermaid": "^11.14.0",
     "react": "^19.0.0",

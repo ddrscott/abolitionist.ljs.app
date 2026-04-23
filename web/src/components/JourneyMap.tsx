@@ -283,13 +283,16 @@ const nodeTypes: NodeTypes = {
 
 type Vec2 = { x: number; y: number };
 
-/** Edit mode is triggered by visiting the page with `?edit=1`. In that
- *  mode, nodes become draggable and an Export panel appears so the
- *  layout can be tuned by hand and committed back to the repo. */
+/** Edit mode is triggered by visiting `/editor/` (full-screen layout
+ *  workspace) or any page with `?edit=1`. In edit mode nodes become
+ *  draggable and an Export panel appears so the layout can be tuned
+ *  by hand and committed back to the repo. */
 function useIsEditing() {
   const [editing, setEditing] = useState(false);
   useEffect(() => {
-    setEditing(new URLSearchParams(window.location.search).has('edit'));
+    const hasEditParam = new URLSearchParams(window.location.search).has('edit');
+    const onEditorPath = window.location.pathname.startsWith('/editor');
+    setEditing(hasEditParam || onEditorPath);
   }, []);
   return editing;
 }

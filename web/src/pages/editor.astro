@@ -1,0 +1,85 @@
+---
+// Full-viewport layout workspace for the Journey Map. Renders the map
+// with edit mode auto-enabled and no Starlight chrome, so every pixel
+// is available for dragging nodes around.
+//
+// This route is noindex'd — it's a tool, not a page readers should find.
+import { JourneyMap } from '@/components/JourneyMap';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Journey Map Editor — Ask the Abolitionist</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/icon-full.png" type="image/png" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: #ffffff;
+        font-family: 'EB Garamond', Georgia, serif;
+        color: #000000;
+      }
+      .editor-root {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      .editor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 1.25rem;
+        background: linear-gradient(90deg, #430607 5%, #230102);
+        color: #fde8e8;
+        border-bottom: 1px solid #c49a6e;
+        font-size: 0.9rem;
+      }
+      .editor-header strong {
+        font-family: 'Cinzel Decorative', 'EB Garamond', serif;
+        font-weight: 400;
+        font-size: 1.1rem;
+        color: #ffd64f;
+      }
+      .editor-header a {
+        color: #fde8e8;
+        text-decoration: underline;
+      }
+      .editor-header a:hover {
+        color: #c49a6e;
+      }
+      .editor-main {
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+      /* Override the reader-view chrome — fill the flex cell, no border,
+         no radius. */
+      .editor-main .jm-wrap {
+        height: 100%;
+        min-height: 0;
+        border: none;
+        border-radius: 0;
+      }
+    </style>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;700&family=Cinzel+Decorative:wght@400;700&display=swap"
+    />
+  </head>
+  <body>
+    <div class="editor-root">
+      <header class="editor-header">
+        <strong>Journey Map Editor</strong>
+        <a href="/pages/journey/">← back to reader view</a>
+      </header>
+      <main class="editor-main">
+        <JourneyMap client:only="react" />
+      </main>
+    </div>
+  </body>
+</html>

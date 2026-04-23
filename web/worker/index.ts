@@ -141,6 +141,36 @@ export default {
   },
 };
 
+// Idempotent schema bootstrap. Runs once per Worker isolate the first
+// time /api/feedback is hit — avoids needing `wrangler d1 execute` to
+// apply migrations after the D1 is created. Matches the DDL in
+// web/migrations/0001_feedback.sql.
+let schemaApplied = false;
+async function ensureSchema(db: D1Database): Promise<void> {
+  if (schemaApplied) return;
+  try {
+    await db
+      .prepare(
+        `CREATE TABLE IF NOT EXISTS feedback (
+           id          INTEGER PRIMARY KEY AUTOINCREMENT,
+           created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+           rating      INTEGER NOT NULL CHECK (rating IN (-1, 1)),
+           source      TEXT    NOT NULL DEFAULT 'ai' CHECK (source IN ('ai', 'index')),
+           question    TEXT    NOT NULL,
+           answer      TEXT    NOT NULL
+         )`,
+      )
+      .run();
+    await db.prepare('CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback (created_at)').run();
+    await db.prepare('CREATE INDEX IF NOT EXISTS idx_feedback_rating     ON feedback (rating)').run();
+    await db.prepare('CREATE INDEX IF NOT EXISTS idx_feedback_source     ON feedback (source)').run();
+    schemaApplied = true;
+  } catch {
+    // Let the actual insert fail + surface the error to the client if
+    // the DDL somehow failed; don't permanently cache the failure.
+  }
+}
+
 // POST /api/feedback — record a thumbs-up (rating=1) or thumbs-down
 // (rating=-1) against a (question, answer) pair so the team can review
 // where the AI is helpful or off-base.
@@ -176,6 +206,7 @@ async function handleFeedback(request: Request, env: Env): Promise<Response> {
     return new Response('missing answer', { status: 400 });
   }
   try {
+    await ensureSchema(env.FEEDBACK_DB);
     await env.FEEDBACK_DB.prepare(
       'INSERT INTO feedback (rating, question, answer, source) VALUES (?, ?, ?, ?)',
     )

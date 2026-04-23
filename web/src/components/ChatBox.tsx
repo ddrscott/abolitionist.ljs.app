@@ -57,6 +57,22 @@ function citationLabel(filename: string): string {
   return base.replace(/-/g, ' ');
 }
 
+/** AI Search returns one entry per retrieved chunk, so the same article
+ *  can appear multiple times when multiple of its chunks were used.
+ *  Collapse to one chip per unique key, keeping the first (highest-ranked)
+ *  so `title={c.text}` shows the most-relevant quote. */
+function dedupeCitations(citations: Citation[]): Citation[] {
+  const seen = new Set<string>();
+  const out: Citation[] = [];
+  for (const c of citations) {
+    const key = citationKey(c);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(c);
+  }
+  return out;
+}
+
 export function ChatBox() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -299,7 +315,7 @@ export function ChatBox() {
                 )}
                 {m.citations && m.citations.length > 0 && (
                   <div className="citations">
-                    {m.citations.map((c, j) => {
+                    {dedupeCitations(m.citations).map((c, j) => {
                       const key = citationKey(c);
                       if (!key) return null;
                       return (

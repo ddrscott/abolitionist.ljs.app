@@ -36,7 +36,12 @@ export default defineConfig({
       customCss: ['./src/styles/custom.css'],
       // Show-by-default the search UI (pagefind).
       pagefind: true,
-      favicon: '/favicon.svg',
+      favicon: '/icon-full.png',
+      logo: {
+        src: './public/icon-full.png',
+        replacesTitle: false,
+        alt: 'Ask the Abolitionist',
+      },
     }),
   ],
 });

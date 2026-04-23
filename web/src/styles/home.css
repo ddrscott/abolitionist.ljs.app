@@ -45,6 +45,9 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0.9rem 1.5rem;
 }
 .nav .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
   font-family: var(--ar-font-caps);
   font-size: 1.1rem;
   font-weight: 500;
@@ -52,6 +55,11 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.5px;
   color: var(--ar-paper);
   text-decoration: none;
+}
+.nav .brand-mark {
+  width: 34px;
+  height: 34px;
+  display: block;
 }
 .nav .brand:hover { color: var(--ar-secondary); }
 .nav nav a {

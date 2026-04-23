@@ -1,141 +1,169 @@
-/* Standalone styles for the homepage — no Starlight shell. */
+/* Homepage — standalone (not under Starlight shell). Visually aligned to
+   abolitionistsrising.com's oxblood+tan+rust triad on paper. */
 
-:root {
-  --bg: #0d0f13;
-  --fg: #e5e7eb;
-  --muted: #9ca3af;
-  --border: #2a2f38;
-  --card: #14171e;
-  --accent: #f59e0b;
-  --accent-fg: #1a1a1a;
-  --accent-soft: rgba(245, 158, 11, 0.1);
-  --accent-border: rgba(245, 158, 11, 0.4);
-  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-}
+@import './tokens.css';
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #ffffff;
-    --fg: #111827;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-    --card: #f9fafb;
-  }
-}
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700&family=Oswald:wght@400;500&display=swap');
 
 * { box-sizing: border-box; }
 
-body {
+html, body {
   margin: 0;
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--fg);
-  line-height: 1.6;
+  padding: 0;
 }
 
+body {
+  font-family: var(--ar-font-body);
+  font-size: var(--ar-text-body);
+  line-height: var(--ar-leading-body);
+  color: var(--ar-ink);
+  background: var(--ar-paper);
+}
+
+a {
+  color: var(--ar-tertiary);
+  transition: color var(--ar-duration-fast) var(--ar-ease);
+}
+a:hover { color: var(--ar-tertiary-hover); }
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--ar-weight-heading);
+  line-height: var(--ar-leading-heading);
+  letter-spacing: var(--ar-tracking);
+  margin-top: 0;
+}
+
+/* --------- Header / nav ------------------------------------------- */
+
 .nav {
+  background: linear-gradient(90deg, var(--ar-primary) 5%, var(--ar-base));
+  color: var(--ar-paper);
+  box-shadow: var(--ar-shadow-sticky);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-  max-width: 64rem;
-  margin: 0 auto;
+  padding: 0.9rem 1.5rem;
 }
 .nav .brand {
-  font-weight: 700;
-  color: var(--fg);
+  font-family: var(--ar-font-caps);
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ar-paper);
   text-decoration: none;
 }
+.nav .brand:hover { color: var(--ar-secondary); }
 .nav nav a {
-  margin-left: 1rem;
-  color: var(--muted);
+  margin-left: 1.25rem;
+  color: var(--ar-paper);
   text-decoration: none;
+  font-family: var(--ar-font-body);
+  font-size: 1rem;
 }
-.nav nav a:hover {
-  color: var(--accent);
-}
+.nav nav a:hover { color: var(--ar-secondary); }
+
+/* --------- Main / hero -------------------------------------------- */
 
 main {
   max-width: 48rem;
   margin: 0 auto;
-  padding: 3rem 1.5rem;
+  padding: 3rem var(--ar-section-px) 4rem;
 }
 
 .hero h1 {
-  margin: 0 0 0.5rem;
-  font-size: 2rem;
-  letter-spacing: -0.02em;
+  font-family: var(--ar-font-display);
+  font-size: var(--ar-h1);
+  color: var(--ar-primary);
+  margin: 0 0 0.75rem;
+  line-height: 1.1;
 }
 .hero .subhead {
-  color: var(--muted);
+  color: var(--ar-ink);
+  font-size: var(--ar-text-l);
   margin: 0 0 2rem;
+  max-width: var(--ar-reading-max);
 }
+
+/* --------- Journey CTA (single "fire" area) ----------------------- */
 
 .journey-cta {
   margin-top: 2rem;
-  padding: 1.5rem;
-  border: 1px solid var(--accent-border);
-  background: var(--accent-soft);
-  border-radius: 0.75rem;
+  padding: 1.75rem;
+  border: 1px solid var(--ar-secondary);
+  background: var(--ar-paper);
+  border-radius: var(--ar-radius-card);
 }
 .journey-cta h2 {
+  font-family: var(--ar-font-display);
+  font-size: var(--ar-h3);
+  color: var(--ar-primary);
   margin: 0 0 0.5rem;
-  font-size: 1.25rem;
 }
 .journey-cta p {
-  color: var(--muted);
-  margin: 0 0 1rem;
+  color: var(--ar-ink);
+  margin: 0 0 1.25rem;
 }
 .journey-cta .button {
   display: inline-block;
-  background: var(--accent);
-  color: var(--accent-fg);
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
+  background: var(--ar-primary);
+  color: var(--ar-blush);
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--ar-primary);
+  border-radius: var(--ar-radius-btn);
+  font-family: var(--ar-font-body);
+  font-weight: 400;
   text-decoration: none;
+  transition: background var(--ar-duration-fast) var(--ar-ease),
+              color var(--ar-duration-fast) var(--ar-ease);
 }
 .journey-cta .button:hover {
-  opacity: 0.9;
+  background: var(--ar-primary-dark);
+  color: var(--ar-paper);
+  border-color: var(--ar-primary-dark);
 }
 
-footer {
-  margin-top: 2rem;
+/* --------- Footer ------------------------------------------------- */
+
+main > footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: var(--ar-border-hair);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  color: var(--muted);
-  font-size: 0.875rem;
+  color: var(--ar-ink);
+  font-size: 0.95rem;
 }
-footer a {
-  color: var(--fg);
+main > footer a {
+  color: var(--ar-tertiary);
   text-decoration: underline;
 }
-footer a:hover { color: var(--accent); }
-footer code {
+main > footer code {
+  font-family: var(--ar-font-body);
   padding: 0.1rem 0.375rem;
-  border-radius: 0.25rem;
-  background: var(--card);
-  font-size: 0.75rem;
+  background: var(--ar-secondary-cream);
+  border: 1px solid var(--ar-secondary);
+  color: var(--ar-ink);
+  font-size: 0.85rem;
 }
 
-/* ChatBox styling — ported from Fumadocs-flavored Tailwind, rewritten as CSS. */
+/* --------- ChatBox ------------------------------------------------ */
+
 .chatbox {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border);
-  background: var(--card);
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--ar-secondary);
+  background: var(--ar-paper);
+  border-radius: var(--ar-radius-card);
   overflow: hidden;
 }
 .chatbox .transcript {
   max-height: 60vh;
-  min-height: 200px;
+  min-height: 220px;
   overflow-y: auto;
-  padding: 1rem 1.25rem;
+  padding: 1.25rem 1.5rem;
 }
 .chatbox ul {
   list-style: none;
@@ -143,123 +171,126 @@ footer code {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
-.chatbox li {
-  max-width: 100%;
-}
+.chatbox li { max-width: 100%; }
 .chatbox li.user {
   align-self: flex-end;
   max-width: 85%;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--ar-primary);
+  color: var(--ar-blush);
   padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--ar-radius-btn);
 }
 .chatbox li.assistant {
   align-self: flex-start;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
-.chatbox p {
-  margin: 0;
-  white-space: pre-wrap;
-}
-.chatbox .error { color: #ef4444; }
+.chatbox p { margin: 0; white-space: pre-wrap; }
+.chatbox .error { color: var(--ar-tertiary); }
 .chatbox .caret {
   display: inline-block;
   width: 0.5rem;
-  height: 1rem;
+  height: 1.1rem;
   margin-left: 0.25rem;
   vertical-align: -2px;
-  background: var(--muted);
+  background: var(--ar-ink);
   animation: pulse 1s infinite;
 }
 @keyframes pulse { 50% { opacity: 0.3; } }
 
 .chatbox .citations {
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.375rem;
 }
 .chatbox .citations a {
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--muted);
-  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--ar-secondary);
+  background: var(--ar-secondary-cream);
+  color: var(--ar-ink);
+  padding: 0.2rem 0.6rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
+  font-family: var(--ar-font-body);
   text-decoration: none;
+  transition: background var(--ar-duration-fast), color var(--ar-duration-fast);
 }
 .chatbox .citations a:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--ar-primary);
+  color: var(--ar-blush);
+  border-color: var(--ar-primary);
 }
 
 .chatbox form {
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
-  border-top: 1px solid var(--border);
-  padding: 0.75rem;
+  border-top: 1px solid var(--ar-secondary);
+  padding: 0.875rem;
+  background: var(--ar-secondary-cream);
 }
 .chatbox textarea {
   flex: 1;
   min-height: 44px;
   resize: none;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--fg);
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  background: var(--ar-paper);
+  color: var(--ar-ink);
   padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  font-family: inherit;
+  border-radius: var(--ar-radius-btn);
+  font-size: 1.05rem;
+  font-family: var(--ar-font-body);
+  line-height: 1.3;
 }
 .chatbox textarea:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
+  border-color: var(--ar-primary);
 }
-.chatbox textarea:disabled {
-  opacity: 0.6;
-}
+.chatbox textarea:disabled { opacity: 0.6; }
 .chatbox button[type='submit'] {
   height: 44px;
-  padding: 0 1rem;
-  background: var(--accent);
-  color: var(--accent-fg);
-  border: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
+  padding: 0 1.25rem;
+  background: var(--ar-primary);
+  color: var(--ar-blush);
+  border: 2px solid var(--ar-primary);
+  border-radius: var(--ar-radius-btn);
+  font-family: var(--ar-font-body);
+  font-size: 1.05rem;
   cursor: pointer;
+  transition: background var(--ar-duration-fast) var(--ar-ease),
+              color var(--ar-duration-fast) var(--ar-ease);
 }
 .chatbox button[type='submit']:hover:not(:disabled) {
-  opacity: 0.9;
+  background: var(--ar-primary-dark);
+  border-color: var(--ar-primary-dark);
 }
 .chatbox button[type='submit']:disabled {
   cursor: not-allowed;
   opacity: 0.4;
 }
 
-.chatbox .welcome { color: var(--muted); }
+.chatbox .welcome { color: var(--ar-ink); }
 .chatbox .welcome p { margin-bottom: 0.75rem; }
 .chatbox .sample-questions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
 }
 .chatbox .sample-questions button {
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--fg);
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
+  border: 1px solid var(--ar-secondary);
+  background: var(--ar-paper);
+  color: var(--ar-ink);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--ar-radius-btn);
+  font-size: 0.95rem;
+  font-family: var(--ar-font-body);
   cursor: pointer;
-  font-family: inherit;
+  transition: background var(--ar-duration-fast), color var(--ar-duration-fast);
 }
 .chatbox .sample-questions button:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--ar-primary);
+  color: var(--ar-blush);
+  border-color: var(--ar-primary);
 }

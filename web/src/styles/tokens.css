@@ -1,0 +1,89 @@
+/* =====================================================================
+   Abolitionists Rising — Design Tokens
+   Vendored from ../../www-ar/design-system/tokens.css. Source of truth
+   is abolitionistsrising.com's live computed styles. Do not edit these
+   freely — changes should flow from the design system, not ad-hoc here.
+   Google-Fonts stand-ins for the licensed families:
+     Hermona Vintage → Cinzel Decorative
+     Brothers        → Oswald
+   ===================================================================== */
+
+:root {
+  /* ------- Color: core ---------------------------------------------- */
+  --ar-primary:          #430607;
+  --ar-primary-dark:     #750A0C;
+  --ar-primary-semi:     #A40E11;
+  --ar-primary-deep:     #2F0405;
+
+  --ar-secondary:        #C49A6E;
+  --ar-secondary-cream:  #F8F2ED;
+
+  --ar-tertiary:         #CC3206;
+  --ar-tertiary-hover:   #E93807;
+
+  --ar-base:             #230102;
+  --ar-accent:           #CBE8F3;
+
+  --ar-gold:             #FFD64F;
+  --ar-gold-border:      #FFC10A;
+
+  --ar-ink:              #000000;
+  --ar-paper:            #FFFFFF;
+  --ar-blush:            #FDE8E8;
+  --ar-footer:           #0A2029;
+
+  /* ------- Color: overlays ------------------------------------------ */
+  --ar-overlay-soft:     rgba(0, 0, 0, 0.25);
+  --ar-overlay-med:      rgba(0, 0, 0, 0.28);
+  --ar-overlay-heavy:    rgba(0, 0, 0, 0.33);
+
+  /* ------- Typography: families ------------------------------------- */
+  --ar-font-body:        "EB Garamond", Georgia, serif;
+  --ar-font-display:     "Cinzel Decorative", "EB Garamond", serif;
+  --ar-font-caps:        "Oswald", Impact, sans-serif;
+
+  /* ------- Typography: fluid scale ---------------------------------- */
+  --ar-h1:       clamp(2.163rem, 1.5rem + 2.9vw, 3.85rem);
+  --ar-h2:       clamp(1.313rem, 1.1rem + 1.0vw, 2rem);
+  --ar-h3:       clamp(1.5rem, 1.25rem + 1.1vw, 2.166rem);
+  --ar-h4:       clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --ar-h5:       clamp(0.813rem, 0.75rem + 0.3vw, 1.219rem);
+  --ar-h6:       clamp(0.75rem, 0.71rem + 0.2vw, 0.913rem);
+  --ar-text-body: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  --ar-text-l:   clamp(1.35rem, 1.15rem + 0.8vw, 1.831rem);
+
+  /* ------- Typography: rules ---------------------------------------- */
+  --ar-weight-heading: 400;
+  --ar-weight-body:    400;
+  --ar-weight-bold:    700;
+  --ar-leading-body:   1.265;
+  --ar-leading-heading:1.2;
+  --ar-tracking:       normal;
+  --ar-tracking-cta:   0.5px;
+
+  /* ------- Layout --------------------------------------------------- */
+  --ar-container-max: 85.375rem;
+  --ar-reading-max:   72ch;
+  --ar-section-px:    clamp(0.9375rem, 2.485vw + 0.378rem, 2.5rem);
+  --ar-section-py:    clamp(1.55rem,   1.25vw  + 1.27rem,  2.33rem);
+  --ar-container-gap: clamp(1.833rem,  1.26vw  + 1.55rem,  2.625rem);
+  --ar-content-gap:   clamp(1.375rem,  0.596vw + 1.24rem,  1.75rem);
+
+  /* ------- Shape ---------------------------------------------------- */
+  --ar-radius-btn:   5px;
+  --ar-radius-cta:   20px;
+  --ar-radius-card:  0;
+  --ar-border-hair:  1px solid var(--ar-secondary);
+  --ar-border-btn:   2px solid;
+  --ar-border-cta:   4px solid var(--ar-gold-border);
+
+  /* ------- Motion --------------------------------------------------- */
+  --ar-ease:          ease-in-out;
+  --ar-duration-fast: 0.3s;
+  --ar-duration-mid:  0.4s;
+  --ar-duration-slow: 0.75s;
+
+  /* ------- Elevation ------------------------------------------------ */
+  --ar-shadow-sticky: rgba(0, 0, 0, 0.7) 5px 5px 30px 1px;
+  --ar-shadow-card:   none;
+}

@@ -1,13 +1,138 @@
-/* Starlight theme overrides. Signal-orange accent matches the homepage. */
+/* Starlight theme overrides — align content pages to the AR palette
+   (oxblood/tan/rust on paper). Applied globally to every Starlight-
+   served page (article routes + the /pages catalog).
+   See tokens.css for source-of-truth values. */
 
+@import './tokens.css';
+
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700&family=Oswald:wght@400;500&display=swap');
+
+/* Force light theme — the AR aesthetic is black-on-paper. Dark mode
+   would invert the palette into something that isn't AR. */
 :root {
-  --sl-color-accent-low: #43260b;
-  --sl-color-accent: #f59e0b;
-  --sl-color-accent-high: #fcd34d;
+  color-scheme: light;
 }
 
-:root[data-theme='light'] {
-  --sl-color-accent-low: #fde68a;
-  --sl-color-accent: #b45309;
-  --sl-color-accent-high: #78350f;
+:root,
+:root[data-theme='light'],
+:root[data-theme='dark'] {
+  /* Starlight maps its UI colors off these. Push everything to the AR
+     palette so the sidebar, header, cards, borders, and body all read
+     the same regardless of the user's stored preference. */
+  --sl-color-white:           var(--ar-ink);
+  --sl-color-gray-1:          #1a1a1a;
+  --sl-color-gray-2:          #2a2a2a;
+  --sl-color-gray-3:          #4a4a4a;
+  --sl-color-gray-4:          #6a6a6a;
+  --sl-color-gray-5:          var(--ar-secondary);
+  --sl-color-gray-6:          var(--ar-secondary-cream);
+  --sl-color-gray-7:          #faf6f2;
+  --sl-color-black:           var(--ar-paper);
+
+  --sl-color-accent-low:      var(--ar-secondary-cream);
+  --sl-color-accent:           var(--ar-tertiary);
+  --sl-color-accent-high:      var(--ar-primary);
+
+  --sl-color-text:             var(--ar-ink);
+  --sl-color-text-accent:      var(--ar-tertiary);
+  --sl-color-text-invert:      var(--ar-paper);
+  --sl-color-bg:               var(--ar-paper);
+  --sl-color-bg-nav:           var(--ar-primary);
+  --sl-color-bg-sidebar:       var(--ar-secondary-cream);
+  --sl-color-bg-inline-code:   var(--ar-secondary-cream);
+
+  --sl-color-hairline-light:   var(--ar-secondary);
+  --sl-color-hairline:         var(--ar-secondary);
+  --sl-color-hairline-shade:   var(--ar-secondary);
+
+  /* Typography */
+  --sl-font:                   var(--ar-font-body);
+  --sl-font-system:            var(--ar-font-body);
+  --sl-text-base:              var(--ar-text-body);
+  --sl-line-height:            var(--ar-leading-body);
+  --sl-line-height-headings:   var(--ar-leading-heading);
+}
+
+/* Header — two-tone oxblood → black gradient, matches AR live site. */
+:root header.header {
+  background: linear-gradient(90deg, var(--ar-primary) 5%, var(--ar-base));
+  color: var(--ar-paper);
+  box-shadow: var(--ar-shadow-sticky);
+  border-bottom: none;
+}
+
+/* Site title in header */
+.site-title,
+a.site-title {
+  font-family: var(--ar-font-caps) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 1.1rem;
+  color: var(--ar-paper);
+}
+.site-title:hover { color: var(--ar-secondary); }
+
+/* Headings inside content area use Cinzel Decorative (display) for H1,
+   EB Garamond for the rest. Oxblood for H1 on paper. */
+.sl-markdown-content h1,
+h1.content-title,
+article h1 {
+  font-family: var(--ar-font-display);
+  color: var(--ar-primary);
+  font-weight: var(--ar-weight-heading);
+}
+.sl-markdown-content h2,
+.sl-markdown-content h3,
+.sl-markdown-content h4,
+.sl-markdown-content h5,
+.sl-markdown-content h6 {
+  font-family: var(--ar-font-body);
+  color: var(--ar-primary);
+  font-weight: var(--ar-weight-bold);
+}
+
+/* Links in content */
+.sl-markdown-content a {
+  color: var(--ar-tertiary);
+}
+.sl-markdown-content a:hover {
+  color: var(--ar-tertiary-hover);
+}
+
+/* Content body sizing — AR reads at 22px body, not 16. */
+.sl-markdown-content {
+  font-size: var(--ar-text-body);
+  line-height: var(--ar-leading-body);
+}
+.sl-markdown-content p,
+.sl-markdown-content li {
+  max-width: var(--ar-reading-max);
+}
+
+/* Cards / code blocks — hard corners, paper background, tan hairline. */
+.sl-markdown-content pre,
+.sl-markdown-content figure.expressive-code,
+.sl-markdown-content blockquote {
+  border-radius: var(--ar-radius-card);
+  border: 1px solid var(--ar-secondary);
+}
+
+/* Inline code */
+.sl-markdown-content :not(pre) > code {
+  background: var(--ar-secondary-cream);
+  color: var(--ar-ink);
+  border: 1px solid var(--ar-secondary);
+  border-radius: 3px;
+  padding: 0.05em 0.35em;
+  font-size: 0.9em;
+}
+
+/* Pagefind search UI — make its chrome read as AR, not Starlight default. */
+#starlight__search,
+.pagefind-ui {
+  --pagefind-ui-primary: var(--ar-primary);
+  --pagefind-ui-text: var(--ar-ink);
+  --pagefind-ui-background: var(--ar-paper);
+  --pagefind-ui-border: var(--ar-secondary);
+  --pagefind-ui-border-radius: var(--ar-radius-btn);
 }

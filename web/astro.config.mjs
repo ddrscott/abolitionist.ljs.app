@@ -35,6 +35,10 @@ export default defineConfig({
       // frontmatter categories. See src/components/CustomSidebar.astro.
       components: {
         Sidebar: './src/components/CustomSidebar.astro',
+        // Shared top bar used on the homepage too — single source of
+        // truth for branding + nav links, with the Starlight chrome
+        // (site title, search field, socials) hidden via scoped CSS.
+        Header: './src/components/SiteHeader.astro',
         // Light-only site — no need for a light/dark picker.
         ThemeSelect: './src/components/EmptyComponent.astro',
       },

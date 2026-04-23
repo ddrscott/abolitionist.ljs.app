@@ -13,6 +13,15 @@
   color-scheme: light;
 }
 
+/* Give articles more horizontal breathing room on desktop. Default
+   Starlight content is ~45rem (reading measure); the journey map +
+   article bodies benefit from filling the space between the sidebar
+   and the ToC. Paragraphs and lists still wrap at ~72ch below for
+   per-line readability. */
+:root {
+  --sl-content-width: 68rem;
+}
+
 :root,
 :root[data-theme='light'],
 :root[data-theme='dark'] {

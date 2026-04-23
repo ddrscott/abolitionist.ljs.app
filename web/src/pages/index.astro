@@ -1,5 +1,6 @@
 ---
 import { ChatBox } from '@/components/ChatBox';
+import SiteHeader from '@/components/SiteHeader.astro';
 import '@/styles/home.css';
 ---
 
@@ -17,16 +18,7 @@ import '@/styles/home.css';
     <link rel="apple-touch-icon" href="/icon-full.png" />
   </head>
   <body>
-    <header class="nav">
-      <a href="/" class="brand">
-        <img src="/icon-full.png" alt="" class="brand-mark" />
-        <span>Ask the Abolitionist</span>
-      </a>
-      <nav>
-        <a href="/pages/">Articles</a>
-        <a href="/pages/journey/">Journey</a>
-      </nav>
-    </header>
+    <SiteHeader />
 
     <main>
       <section class="hero">

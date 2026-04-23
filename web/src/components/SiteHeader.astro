@@ -1,0 +1,71 @@
+---
+// Shared header used on every page (custom home + Starlight article
+// routes via the `components.Header` override in astro.config.mjs).
+// Keep this the single source of truth for the top bar.
+---
+
+<header class="site-header">
+  <a href="/" class="brand">
+    <img src="/icon-full.png" alt="" class="brand-mark" />
+    <span>Ask the Abolitionist</span>
+  </a>
+  <nav class="site-nav">
+    <a href="/pages/">Articles</a>
+    <a href="/pages/journey/">Journey</a>
+  </nav>
+</header>
+
+<style is:global>
+  .site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 1.25rem;
+    background: linear-gradient(90deg, #430607 5%, #230102);
+    color: #fde8e8;
+    border-bottom: 1px solid #c49a6e;
+    box-shadow: rgba(0, 0, 0, 0.7) 5px 5px 30px 1px;
+  }
+  .site-header .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: 'Oswald', Impact, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    text-decoration: none;
+  }
+  .site-header .brand:hover { color: #c49a6e; }
+  .site-header .brand-mark {
+    width: 34px;
+    height: 34px;
+    display: block;
+  }
+  .site-header .site-nav {
+    display: inline-flex;
+    gap: 1.25rem;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1rem;
+  }
+  .site-header .site-nav a {
+    color: #fde8e8;
+    text-decoration: none;
+  }
+  .site-header .site-nav a:hover { color: #c49a6e; }
+
+  /* When rendered inside Starlight's layout, neutralize the default
+     site-title + link chrome so we don't double up. */
+  :root .header > .site-header {
+    flex: 1;
+  }
+  :root header.header {
+    padding: 0 !important;
+  }
+  :root header.header > *:not(.site-header) {
+    display: none !important;
+  }
+</style>

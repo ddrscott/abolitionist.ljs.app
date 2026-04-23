@@ -204,3 +204,61 @@ a.jm-node { cursor: pointer; }
   font-family: var(--ar-font-body);
   font-size: 11px;
 }
+
+/* Layout editor panel (visible only when ?edit=1 is set). Small,
+   unobtrusive, corner-anchored — not meant for the reader view. */
+.jm-editor-panel {
+  max-width: 320px;
+  padding: 0.75rem 0.9rem;
+  background: var(--ar-paper);
+  border: 1px solid var(--ar-secondary);
+  border-radius: var(--ar-radius-btn);
+  font-family: var(--ar-font-body);
+  font-size: 0.9rem;
+  color: var(--ar-ink);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.jm-editor-panel strong {
+  display: block;
+  color: var(--ar-primary);
+  font-family: var(--ar-font-display);
+  margin-bottom: 0.35rem;
+}
+.jm-editor-panel p {
+  margin: 0 0 0.6rem;
+  line-height: 1.35;
+  color: var(--ar-ink);
+  font-size: 0.85rem;
+}
+.jm-editor-panel code {
+  background: var(--ar-secondary-cream);
+  padding: 0 0.25em;
+  border-radius: 2px;
+  font-size: 0.85em;
+}
+.jm-editor-buttons {
+  display: flex;
+  gap: 0.4rem;
+}
+.jm-editor-panel button {
+  font-family: var(--ar-font-body);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--ar-radius-btn);
+  background: var(--ar-primary);
+  color: var(--ar-blush);
+  border: 2px solid var(--ar-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.jm-editor-panel button:hover {
+  background: var(--ar-primary-dark);
+  border-color: var(--ar-primary-dark);
+}
+.jm-editor-panel button.jm-editor-reset {
+  background: var(--ar-paper);
+  color: var(--ar-ink);
+  border-color: var(--ar-secondary);
+}
+.jm-editor-panel button.jm-editor-reset:hover {
+  background: var(--ar-secondary-cream);
+}

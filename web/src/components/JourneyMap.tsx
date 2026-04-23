@@ -4,6 +4,7 @@ import {
   Background,
   Controls,
   MiniMap,
+  Panel,
   Handle,
   MarkerType,
   Position,
@@ -280,7 +281,43 @@ const nodeTypes: NodeTypes = {
 // MAIN COMPONENT
 // ============================================================================
 
+type Vec2 = { x: number; y: number };
+
+/** Edit mode is triggered by visiting the page with `?edit=1`. In that
+ *  mode, nodes become draggable and an Export panel appears so the
+ *  layout can be tuned by hand and committed back to the repo. */
+function useIsEditing() {
+  const [editing, setEditing] = useState(false);
+  useEffect(() => {
+    setEditing(new URLSearchParams(window.location.search).has('edit'));
+  }, []);
+  return editing;
+}
+
+/** Any positions in `web/public/journey-layout.json` are treated as
+ *  authoritative overrides on top of the auto-computed ones. Empty
+ *  object (or 404) means "use the computed layout". */
+function useSavedPositions() {
+  const [saved, setSaved] = useState<Record<string, Vec2>>({});
+  useEffect(() => {
+    fetch('/journey-layout.json', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data) => {
+        if (data && typeof data === 'object') setSaved(data);
+      })
+      .catch(() => {});
+  }, []);
+  return saved;
+}
+
 export function JourneyMap() {
+  const isEditing = useIsEditing();
+  const savedPositions = useSavedPositions();
+
+  // Drag overrides recorded in this session (take precedence over saved
+  // file; persist across collapse/expand toggles).
+  const [userPositions, setUserPositions] = useState<Record<string, Vec2>>({});
+
   // Initial collapse state: all collapsed on mobile, all expanded on desktop.
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     if (typeof window === 'undefined') return new Set();
@@ -289,13 +326,6 @@ export function JourneyMap() {
       : new Set();
   });
 
-  // Re-evaluate defaults when crossing the breakpoint (unless user has
-  // already interacted, which we can't easily detect — so just apply on
-  // mount and let user toggle from there).
-  useEffect(() => {
-    // no-op; default is computed once at mount. Re-mount via key if needed.
-  }, []);
-
   const toggleGate = useCallback((id: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
@@ -303,6 +333,17 @@ export function JourneyMap() {
       else next.add(id);
       return next;
     });
+  }, []);
+
+  /** Priority: in-session drag → saved file → auto-computed position. */
+  const overrideFor = useCallback(
+    (id: string, fallback: Vec2): Vec2 =>
+      userPositions[id] ?? savedPositions[id] ?? fallback,
+    [userPositions, savedPositions],
+  );
+
+  const onNodeDragStop = useCallback((_event: unknown, node: Node) => {
+    setUserPositions((prev) => ({ ...prev, [node.id]: node.position }));
   }, []);
 
   const { nodes, edges } = useMemo(() => {
@@ -315,9 +356,9 @@ export function JourneyMap() {
     nodes.push({
       id: 'start',
       type: 'start',
-      position: { x: trunkX, y: GRID.rowStart },
+      position: overrideFor('start', { x: trunkX, y: GRID.rowStart }),
       data: { label: 'Where are you\nnow?' },
-      draggable: false,
+      draggable: isEditing,
     });
 
     // Entry positions
@@ -325,9 +366,9 @@ export function JourneyMap() {
       nodes.push({
         id: p.id,
         type: 'position',
-        position: { x: p.col * GRID.colStep, y: GRID.rowEntries },
+        position: overrideFor(p.id, { x: p.col * GRID.colStep, y: GRID.rowEntries }),
         data: { label: p.label, href: p.href },
-        draggable: false,
+        draggable: isEditing,
       });
       edges.push({
         id: `start-${p.id}`,
@@ -346,13 +387,13 @@ export function JourneyMap() {
       nodes.push({
         id: g.id,
         type: 'gate',
-        position: { x: trunkX, y: gy },
+        position: overrideFor(g.id, { x: trunkX, y: gy }),
         data: {
           label: g.question,
           expanded: !collapsed.has(g.id),
           onToggle: () => toggleGate(g.id),
         },
-        draggable: false,
+        draggable: isEditing,
       });
 
       if (!collapsed.has(g.id)) {
@@ -373,9 +414,9 @@ export function JourneyMap() {
           nodes.push({
             id: o.id,
             type: 'objection',
-            position: { x, y: gy + yOffset },
+            position: overrideFor(o.id, { x, y: gy + yOffset }),
             data: { label: o.label, href: o.href },
-            draggable: false,
+            draggable: isEditing,
           });
           edges.push({
             id: `${g.id}-${o.id}`,
@@ -436,13 +477,13 @@ export function JourneyMap() {
     nodes.push({
       id: GOSPEL_GATE.id,
       type: 'gate',
-      position: { x: gospelX, y: gospelY },
+      position: overrideFor(GOSPEL_GATE.id, { x: gospelX, y: gospelY }),
       data: {
         label: GOSPEL_GATE.question,
         expanded: !collapsed.has(GOSPEL_GATE.id),
         onToggle: () => toggleGate(GOSPEL_GATE.id),
       },
-      draggable: false,
+      draggable: isEditing,
     });
 
     if (!collapsed.has(GOSPEL_GATE.id)) {
@@ -450,12 +491,12 @@ export function JourneyMap() {
         nodes.push({
           id: o.id,
           type: 'objection',
-          position: {
+          position: overrideFor(o.id, {
             x: gospelX + GRID.objRightStart,
             y: gospelY + (i - 1) * GRID.objRowStep,
-          },
+          }),
           data: { label: o.label, href: o.href },
-          draggable: false,
+          draggable: isEditing,
         });
         edges.push({
           id: `${GOSPEL_GATE.id}-${o.id}`,
@@ -474,13 +515,13 @@ export function JourneyMap() {
     nodes.push({
       id: 'T_FA',
       type: 'terminal',
-      position: { x: trunkX, y: abolitionY },
+      position: overrideFor('T_FA', { x: trunkX, y: abolitionY }),
       data: {
         label: 'Faithful Abolitionist\nimmediate · total · biblical · active',
         href: '/pages/journey/next-steps/',
         variant: 'abolition',
       },
-      draggable: false,
+      draggable: isEditing,
     });
     edges.push({
       id: `${GATES[GATES.length - 1].id}-T_FA`,
@@ -497,12 +538,12 @@ export function JourneyMap() {
     nodes.push({
       id: 'T_GOSPEL',
       type: 'terminal',
-      position: { x: gospelX, y: gospelTerminalY },
+      position: overrideFor('T_GOSPEL', { x: gospelX, y: gospelTerminalY }),
       data: {
         label: 'The gospel\nprecedes abolition',
         variant: 'gospel',
       },
-      draggable: false,
+      draggable: isEditing,
     });
     edges.push({
       id: `${GOSPEL_GATE.id}-T_GOSPEL`,
@@ -534,7 +575,28 @@ export function JourneyMap() {
     });
 
     return { nodes, edges };
-  }, [collapsed, toggleGate]);
+  }, [collapsed, toggleGate, isEditing, overrideFor]);
+
+  const exportLayout = useCallback(() => {
+    // Grab EVERY node's current position (computed + overrides + drags)
+    // so the exported JSON is a complete, self-contained layout the
+    // next page load can use as-is.
+    const positions: Record<string, Vec2> = {};
+    for (const n of nodes) positions[n.id] = n.position;
+    const blob = new Blob([JSON.stringify(positions, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'journey-layout.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [nodes]);
+
+  const resetLayout = useCallback(() => {
+    setUserPositions({});
+  }, []);
 
   return (
     <div className="jm-wrap">
@@ -551,10 +613,11 @@ export function JourneyMap() {
         minZoom={0.1}
         maxZoom={1.5}
         proOptions={{ hideAttribution: true }}
-        nodesDraggable={false}
+        nodesDraggable={isEditing}
         nodesConnectable={false}
         edgesFocusable={false}
         preventScrolling={false}
+        onNodeDragStop={isEditing ? onNodeDragStop : undefined}
       >
         <Background color="#C49A6E" gap={28} size={1} />
         <Controls showInteractive={false} />
@@ -571,6 +634,28 @@ export function JourneyMap() {
           nodeStrokeColor="#C49A6E"
           maskColor="rgba(67, 6, 7, 0.12)"
         />
+        {isEditing && (
+          <Panel position="top-right" className="jm-editor-panel">
+            <strong>Layout editor</strong>
+            <p>
+              Drag nodes into place. Click export — save the file as
+              <code>web/public/journey-layout.json</code>. Reload the map
+              without <code>?edit=1</code> to verify.
+            </p>
+            <div className="jm-editor-buttons">
+              <button type="button" onClick={exportLayout}>
+                Export layout JSON
+              </button>
+              <button
+                type="button"
+                onClick={resetLayout}
+                className="jm-editor-reset"
+              >
+                Reset drags
+              </button>
+            </div>
+          </Panel>
+        )}
       </ReactFlow>
     </div>
   );

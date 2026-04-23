@@ -1,0 +1,184 @@
+/* Journey map — React Flow node + container styling in the AR palette.
+   Imported from the journey index MDX via JourneyMap.tsx side-effect. */
+
+@import './tokens.css';
+
+.jm-wrap {
+  width: 100%;
+  height: 85vh;
+  min-height: 520px;
+  border: 1px solid var(--ar-secondary);
+  background: var(--ar-paper);
+  border-radius: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Node base */
+.jm-node {
+  font-family: var(--ar-font-body);
+  line-height: 1.15;
+  color: var(--ar-ink);
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ar-secondary);
+  border-radius: var(--ar-radius-btn);
+  background: var(--ar-paper);
+  white-space: pre-line;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
+  transition: background var(--ar-duration-fast) var(--ar-ease),
+              color var(--ar-duration-fast) var(--ar-ease),
+              border-color var(--ar-duration-fast) var(--ar-ease);
+}
+
+a.jm-node { cursor: pointer; }
+
+.jm-node:hover {
+  background: var(--ar-secondary-cream);
+  border-color: var(--ar-primary);
+}
+
+/* Start — the question that opens the map. */
+.jm-node.jm-start {
+  width: 160px;
+  min-height: 70px;
+  background: var(--ar-paper);
+  border: 2px solid var(--ar-ink);
+  font-family: var(--ar-font-display);
+  font-size: 0.95rem;
+  color: var(--ar-ink);
+}
+
+/* Entry position — where the reader actually stands. Tan, hard corners. */
+.jm-node.jm-position {
+  width: 160px;
+  min-height: 72px;
+  background: var(--ar-secondary-cream);
+  border: 2px solid var(--ar-secondary);
+  color: var(--ar-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.jm-node.jm-position:hover {
+  background: var(--ar-primary);
+  color: var(--ar-blush);
+  border-color: var(--ar-primary);
+}
+
+/* Gate — the oxblood central trunk. The button lets the user toggle
+   expand/collapse of its sub-objections. */
+.jm-node.jm-gate {
+  width: 260px;
+  min-height: 76px;
+  background: var(--ar-primary);
+  color: var(--ar-blush);
+  border: 2px solid var(--ar-primary);
+  padding: 0;
+}
+.jm-node.jm-gate button {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 76px;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: inherit;
+  font-family: var(--ar-font-body);
+  font-size: 0.95rem;
+  line-height: 1.2;
+  text-align: center;
+  white-space: pre-line;
+}
+.jm-node.jm-gate:hover {
+  background: var(--ar-primary-dark);
+  border-color: var(--ar-gold-border);
+}
+.jm-node.jm-gate .jm-toggle {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  font-family: var(--ar-font-body);
+  color: var(--ar-gold);
+  font-weight: 700;
+}
+
+/* Objection — the sticking point that a reader at this gate actually
+   holds. Clickable: navigates to the article that answers it. */
+.jm-node.jm-objection {
+  width: 200px;
+  min-height: 52px;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--ar-paper);
+  border: 1px solid var(--ar-secondary);
+  color: var(--ar-ink);
+}
+.jm-node.jm-objection:hover {
+  background: var(--ar-tertiary);
+  color: var(--ar-paper);
+  border-color: var(--ar-tertiary);
+}
+
+/* Terminals — the two destinations of the map. */
+.jm-node.jm-terminal {
+  width: 280px;
+  min-height: 80px;
+  background: var(--ar-primary);
+  color: var(--ar-blush);
+  border: 4px solid var(--ar-gold-border);
+  border-radius: var(--ar-radius-cta);
+  font-family: var(--ar-font-display);
+  font-size: 0.95rem;
+  padding: 0.75rem;
+  font-weight: 500;
+}
+.jm-node.jm-terminal:hover {
+  background: var(--ar-primary-dark);
+  color: var(--ar-paper);
+}
+.jm-node.jm-terminal-gospel {
+  /* Gospel terminal — same shape, slightly different treatment: */
+  background: var(--ar-footer);
+  border-color: var(--ar-secondary);
+}
+.jm-node.jm-terminal-gospel:hover {
+  background: var(--ar-base);
+}
+
+/* React Flow chrome — make the pan/zoom controls + minimap feel AR. */
+.jm-wrap .react-flow__controls {
+  box-shadow: none;
+  border: 1px solid var(--ar-secondary);
+  border-radius: var(--ar-radius-btn);
+  overflow: hidden;
+}
+.jm-wrap .react-flow__controls-button {
+  background: var(--ar-paper);
+  border-bottom: 1px solid var(--ar-secondary);
+  color: var(--ar-ink);
+}
+.jm-wrap .react-flow__controls-button:hover {
+  background: var(--ar-secondary-cream);
+}
+.jm-wrap .react-flow__controls-button svg {
+  fill: var(--ar-ink);
+}
+
+.jm-wrap .react-flow__minimap {
+  border: 1px solid var(--ar-secondary);
+  border-radius: var(--ar-radius-btn);
+  background: var(--ar-paper);
+}
+
+.jm-wrap .react-flow__edge-text {
+  font-family: var(--ar-font-body);
+  font-size: 11px;
+}

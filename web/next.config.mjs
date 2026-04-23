@@ -5,10 +5,10 @@ import { dirname, resolve } from 'node:path';
 const withMDX = createMDX();
 const here = dirname(fileURLToPath(import.meta.url));
 
-// The article corpus lives at <project root>/docs (one level up from web/),
+// The article corpus lives at <project root>/pages (one level up from web/),
 // and fumadocs-mdx generates `.source/server.ts` with relative imports like
-// `../../docs/<slug>.md`. We widen Turbopack's workspace root to include
-// both web/ and docs/ rather than copying or symlinking the corpus.
+// `../../pages/<slug>.md`. We widen Turbopack's workspace root to include
+// both web/ and pages/ rather than copying or symlinking the corpus.
 const projectRoot = resolve(here, '..');
 
 /** @type {import('next').NextConfig} */

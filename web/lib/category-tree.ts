@@ -8,7 +8,7 @@ const UNCATEGORIZED = 'Uncategorized';
  * categories (curated by the original editors), each containing articles
  * sorted newest-first. Articles with multiple categories appear under each.
  *
- * Articles still resolve at their original `/docs/<site>/<slug>` URLs; only
+ * Articles still resolve at their original `/pages/<site>/<slug>` URLs; only
  * the sidebar shape changes.
  */
 export function buildCategoryTree(): PageTree.Root {
@@ -55,11 +55,11 @@ export function buildCategoryTree(): PageTree.Root {
   return {
     name: 'Categories',
     children: [
-      // A persistent link to the flat /docs catalog.
+      // A persistent link to the flat /pages catalog.
       {
         type: 'page',
         name: 'All Articles',
-        url: '/docs',
+        url: '/pages',
       },
       { type: 'separator', name: 'By Category' },
       ...children,

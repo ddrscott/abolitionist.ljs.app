@@ -4,12 +4,12 @@
 
 **Goal:** Build a visual map + seven curated reading paths that guide a reader from their current value system into the "faithful abolitionist" position the corpus defines.
 
-**Architecture:** New content under `docs/journey/*.mdx` — one map page and seven reading-path pages. Uses the existing Fumadocs + R2 + AI Search pipeline without new infrastructure. Each reading path is a linear itinerary through the existing 207-article corpus with a short framing wrapper around each citation. Mermaid renders the map via a Fumadocs MDX component.
+**Architecture:** New content under `pages/journey/*.mdx` — one map page and seven reading-path pages. Uses the existing Fumadocs + R2 + AI Search pipeline without new infrastructure. Each reading path is a linear itinerary through the existing 207-article corpus with a short framing wrapper around each citation. Mermaid renders the map via a Fumadocs MDX component.
 
 **Tech Stack:** Fumadocs MDX, Mermaid (via `fumadocs-ui/components/mermaid` or a remark plugin), existing Next.js static export, existing Cloudflare Worker.
 
 **Why this shape (decisions made in brainstorming):**
-- `docs/journey/` and not a separate collection → `sync_to_r2.sh` already finds it (`find -mindepth 2 -maxdepth 2`), the Fumadocs glob (`*/*.md`) already picks it up, and `category-tree.ts` groups it automatically via `categories` frontmatter. Zero engineering to wire into sidebar + RAG.
+- `pages/journey/` and not a separate collection → `sync_to_r2.sh` already finds it (`find -mindepth 2 -maxdepth 2`), the Fumadocs glob (`*/*.md`) already picks it up, and `category-tree.ts` groups it automatically via `categories` frontmatter. Zero engineering to wire into sidebar + RAG.
 - `.mdx` (not `.md`) for journey pages → lets us use a `<Mermaid>` component. The extractor keeps writing `.md` for corpus articles. Glob extends to `*/*.{md,mdx}`.
 - Paths are linear itineraries (not decision trees) → the doctrinal content already exists in the 207 articles. We're writing *connective tissue*, not re-arguing the theology. A path page is ~200–400 words of our voice + 3–6 ordered article links.
 - "No ecumenical partnership" per FAQ → the atheist/non-Christian-anti-abortion path terminates at repentance + gospel, not at "you are an abolitionist." This is a doctrinal constraint, not an editorial choice.
@@ -26,16 +26,16 @@
 ## File Structure
 
 **New files:**
-- `docs/journey/index.mdx` — map page with Mermaid flowchart
-- `docs/journey/start-here.mdx` — brief self-assessment routing readers into a path
-- `docs/journey/path-secular-pro-choice.mdx`
-- `docs/journey/path-christian-pro-choice.mdx`
-- `docs/journey/path-personally-opposed.mdx`
-- `docs/journey/path-pro-life-with-exceptions.mdx`
-- `docs/journey/path-pro-life-incrementalist.mdx`
-- `docs/journey/path-apathetic-christian.mdx`
-- `docs/journey/path-anti-abortion-non-christian.mdx`
-- `docs/journey/next-steps.mdx` — what to do once you agree
+- `pages/journey/index.mdx` — map page with Mermaid flowchart
+- `pages/journey/start-here.mdx` — brief self-assessment routing readers into a path
+- `pages/journey/path-secular-pro-choice.mdx`
+- `pages/journey/path-christian-pro-choice.mdx`
+- `pages/journey/path-personally-opposed.mdx`
+- `pages/journey/path-pro-life-with-exceptions.mdx`
+- `pages/journey/path-pro-life-incrementalist.mdx`
+- `pages/journey/path-apathetic-christian.mdx`
+- `pages/journey/path-anti-abortion-non-christian.mdx`
+- `pages/journey/next-steps.mdx` — what to do once you agree
 
 **Modified files:**
 - `web/source.config.ts` — extend glob from `*/*.md` to `*/*.{md,mdx}`
@@ -52,14 +52,14 @@
 ## Task 0: Create the content home + minimal routing
 
 **Files:**
-- Create: `docs/journey/index.mdx` (placeholder for now)
+- Create: `pages/journey/index.mdx` (placeholder for now)
 - Modify: `web/source.config.ts:34`
 - Modify: `scripts/sync_to_r2.sh:32`
 - Modify: `web/components/chat-box.tsx:38,44` (regex widening — see Step 3b)
 
 - [ ] **Step 1: Write a minimal index page so Fumadocs has something to serve**
 
-Create `docs/journey/index.mdx`:
+Create `pages/journey/index.mdx`:
 
 ```mdx
 ---
@@ -106,7 +106,7 @@ mapfile -t files < <(find "$DOCS_DIR" -mindepth 2 -maxdepth 2 \( -name '*.md' -o
 
 - [ ] **Step 3b: Widen the chat-box citation regex to strip `.mdx` too**
 
-The AI Search chat citations arrive as R2 keys like `journey/index.mdx`. `web/components/chat-box.tsx` strips `.md` via `/\.md$/i` at two locations (~L38 and ~L44). Without this fix, any chat citation that lands on a journey page produces a broken `/docs/journey/index.mdx` URL.
+The AI Search chat citations arrive as R2 keys like `journey/index.mdx`. `web/components/chat-box.tsx` strips `.md` via `/\.md$/i` at two locations (~L38 and ~L44). Without this fix, any chat citation that lands on a journey page produces a broken `/pages/journey/index.mdx` URL.
 
 Edit `web/components/chat-box.tsx`. Change both occurrences:
 
@@ -142,12 +142,12 @@ Run from `web/`:
 pnpm dev
 ```
 
-Open `http://localhost:3000/docs/journey` — expect the placeholder page to render and a new "Reader Journey (1)" folder to appear in the sidebar. If it doesn't appear, check that `postinstall` ran (`pnpm install` to retrigger `fumadocs-mdx`).
+Open `http://localhost:3000/pages/journey` — expect the placeholder page to render and a new "Reader Journey (1)" folder to appear in the sidebar. If it doesn't appear, check that `postinstall` ran (`pnpm install` to retrigger `fumadocs-mdx`).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add docs/journey/index.mdx web/source.config.ts scripts/sync_to_r2.sh web/components/chat-box.tsx
+git add pages/journey/index.mdx web/source.config.ts scripts/sync_to_r2.sh web/components/chat-box.tsx
 git commit -m "feat(journey): scaffold journey content directory + .mdx support"
 ```
 
@@ -162,7 +162,7 @@ This is the highest-leverage task. Every later task depends on the question tree
 
 - [ ] **Step 1: Read these 12 articles in full, in order**
 
-From `docs/abolitionistsrising.com/`:
+From `pages/abolitionistsrising.com/`:
 
 1. `abolitionism101.md` (foundation)
 2. `abolitionist-not-pro-life.md` (the core distinction)
@@ -177,7 +177,7 @@ From `docs/abolitionistsrising.com/`:
 11. `fruits-of-abolitionism-is-true-repentance-necessary.md`
 12. `kristan-hawkins-flawed-reasoning-vs-scripture.md` (the Students for Life critique)
 
-From `docs/freethestates.org/`:
+From `pages/freethestates.org/`:
 
 13. `against-pro-life-compromise-responding-to-denny-burk-andrew-walker-et-al.md`
 14. `affirmations-and-denials-regarding-abolitionist-terms-and-other-controversial-subjects.md`
@@ -313,7 +313,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
 
 - [ ] **Step 4: Smoke-test Mermaid**
 
-Temporarily add a Mermaid block to `docs/journey/index.mdx`:
+Temporarily add a Mermaid block to `pages/journey/index.mdx`:
 
 ```mdx
 <Mermaid chart={`graph TD
@@ -323,12 +323,12 @@ Temporarily add a Mermaid block to `docs/journey/index.mdx`:
 `} />
 ```
 
-Run `pnpm dev` and load `/docs/journey`. Expect a rendered flowchart on the page. If it renders, proceed. If it doesn't, check browser console for Mermaid init errors.
+Run `pnpm dev` and load `/pages/journey`. Expect a rendered flowchart on the page. If it renders, proceed. If it doesn't, check browser console for Mermaid init errors.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web/package.json web/pnpm-lock.yaml web/components/mermaid.tsx web/mdx-components.tsx docs/journey/index.mdx
+git add web/package.json web/pnpm-lock.yaml web/components/mermaid.tsx web/mdx-components.tsx pages/journey/index.mdx
 git commit -m "feat(journey): render Mermaid diagrams in MDX pages"
 ```
 
@@ -337,11 +337,11 @@ git commit -m "feat(journey): render Mermaid diagrams in MDX pages"
 ## Task 3: Write the map page
 
 **Files:**
-- Modify: `docs/journey/index.mdx`
+- Modify: `pages/journey/index.mdx`
 
 This page is the visual overview. Short prose + a single Mermaid flowchart + links into each of the seven path pages.
 
-- [ ] **Step 1: Rewrite `docs/journey/index.mdx` with the full map**
+- [ ] **Step 1: Rewrite `pages/journey/index.mdx` with the full map**
 
 Replace the placeholder. Use this exact frontmatter + structure (fill in the flowchart from the question tree produced in Task 1):
 
@@ -409,22 +409,22 @@ Pick the description that fits you best. Each path is a short reading order thro
 
 ## The seven paths
 
-- **[I support legal abortion](/docs/journey/path-secular-pro-choice)** — the full journey, starting with whether the preborn child is a human being.
-- **[I'm a Christian but pro-choice](/docs/journey/path-christian-pro-choice)** — where Scripture and your current position conflict.
-- **[I'm personally opposed but don't want it illegal](/docs/journey/path-personally-opposed)** — why "you can't legislate morality" is a category error.
-- **[I'm pro-life but support exceptions](/docs/journey/path-pro-life-with-exceptions)** — the rape/incest/mother's-life objections addressed directly.
-- **[I'm pro-life and support incremental laws](/docs/journey/path-pro-life-incrementalist)** — the heaviest lift in the archive, and the path the movement exists to challenge.
-- **[I know abortion is wrong but I'm not doing anything](/docs/journey/path-apathetic-christian)** — why belief without action is the church's great sin on this matter.
-- **[I oppose abortion but I'm not a Christian](/docs/journey/path-anti-abortion-non-christian)** — read this first. The gospel is not optional.
+- **[I support legal abortion](/pages/journey/path-secular-pro-choice)** — the full journey, starting with whether the preborn child is a human being.
+- **[I'm a Christian but pro-choice](/pages/journey/path-christian-pro-choice)** — where Scripture and your current position conflict.
+- **[I'm personally opposed but don't want it illegal](/pages/journey/path-personally-opposed)** — why "you can't legislate morality" is a category error.
+- **[I'm pro-life but support exceptions](/pages/journey/path-pro-life-with-exceptions)** — the rape/incest/mother's-life objections addressed directly.
+- **[I'm pro-life and support incremental laws](/pages/journey/path-pro-life-incrementalist)** — the heaviest lift in the archive, and the path the movement exists to challenge.
+- **[I know abortion is wrong but I'm not doing anything](/pages/journey/path-apathetic-christian)** — why belief without action is the church's great sin on this matter.
+- **[I oppose abortion but I'm not a Christian](/pages/journey/path-anti-abortion-non-christian)** — read this first. The gospel is not optional.
 
 ## When you've arrived
 
-When you agree that abortion is the murder of a human being and must be abolished immediately, totally, and by the authority of Scripture — **[read the next steps](/docs/journey/next-steps).**
+When you agree that abortion is the murder of a human being and must be abolished immediately, totally, and by the authority of Scripture — **[read the next steps](/pages/journey/next-steps).**
 ```
 
 - [ ] **Step 2: Render and verify**
 
-Run `pnpm dev`, open `/docs/journey`. Expect:
+Run `pnpm dev`, open `/pages/journey`. Expect:
 - Page title "Start Here – Your Reader Journey"
 - Intro paragraph
 - Rendered Mermaid flowchart (seven colored entry nodes, five gates, two terminal nodes)
@@ -436,7 +436,7 @@ If the Mermaid fails to render, do NOT debug it here — go back to Task 2 and f
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/journey/index.mdx
+git add pages/journey/index.mdx
 git commit -m "feat(journey): write the map page with visual flowchart"
 ```
 
@@ -445,11 +445,11 @@ git commit -m "feat(journey): write the map page with visual flowchart"
 ## Task 4: Build the reusable reading-path template (dogfood it with path-pro-life-with-exceptions)
 
 **Files:**
-- Create: `docs/journey/path-pro-life-with-exceptions.mdx`
+- Create: `pages/journey/path-pro-life-with-exceptions.mdx`
 
 This is the second-most-common reader (after incrementalist) and has clean source material (`no-exceptions.md`, `kristan-hawkins-flawed-reasoning-vs-scripture.md`, FAQ "What about rape and incest?"). It establishes the template the other six pages will copy.
 
-- [ ] **Step 1: Write `docs/journey/path-pro-life-with-exceptions.mdx`**
+- [ ] **Step 1: Write `pages/journey/path-pro-life-with-exceptions.mdx`**
 
 ```mdx
 ---
@@ -478,30 +478,30 @@ An exception is not a compromise. It is a denial of the principle.
 
 ## Read in this order
 
-1. **[No Exceptions](/docs/abolitionistsrising.com/no-exceptions)** — the case that exceptions are morally incoherent given what we both agree the child is.
-2. **[FAQ — "What about rape and incest?"](/docs/abolitionistsrising.com/faq)** — the direct answer to the hardest case.
-3. **[Kristan Hawkins' Flawed Reasoning vs Scripture](/docs/abolitionistsrising.com/kristan-hawkins-flawed-reasoning-vs-scripture)** — addresses Students for Life's defense of exceptions from within the pro-life movement.
-4. **[Biblical, Not Secular](/docs/abolitionistsrising.com/biblical-not-secular)** — where the authority to reject exceptions actually comes from.
-5. **[Abolitionist, Not Pro-Life](/docs/abolitionistsrising.com/abolitionist-not-pro-life)** — why the pro-life movement cannot self-correct on this point.
+1. **[No Exceptions](/pages/abolitionistsrising.com/no-exceptions)** — the case that exceptions are morally incoherent given what we both agree the child is.
+2. **[FAQ — "What about rape and incest?"](/pages/abolitionistsrising.com/faq)** — the direct answer to the hardest case.
+3. **[Kristan Hawkins' Flawed Reasoning vs Scripture](/pages/abolitionistsrising.com/kristan-hawkins-flawed-reasoning-vs-scripture)** — addresses Students for Life's defense of exceptions from within the pro-life movement.
+4. **[Biblical, Not Secular](/pages/abolitionistsrising.com/biblical-not-secular)** — where the authority to reject exceptions actually comes from.
+5. **[Abolitionist, Not Pro-Life](/pages/abolitionistsrising.com/abolitionist-not-pro-life)** — why the pro-life movement cannot self-correct on this point.
 
 ## The specific objection the corpus answers
 
 > "I just can't tell a rape victim she has to carry her attacker's child."
 
-The archive's answer: we are not telling her she has to endure her attacker — we are telling her she may not murder her child. Rape is a capital crime against the mother. The child is the second victim, not the perpetrator. **Read [No Exceptions](/docs/abolitionistsrising.com/no-exceptions)** and sit with that distinction.
+The archive's answer: we are not telling her she has to endure her attacker — we are telling her she may not murder her child. Rape is a capital crime against the mother. The child is the second victim, not the perpetrator. **Read [No Exceptions](/pages/abolitionistsrising.com/no-exceptions)** and sit with that distinction.
 
 ## When you've read these
 
 If you agree that exceptions deny the very principle they claim to defend, you are no longer a consistent pro-life person — you are an abolitionist who hasn't yet said the word out loud.
 
-**[Continue to Next Steps →](/docs/journey/next-steps)**
+**[Continue to Next Steps →](/pages/journey/next-steps)**
 
-Or, if you still hesitate on strategy ("yes, but we can't pass that today"), read **[If You're Pro-Life and Support Incremental Laws](/docs/journey/path-pro-life-incrementalist)** next.
+Or, if you still hesitate on strategy ("yes, but we can't pass that today"), read **[If You're Pro-Life and Support Incremental Laws](/pages/journey/path-pro-life-incrementalist)** next.
 ```
 
 - [ ] **Step 2: Render and verify**
 
-Open `/docs/journey/path-pro-life-with-exceptions`. Expect:
+Open `/pages/journey/path-pro-life-with-exceptions`. Expect:
 - Title renders
 - All five "Read in this order" links resolve (click each one; every target is an existing article)
 - The "Continue to Next Steps" link is a dead link for now — that's fine; Task 10 creates it.
@@ -520,7 +520,7 @@ Freeze these six sections. Every other path page uses them verbatim in this orde
 - [ ] **Step 4: Commit**
 
 ```bash
-git add docs/journey/path-pro-life-with-exceptions.mdx
+git add pages/journey/path-pro-life-with-exceptions.mdx
 git commit -m "feat(journey): write path for pro-life readers who support exceptions"
 ```
 
@@ -529,7 +529,7 @@ git commit -m "feat(journey): write path for pro-life readers who support except
 ## Task 5: Write `path-pro-life-incrementalist.mdx`
 
 **Files:**
-- Create: `docs/journey/path-pro-life-incrementalist.mdx`
+- Create: `pages/journey/path-pro-life-incrementalist.mdx`
 
 This is the most theologically loaded path in the archive. It's the one the whole movement exists to argue against. Source material is dense: `immediatism.md`, `against-pro-life-compromise-responding-to-denny-burk-andrew-walker-et-al.md`, FAQ "Was Dobbs a step in the right direction?", `why-i-believe-voting-for-a-pro-abortion-candidate-is-a-sin-no-matter-the-context.md`.
 
@@ -543,12 +543,12 @@ Fill in the six sections. Key content decisions for this page:
 
 - [ ] **Step 2: Render and verify**
 
-Open `/docs/journey/path-pro-life-incrementalist`. All citations resolve. Mermaid/template integrity intact.
+Open `/pages/journey/path-pro-life-incrementalist`. All citations resolve. Mermaid/template integrity intact.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/journey/path-pro-life-incrementalist.mdx
+git add pages/journey/path-pro-life-incrementalist.mdx
 git commit -m "feat(journey): write path for incrementalist pro-life readers"
 ```
 
@@ -557,7 +557,7 @@ git commit -m "feat(journey): write path for incrementalist pro-life readers"
 ## Task 6: Write `path-secular-pro-choice.mdx`
 
 **Files:**
-- Create: `docs/journey/path-secular-pro-choice.mdx`
+- Create: `pages/journey/path-secular-pro-choice.mdx`
 
 The longest journey — reader starts with no shared premise. Begins with humanity of the preborn child (science + image of God) and ends at "the gospel is not optional."
 
@@ -575,7 +575,7 @@ Content decisions:
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/journey/path-secular-pro-choice.mdx
+git add pages/journey/path-secular-pro-choice.mdx
 git commit -m "feat(journey): write path for secular pro-choice readers"
 ```
 
@@ -584,7 +584,7 @@ git commit -m "feat(journey): write path for secular pro-choice readers"
 ## Task 7: Write `path-christian-pro-choice.mdx`
 
 **Files:**
-- Create: `docs/journey/path-christian-pro-choice.mdx`
+- Create: `pages/journey/path-christian-pro-choice.mdx`
 
 - [ ] **Step 1: Write the page using the Task 4 template**
 
@@ -600,7 +600,7 @@ Content decisions:
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/journey/path-christian-pro-choice.mdx
+git add pages/journey/path-christian-pro-choice.mdx
 git commit -m "feat(journey): write path for Christian pro-choice readers"
 ```
 
@@ -609,7 +609,7 @@ git commit -m "feat(journey): write path for Christian pro-choice readers"
 ## Task 8: Write `path-personally-opposed.mdx`
 
 **Files:**
-- Create: `docs/journey/path-personally-opposed.mdx`
+- Create: `pages/journey/path-personally-opposed.mdx`
 
 - [ ] **Step 1: Write the page using the Task 4 template**
 
@@ -625,7 +625,7 @@ Content decisions:
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/journey/path-personally-opposed.mdx
+git add pages/journey/path-personally-opposed.mdx
 git commit -m "feat(journey): write path for 'personally opposed' readers"
 ```
 
@@ -634,7 +634,7 @@ git commit -m "feat(journey): write path for 'personally opposed' readers"
 ## Task 9: Write `path-apathetic-christian.mdx`
 
 **Files:**
-- Create: `docs/journey/path-apathetic-christian.mdx`
+- Create: `pages/journey/path-apathetic-christian.mdx`
 
 This path is different in kind. The reader already agrees with the theology; the issue is the will. The reading order leads toward rebuke, repentance, and specific action.
 
@@ -652,7 +652,7 @@ Content decisions:
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/journey/path-apathetic-christian.mdx
+git add pages/journey/path-apathetic-christian.mdx
 git commit -m "feat(journey): write path for apathetic Christian readers"
 ```
 
@@ -661,7 +661,7 @@ git commit -m "feat(journey): write path for apathetic Christian readers"
 ## Task 10: Write `path-anti-abortion-non-christian.mdx`
 
 **Files:**
-- Create: `docs/journey/path-anti-abortion-non-christian.mdx`
+- Create: `pages/journey/path-anti-abortion-non-christian.mdx`
 
 This path terminates differently from the other six. Per the FAQ ("Can People Who Disagree With You Join The Abolitionist Movement?"), a non-Christian cannot be an abolitionist in this corpus's sense — three of the five tenets (Gospel-Centered, Biblical, Church-Driven) make it impossible. The path leads to the gospel, not to a signature.
 
@@ -681,7 +681,7 @@ Content decisions:
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/journey/path-anti-abortion-non-christian.mdx
+git add pages/journey/path-anti-abortion-non-christian.mdx
 git commit -m "feat(journey): write path for anti-abortion non-Christian readers"
 ```
 
@@ -690,11 +690,11 @@ git commit -m "feat(journey): write path for anti-abortion non-Christian readers
 ## Task 11: Write `next-steps.mdx`
 
 **Files:**
-- Create: `docs/journey/next-steps.mdx`
+- Create: `pages/journey/next-steps.mdx`
 
 The terminal page for anyone who has arrived at the abolitionist position. Not a reading list — an action list.
 
-- [ ] **Step 1: Write `docs/journey/next-steps.mdx`**
+- [ ] **Step 1: Write `pages/journey/next-steps.mdx`**
 
 Frontmatter + sections:
 
@@ -721,19 +721,19 @@ This is the position of the Norman Statement, the doctrinal confession of the Ab
 
 ## Do these, in this order
 
-**1. Sign the Norman Statement.** The doctrinal foundation of today's movement. Read it in full, not just the summary: [The Norman Statement](/docs/abolitionistsrising.com/norman-statement).
+**1. Sign the Norman Statement.** The doctrinal foundation of today's movement. Read it in full, not just the summary: [The Norman Statement](/pages/abolitionistsrising.com/norman-statement).
 
-**2. Pray.** Not as a substitute for action — as the source of it. See [Stay Steeped in Prayer as You Seek to Abolish Abortion](/docs/abolitionistsrising.com/stay-steeped-in-prayer-as-you-seek-to-abolish-abortion).
+**2. Pray.** Not as a substitute for action — as the source of it. See [Stay Steeped in Prayer as You Seek to Abolish Abortion](/pages/abolitionistsrising.com/stay-steeped-in-prayer-as-you-seek-to-abolish-abortion).
 
 **3. Find an abolitionist church or group near you.** The movement is body-driven. Go to the [state pages on Abolitionists Rising](https://abolitionistsrising.com/) and find your state. If there isn't a group near you, be the first one.
 
-**4. Engage your magistrates.** Your state senators, representatives, and local magistrates all have a biblical duty to abolish abortion. Schedule meetings. Explain their duty before God and Constitution. See [Biblical, Not Secular](/docs/abolitionistsrising.com/biblical-not-secular).
+**4. Engage your magistrates.** Your state senators, representatives, and local magistrates all have a biblical duty to abolish abortion. Schedule meetings. Explain their duty before God and Constitution. See [Biblical, Not Secular](/pages/abolitionistsrising.com/biblical-not-secular).
 
-**5. Vote consistently.** Read [Why I Believe Voting for a Pro-Abortion Candidate Is a Sin](/docs/abolitionistsrising.com/why-i-believe-voting-for-a-pro-abortion-candidate-is-a-sin-no-matter-the-context) and [How Shall an Abolitionist Vote](/docs/abolitionistsrising.com/how-shall-an-abolitionist-vote).
+**5. Vote consistently.** Read [Why I Believe Voting for a Pro-Abortion Candidate Is a Sin](/pages/abolitionistsrising.com/why-i-believe-voting-for-a-pro-abortion-candidate-is-a-sin-no-matter-the-context) and [How Shall an Abolitionist Vote](/pages/abolitionistsrising.com/how-shall-an-abolitionist-vote).
 
 **6. Go to the killing centers.** Preach the gospel to those stumbling toward slaughter. Plead with mothers. This is not metaphor.
 
-**7. Bring this into your church.** The silence of the church is the largest obstacle to abolition. See [All About the Church](/docs/freethestates.org/all-about-the-church).
+**7. Bring this into your church.** The silence of the church is the largest obstacle to abolition. See [All About the Church](/pages/freethestates.org/all-about-the-church).
 
 ## What you cannot do
 
@@ -741,7 +741,7 @@ You cannot wait.
 
 You cannot hand this off to a specialized group of activists while you resume ordinary Christian life. Ordinary Christian life, in a culture that practices child sacrifice, includes the active work of abolition.
 
-You cannot partner with pro-life organizations whose strategies you now understand to be iniquitous. See [Abolitionist, Not Pro-Life](/docs/abolitionistsrising.com/abolitionist-not-pro-life).
+You cannot partner with pro-life organizations whose strategies you now understand to be iniquitous. See [Abolitionist, Not Pro-Life](/pages/abolitionistsrising.com/abolitionist-not-pro-life).
 
 You cannot be silent.
 
@@ -754,12 +754,12 @@ If the question is pastoral rather than theological, find the abolitionist churc
 
 - [ ] **Step 2: Render and verify**
 
-Open `/docs/journey/next-steps`. Click every internal link; expect all resolve to existing articles.
+Open `/pages/journey/next-steps`. Click every internal link; expect all resolve to existing articles.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/journey/next-steps.mdx
+git add pages/journey/next-steps.mdx
 git commit -m "feat(journey): write next-steps terminal page"
 ```
 
@@ -768,22 +768,22 @@ git commit -m "feat(journey): write next-steps terminal page"
 ## Task 12: Add a "start here" self-assessment page (optional but recommended)
 
 **Files:**
-- Create: `docs/journey/start-here.mdx`
+- Create: `pages/journey/start-here.mdx`
 
-A single-page version of the "which path fits you" question, for readers who arrive at `/docs/journey/start-here` from an external link (social, email) rather than the map page. Same content philosophy but tighter — one paragraph per entry, large CTA buttons.
+A single-page version of the "which path fits you" question, for readers who arrive at `/pages/journey/start-here` from an external link (social, email) rather than the map page. Same content philosophy but tighter — one paragraph per entry, large CTA buttons.
 
 This is nearly redundant with `index.mdx` and could be skipped. Decide at this point: does the map-page-with-seven-bullets suffice? If yes, delete this task and move on. If no, execute it.
 
 - [ ] **Step 1: Decide whether to build this page**
 
-Read back `docs/journey/index.mdx`. If the map page's "seven paths" section already does what this page would do, skip to Task 13 and mark this task complete without creating the file. If you believe a simplified standalone is valuable, proceed.
+Read back `pages/journey/index.mdx`. If the map page's "seven paths" section already does what this page would do, skip to Task 13 and mark this task complete without creating the file. If you believe a simplified standalone is valuable, proceed.
 
-- [ ] **Step 2: If proceeding, write `docs/journey/start-here.mdx`** following the same frontmatter convention and linking out to the seven paths.
+- [ ] **Step 2: If proceeding, write `pages/journey/start-here.mdx`** following the same frontmatter convention and linking out to the seven paths.
 
 - [ ] **Step 3: Commit (if file created)**
 
 ```bash
-git add docs/journey/start-here.mdx
+git add pages/journey/start-here.mdx
 git commit -m "feat(journey): add start-here self-assessment page"
 ```
 
@@ -811,7 +811,7 @@ Add a `<section>` between the `<header>` and `<ChatBox />`:
           you.
         </p>
         <Link
-          href="/docs/journey"
+          href="/pages/journey"
           className="inline-block rounded-md bg-fd-primary px-4 py-2 font-medium text-fd-primary-foreground hover:bg-fd-primary/90"
         >
           Start the journey →
@@ -825,7 +825,7 @@ Run `pnpm dev`. Open `http://localhost:3000`. Expect:
 - Header "Ask the Abolition Archive"
 - CTA banner "New here? Start the reader journey."
 - Chat box below the banner
-- "Start the journey →" button links to `/docs/journey`
+- "Start the journey →" button links to `/pages/journey`
 
 - [ ] **Step 3: Commit**
 
@@ -847,7 +847,7 @@ For each of the 10 journey pages, open it in dev mode and click every outbound l
 
 - [ ] **Step 2: Category tree check**
 
-Open `/docs` (or any article page) and expand the sidebar. Expect a "Reader Journey (9)" or "(10)" folder containing every journey page. If the count is wrong, check that every journey file has `categories: ["Reader Journey"]` in its frontmatter.
+Open `/pages` (or any article page) and expand the sidebar. Expect a "Reader Journey (9)" or "(10)" folder containing every journey page. If the count is wrong, check that every journey file has `categories: ["Reader Journey"]` in its frontmatter.
 
 - [ ] **Step 3: Build test**
 
@@ -861,7 +861,7 @@ Expect a clean build with no TypeScript or MDX errors. If Mermaid or a component
 
 - [ ] **Step 4: R2 sync test (dry run first)**
 
-Run `scripts/sync_to_r2.sh` and confirm the output lists all new `.mdx` files under `docs/journey/`. The `.mdx` extension must be picked up by the find command (verify by grepping the output for `journey`).
+Run `scripts/sync_to_r2.sh` and confirm the output lists all new `.mdx` files under `pages/journey/`. The `.mdx` extension must be picked up by the find command (verify by grepping the output for `journey`).
 
 - [ ] **Step 5: Deploy**
 
@@ -873,11 +873,11 @@ wrangler deploy
 
 - [ ] **Step 6: Production smoke test**
 
-Open `https://abolitionist.ljs.app/docs/journey`. Verify the Mermaid diagram renders. Click through one full path (start → path page → corpus citation → next steps). If every step renders and every link resolves, the feature is live.
+Open `https://abolitionist.ljs.app/pages/journey`. Verify the Mermaid diagram renders. Click through one full path (start → path page → corpus citation → next steps). If every step renders and every link resolves, the feature is live.
 
 - [ ] **Step 7: RAG smoke test**
 
-Open the homepage chat box. Ask: "I'm a pro-life Christian who supports rape and incest exceptions. Where should I start?" Expect the answer to cite `/docs/journey/path-pro-life-with-exceptions` (or the underlying articles). AI Search indexing can take a few minutes after the R2 sync; if the journey pages aren't yet cited, wait 5–10 minutes and retry.
+Open the homepage chat box. Ask: "I'm a pro-life Christian who supports rape and incest exceptions. Where should I start?" Expect the answer to cite `/pages/journey/path-pro-life-with-exceptions` (or the underlying articles). AI Search indexing can take a few minutes after the R2 sync; if the journey pages aren't yet cited, wait 5–10 minutes and retry.
 
 - [ ] **Step 8: Commit any fixes and write a final wrap-up commit if needed**
 
@@ -891,7 +891,7 @@ git status
 ## Self-review checklist (run after writing, before executing)
 
 - [ ] Every new file listed in "File Structure" has a corresponding task that creates it.
-- [ ] Every `[Article title](/docs/...)` link in the template sections points to a file that exists today in `docs/`. (Verify by running `ls docs/abolitionistsrising.com/` and `ls docs/freethestates.org/` against the slugs referenced in tasks 4–11.)
+- [ ] Every `[Article title](/pages/...)` link in the template sections points to a file that exists today in `pages/`. (Verify by running `ls pages/abolitionistsrising.com/` and `ls pages/freethestates.org/` against the slugs referenced in tasks 4–11.)
 - [ ] The Mermaid chart syntax in Task 3 is valid. (Verify by pasting the `graph TD` block into `mermaid.live` before writing it into the file.)
 - [ ] `source.config.ts` glob change (Task 0) and `sync_to_r2.sh` find change (Task 0) are consistent with each other — both must pick up `.mdx`.
 - [ ] The non-Christian path's terminus (Task 10) does not link to `next-steps.mdx`. This is intentional and load-bearing.

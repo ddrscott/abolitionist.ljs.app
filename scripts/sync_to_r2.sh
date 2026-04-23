@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sync docs/<site>/<slug>.md → R2 bucket so Cloudflare AI Search can index them.
+# Sync pages/<site>/<slug>.md → R2 bucket so Cloudflare AI Search can index them.
 #
 # Uses your local `wrangler` OAuth — no extra credentials required.
 # Idempotent: re-running re-uploads every article (AI Search dedupes by key
@@ -17,7 +17,7 @@
 set -euo pipefail
 
 BUCKET="${BUCKET:-abolition-kb}"
-DOCS_DIR="${DOCS_DIR:-docs}"
+PAGES_DIR="${PAGES_DIR:-pages}"
 PARALLEL="${PARALLEL:-8}"
 # Optional: if set, kick off an AI Search re-index after uploading.
 AI_SEARCH_INSTANCE="${AI_SEARCH_INSTANCE:-}"
@@ -28,23 +28,23 @@ if ! command -v wrangler >/dev/null; then
 fi
 
 # Build the file list. We include only <site>/<slug>.md, excluding the
-# auto-generated README.md and index.json at the docs root.
-mapfile -t files < <(find "$DOCS_DIR" -mindepth 2 -maxdepth 2 \( -name '*.md' -o -name '*.mdx' \) | sort)
+# auto-generated README.md and index.json at the pages root.
+mapfile -t files < <(find "$PAGES_DIR" -mindepth 2 -maxdepth 2 \( -name '*.md' -o -name '*.mdx' \) | sort)
 total="${#files[@]}"
 
 if [[ "$total" -eq 0 ]]; then
-  echo "no .md or .mdx files found under $DOCS_DIR/<site>/" >&2
+  echo "no .md or .mdx files found under $PAGES_DIR/<site>/" >&2
   exit 1
 fi
 
 echo "syncing $total files → r2://$BUCKET (parallel=$PARALLEL)"
 
-# Upload one file. The R2 key mirrors the local path under docs/, so
+# Upload one file. The R2 key mirrors the local path under pages/, so
 # citations from AI Search ("abolitionistsrising.com/foo.md") map 1:1 to
-# the Fumadocs URL (/docs/abolitionistsrising.com/foo).
+# the Fumadocs URL (/pages/abolitionistsrising.com/foo).
 upload_one() {
   local path="$1"
-  local key="${path#"$DOCS_DIR"/}"
+  local key="${path#"$PAGES_DIR"/}"
   wrangler r2 object put "$BUCKET/$key" \
     --file="$path" \
     --content-type="text/markdown" \
@@ -52,7 +52,7 @@ upload_one() {
   printf '.'
 }
 export -f upload_one
-export BUCKET DOCS_DIR
+export BUCKET PAGES_DIR
 
 printf '%s\n' "${files[@]}" \
   | xargs -P "$PARALLEL" -I{} bash -c 'upload_one "$@"' _ {}

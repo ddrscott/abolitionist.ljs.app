@@ -31,7 +31,7 @@ export default function HomePage() {
           you.
         </p>
         <Link
-          href="/docs/journey"
+          href="/pages/journey"
           className="inline-block rounded-md bg-fd-primary px-4 py-2 font-medium text-fd-primary-foreground hover:bg-fd-primary/90"
         >
           Start the journey →
@@ -41,7 +41,7 @@ export default function HomePage() {
       <ChatBox />
 
       <footer className="mt-8 flex flex-wrap items-center gap-3 text-sm text-fd-muted-foreground">
-        <Link href="/docs" className="underline hover:text-fd-primary">
+        <Link href="/pages" className="underline hover:text-fd-primary">
           Browse all {pages.length} articles →
         </Link>
         <span>·</span>

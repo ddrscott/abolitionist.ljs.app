@@ -21,14 +21,14 @@ const articleSchema = frontmatterSchema.extend({
   source_post_id: z.number().optional(),
 });
 
-// Articles live at <project root>/docs (one level up from web/). Fumadocs
+// Articles live at <project root>/pages (one level up from web/). Fumadocs
 // MDX accepts any directory; no symlinks or copies needed.
 //
-// docs/README.md and docs/index.json are not articles — they're the human
+// pages/README.md and pages/index.json are not articles — they're the human
 // TOC and the machine manifest. Restrict the collection to files inside
 // per-site subdirectories so those auxiliary files are ignored.
 export const docs = defineDocs({
-  dir: '../docs',
+  dir: '../pages',
   docs: {
     schema: articleSchema,
     files: ['*/*.{md,mdx}'],

@@ -16,7 +16,7 @@ export default async function Page(props: {
   const params = await props.params;
   const slug = params.slug ?? [];
 
-  // No slug means the /docs index — render a flat catalog of every article
+  // No slug means the /pages index — render a flat catalog of every article
   // grouped by source site, newest first. Real article routes fall through.
   if (slug.length === 0) {
     return <DocsIndex />;

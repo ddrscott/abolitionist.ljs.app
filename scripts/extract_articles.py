@@ -12,19 +12,19 @@
 Extract WordPress site mirrors into Markdown + frontmatter for Fumadocs.
 
 Discovers articles in one or more WordPress static-site mirrors (e.g.
-HTTrack/wget output) and emits one Markdown file per article into ./docs,
+HTTrack/wget output) and emits one Markdown file per article into ./pages,
 plus an index.json manifest for cross-referencing back to source material.
 
 Usage:
 
     ./scripts/extract_articles.py                          # default sources
     ./scripts/extract_articles.py --site ../mysite.com     # custom source
-    ./scripts/extract_articles.py --out docs --verbose
+    ./scripts/extract_articles.py --out pages --verbose
 
 Each source must be a directory containing a `wp-content/` (i.e. a
 WordPress mirror). For each article-bearing `index.html` we emit:
 
-    docs/<host>/<slug>.md
+    pages/<host>/<slug>.md
 
 with YAML frontmatter:
 
@@ -767,8 +767,8 @@ def main(argv: list[str]) -> int:
     )
     parser.add_argument(
         "--out",
-        default="docs",
-        help="output directory (default: docs)",
+        default="pages",
+        help="output directory (default: pages)",
     )
     parser.add_argument(
         "--project-root",

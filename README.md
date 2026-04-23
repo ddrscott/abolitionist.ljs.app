@@ -5,32 +5,34 @@ Knowledge base derived from two abolitionist WordPress sites:
 - [`abolitionistsrising.com`](https://abolitionistsrising.com)
 - [`freethestates.org`](https://freethestates.org)
 
-The plan is to render the Markdown corpus in `docs/` with [Fumadocs](https://fumadocs.dev/),
+The plan is to render the Markdown corpus in `pages/` with [Fumadocs](https://fumadocs.dev/),
 then derive downstream products (search, summaries, agent context, etc.). Every
 article carries a `source_url` and `source_post_id` in its frontmatter so any
 generated artifact can be cross-referenced back to its origin.
 
-> **Why is the system built this way?** See [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+> **Why is the system built this way?** See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 > for the design decisions, the data flow diagram, and the open questions
 > (Cloudflare AutoRAG vs DIY, where the chatbot lives, etc.).
 
 ## Layout
 
 ```
-docs/
+pages/                 # public content corpus (rendered as the site)
   README.md            # human-browsable TOC, newest first per site
   index.json           # machine-readable manifest (every article + metadata)
   abolitionistsrising.com/<slug>.md
   freethestates.org/<slug>.md
+  journey/             # authored reader-journey MDX
+docs/                  # project / developer docs (this is where ARCHITECTURE.md lives)
 scripts/
-  extract_articles.py  # extracts ./docs from the raw site mirrors
+  extract_articles.py  # extracts ./pages from the raw site mirrors
 ```
 
 The site mirrors themselves are siblings of this repo (e.g.
 `../abolitionistsrising.com/` and `../freethestates.org/`) and are not
 checked in.
 
-## Extracting / refreshing `docs/`
+## Extracting / refreshing `pages/`
 
 `extract_articles.py` is a self-contained `uv` script (deps declared inline):
 
@@ -43,7 +45,7 @@ uv run scripts/extract_articles.py --site ../some-other-site -v
 ```
 
 The script is idempotent: rerunning blows away and rewrites every file under
-`docs/<host>/`. Articles reachable via multiple paths (slug folder + `?p=NNN`
+`pages/<host>/`. Articles reachable via multiple paths (slug folder + `?p=NNN`
 permalink) are deduplicated by canonical URL.
 
 ### What counts as an "article"

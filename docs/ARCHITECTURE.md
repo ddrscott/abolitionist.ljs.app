@@ -23,7 +23,7 @@ every chat citation traces back to its original URL.
                                         │                      lxml, PyYAML)
                                         ▼
                        ┌──────────────────────────────────┐
-                       │  docs/                           │
+                       │  pages/                          │
                        │  ├─ <site>/<slug>.md   (×207)    │   ← canonical
                        │  ├─ README.md (human TOC)        │     knowledge base
                        │  └─ index.json (machine manifest)│
@@ -56,10 +56,15 @@ every chat citation traces back to its original URL.
    └─────────────────────────────────────────────┘      no API token)
 ```
 
-The `docs/` directory is the load-bearing artifact. The deploy pipeline
+The `pages/` directory is the load-bearing artifact. The deploy pipeline
 fans it into two destinations — Worker assets (for the website) and R2
 (for the RAG indexer) — but both pull from the same source of truth.
 Re-extraction is idempotent.
+
+> **Naming**: `pages/` holds the public content corpus (what the site
+> renders, what AI Search indexes). `docs/` — where this file lives —
+> holds project/developer documentation only. They are not the same
+> thing.
 
 ---
 
@@ -71,7 +76,7 @@ you're considering changing one of these, read the rationale first.
 ### 1. Extract to Markdown + frontmatter, don't parse at runtime
 
 **Choice.** `scripts/extract_articles.py` walks the HTML mirrors once and
-writes one `.md` per article into `docs/<host>/<slug>.md` with rich YAML
+writes one `.md` per article into `pages/<host>/<slug>.md` with rich YAML
 frontmatter (title, source_url, source_post_id, dates, author, categories,
 tags, excerpt, featured_image).
 
@@ -83,26 +88,26 @@ agent or product — works against the same predictable shape. Frontmatter
 keys are stable; HTML quirks aren't. The extraction script is also
 idempotent: rerun it after the mirrors update and you get the same output.
 
-The trade is that `docs/` is committed to git (~27k lines) — but it's the
+The trade is that `pages/` is committed to git (~27k lines) — but it's the
 canonical artifact, the source mirrors aren't checked in, and Markdown
 diffs cleanly enough that this isn't a real problem.
 
-### 2. Fumadocs reads `../docs` directly with a widened Turbopack root
+### 2. Fumadocs reads `../pages` directly with a widened Turbopack root
 
-**Choice.** `web/source.config.ts` declares `defineDocs({ dir: '../docs' })`
+**Choice.** `web/source.config.ts` declares `defineDocs({ dir: '../pages' })`
 and `web/next.config.mjs` sets `turbopack.root = <project root>` (one level
 above `web/`) so Turbopack will bundle files from outside the Next.js app.
 
-**Why.** The natural layout is the corpus at `docs/` and the Fumadocs app
+**Why.** The natural layout is the corpus at `pages/` and the Fumadocs app
 at `web/` as siblings — the corpus serves more than just the website, and
 nesting it inside `web/` would imply otherwise. By default Turbopack picks
 a workspace root from the nearest lockfile (which on this machine landed at
 `~/code/package-lock.json`, completely outside the repo) and refuses to
 bundle files outside that root. Setting `turbopack.root` explicitly fixes
 both: it pins the root to the project, *and* it widens it to include both
-`web/` and `docs/`.
+`web/` and `pages/`.
 
-A symlink (`web/content/docs → ../docs`) was tried first and rejected —
+A symlink (`web/content/pages → ../pages`) was tried first and rejected —
 Turbopack follows symlinks to their realpath, which expanded the workspace
 the same way without making the dependency clear in `next.config.mjs`. The
 explicit config is more honest.
@@ -150,7 +155,7 @@ records, ~1/4 the size) or rely on AI Search alone.
 
 ### 5. Cloudflare AI Search (managed RAG) for Q&A — chosen over DIY
 
-**Choice.** `scripts/sync_to_r2.sh` uploads every `docs/<site>/<slug>.md`
+**Choice.** `scripts/sync_to_r2.sh` uploads every `pages/<site>/<slug>.md`
 into the R2 bucket `abolition-kb`. The Cloudflare AI Search instance
 `abolitionist-r2` indexes that bucket automatically (chunk → embed via
 Workers AI → store in Vectorize). The Worker calls
@@ -158,14 +163,17 @@ Workers AI → store in Vectorize). The Worker calls
 streamed Llama-3.3-70B answer plus citation chunks identifying which
 source files were retrieved. Citations carry `item.key` like
 `freethestates.org/treat-sb13-not-secession.md`, which the client maps
-1:1 to `/docs/freethestates.org/treat-sb13-not-secession`.
+1:1 to `/pages/freethestates.org/treat-sb13-not-secession`. (R2 keys
+intentionally omit the `pages/` prefix — URLs are a UI concern, R2
+keys are document identifiers, so the bucket layout stays stable if
+the public path ever moves.)
 
 **Why managed over DIY.** A from-scratch Vectorize + Workers AI pipeline
 is maybe 5× the code (custom chunker, embedder, retriever, prompt
 template, citation formatter). AI Search ships all of that behind one
 binding, and the Markdown corpus + frontmatter remains portable: if we
 outgrow the managed product, swapping in a custom pipeline doesn't touch
-`docs/`, the extractor, or the website.
+`pages/`, the extractor, or the website.
 
 ### 6. Worker binding for AI Search — not the public endpoint
 
@@ -212,12 +220,12 @@ If you're going to touch the system, these are the files that matter:
   frontmatter schema is the `Article` dataclass (~line 75); add fields
   here when you need them. Taxonomy splitting/dedupe lives in
   `_normalize_taxonomy` and `classify_from_jsonld`.
-- **`scripts/sync_to_r2.sh`** — pushes `docs/<site>/<slug>.md` files into
+- **`scripts/sync_to_r2.sh`** — pushes `pages/<site>/<slug>.md` files into
   the R2 bucket via `wrangler r2 object put` with `xargs -P 8`. Re-run
   this after `extract_articles.py` to refresh what AI Search indexes.
 - **`web/source.config.ts`** — Fumadocs collection config. The
-  `files: ['*/*.md']` glob excludes the auto-generated `docs/README.md`
-  and `docs/index.json`. The `articleSchema` mirrors the extractor's
+  `files: ['*/*.md']` glob excludes the auto-generated `pages/README.md`
+  and `pages/index.json`. The `articleSchema` mirrors the extractor's
   frontmatter via `zod`.
 - **`web/wrangler.jsonc`** — single source of truth for the deploy:
   Worker name, AI Search binding, asset directory, custom domain route.
@@ -229,7 +237,7 @@ If you're going to touch the system, these are the files that matter:
 - **`web/components/chat-box.tsx`** — the homepage chat UI. Parses the
   AI Search SSE stream (`event: chunks` for citations + OpenAI-shape
   token deltas) and renders citation chips that resolve to
-  `/docs/<site>/<slug>`.
+  `/pages/<site>/<slug>`.
 - **`web/next.config.mjs`** — `turbopack.root` (decision #2),
   `output: 'export'` (decision #7), `images.unoptimized` (required by
   the static export), `images.remotePatterns` (article-body images from
@@ -240,7 +248,7 @@ If you're going to touch the system, these are the files that matter:
   static-Orama wiring (decision #4). Server-side `staticGET` and
   client-side `RootProvider search.options.type = 'static'` are the two
   ends of the same configuration; change them together or not at all.
-- **`docs/index.json`** — machine-readable manifest of every article
+- **`pages/index.json`** — machine-readable manifest of every article
   with its full frontmatter. Useful for any non-Fumadocs consumer.
 - **`README.md`** — surface-level project orientation; defers to this
   doc for the "why."
@@ -249,7 +257,7 @@ If you're going to touch the system, these are the files that matter:
 
 - **Refreshing the corpus**: re-run the source-mirror download outside
   this repo, then `uv run scripts/extract_articles.py -v` (writes to
-  `docs/`), then `bash scripts/sync_to_r2.sh` (uploads to R2; AI Search
+  `pages/`), then `bash scripts/sync_to_r2.sh` (uploads to R2; AI Search
   picks up the changes on its next sync), then `pnpm build && wrangler
   deploy` from `web/` to update the static site.
 - **Tuning chat behavior**: edit `SYSTEM_PROMPT` in

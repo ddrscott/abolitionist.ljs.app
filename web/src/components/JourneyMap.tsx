@@ -206,7 +206,7 @@ type TerminalData = { label: string; href?: string; variant: 'abolition' | 'gosp
 function StartNode({ data }: NodeProps<Node<StartData>>) {
   return (
     <div className="jm-node jm-start">
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Bottom} id="b" />
       {data.label}
     </div>
   );
@@ -215,8 +215,8 @@ function StartNode({ data }: NodeProps<Node<StartData>>) {
 function PositionNode({ data }: NodeProps<Node<PositionData>>) {
   return (
     <a href={data.href} className="jm-node jm-position" title={`Read the ${data.label.replace('\n', ' ')} path`}>
-      <Handle type="target" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="target" position={Position.Top} id="t" />
+      <Handle type="source" position={Position.Bottom} id="b" />
       <span>{data.label}</span>
     </a>
   );
@@ -225,10 +225,10 @@ function PositionNode({ data }: NodeProps<Node<PositionData>>) {
 function GateNode({ data }: NodeProps<Node<GateData>>) {
   return (
     <div className="jm-node jm-gate">
-      <Handle type="target" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
-      <Handle type="source" position={Position.Right} id="right" />
-      <Handle type="source" position={Position.Left} id="left" />
+      <Handle type="target" position={Position.Top} id="t" />
+      <Handle type="source" position={Position.Bottom} id="b" />
+      <Handle type="source" position={Position.Right} id="r" />
+      <Handle type="source" position={Position.Left} id="l" />
       <button type="button" onClick={data.onToggle} aria-expanded={data.expanded}>
         {data.label}
         <span className="jm-toggle" aria-hidden="true">{data.expanded ? '−' : '+'}</span>
@@ -240,8 +240,8 @@ function GateNode({ data }: NodeProps<Node<GateData>>) {
 function ObjectionNode({ data }: NodeProps<Node<ObjectionData>>) {
   return (
     <a href={data.href} className="jm-node jm-objection" title="Read the article that answers this">
-      <Handle type="target" position={Position.Left} />
-      <Handle type="target" position={Position.Right} />
+      <Handle type="target" position={Position.Left} id="l" />
+      <Handle type="target" position={Position.Right} id="r" />
       <span>{data.label}</span>
     </a>
   );
@@ -251,12 +251,14 @@ function TerminalNode({ data }: NodeProps<Node<TerminalData>>) {
   const cls = `jm-node jm-terminal jm-terminal-${data.variant}`;
   return data.href ? (
     <a href={data.href} className={cls}>
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Top} id="t" />
+      <Handle type="source" position={Position.Bottom} id="b" />
       <span>{data.label}</span>
     </a>
   ) : (
     <div className={cls}>
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Top} id="t" />
+      <Handle type="source" position={Position.Bottom} id="b" />
       <span>{data.label}</span>
     </div>
   );
@@ -326,7 +328,9 @@ export function JourneyMap() {
       edges.push({
         id: `start-${p.id}`,
         source: 'start',
+        sourceHandle: 'b',
         target: p.id,
+        targetHandle: 't',
         type: 'smoothstep',
         style: { stroke: '#C49A6E', strokeWidth: 1.5 },
       });
@@ -370,34 +374,49 @@ export function JourneyMap() {
           edges.push({
             id: `${g.id}-${o.id}`,
             source: g.id,
+            sourceHandle: g.side === 'right' ? 'r' : 'l',
             target: o.id,
-            sourceHandle: g.side,
+            targetHandle: g.side === 'right' ? 'l' : 'r',
             type: 'smoothstep',
-            style: { stroke: '#C49A6E', strokeWidth: 1, strokeDasharray: '4 3' },
+            label: i === 0 ? 'no' : undefined,
+            labelStyle: { fontSize: 10, fill: '#CC3206', fontWeight: 700 },
+            labelBgStyle: { fill: '#FFFFFF' },
+            style: { stroke: '#CC3206', strokeWidth: 1, strokeDasharray: '4 3' },
           });
         });
       }
     }
 
-    // Trunk edges (gate-to-gate)
+    // Trunk edges (gate-to-gate) — labeled "yes" to carry the flowchart
+    // semantic: "yes, I agree with this gate's answer, continue".
     for (let i = 0; i < GATES.length - 1; i++) {
       edges.push({
         id: `${GATES[i].id}-${GATES[i + 1].id}`,
         source: GATES[i].id,
+        sourceHandle: 'b',
         target: GATES[i + 1].id,
+        targetHandle: 't',
         type: 'smoothstep',
-        style: { stroke: '#430607', strokeWidth: 2 },
+        label: 'yes',
+        labelStyle: { fontSize: 12, fill: '#430607', fontWeight: 700 },
+        labelBgStyle: { fill: '#FFFFFF', fillOpacity: 0.95 },
+        labelBgPadding: [4, 2],
+        style: { stroke: '#430607', strokeWidth: 2.5 },
+        markerEnd: { type: 'arrowclosed', color: '#430607', width: 18, height: 18 } as const,
       });
     }
 
-    // Position → first-gate edges
+    // Position → first-gate edges (where each starter "enters" the trunk)
     for (const [pId, gateId] of Object.entries(POSITION_TO_FIRST_GATE)) {
       edges.push({
         id: `${pId}-${gateId}`,
         source: pId,
+        sourceHandle: 'b',
         target: gateId,
+        targetHandle: 't',
         type: 'smoothstep',
-        style: { stroke: '#CC3206', strokeWidth: 1.5 },
+        style: { stroke: '#430607', strokeWidth: 1.5 },
+        markerEnd: { type: 'arrowclosed', color: '#430607', width: 14, height: 14 } as const,
       });
     }
 
@@ -430,10 +449,11 @@ export function JourneyMap() {
         edges.push({
           id: `${GOSPEL_GATE.id}-${o.id}`,
           source: GOSPEL_GATE.id,
+          sourceHandle: 'r',
           target: o.id,
-          sourceHandle: 'right',
+          targetHandle: 'l',
           type: 'smoothstep',
-          style: { stroke: '#C49A6E', strokeWidth: 1, strokeDasharray: '4 3' },
+          style: { stroke: '#CC3206', strokeWidth: 1, strokeDasharray: '4 3' },
         });
       });
     }
@@ -454,9 +474,12 @@ export function JourneyMap() {
     edges.push({
       id: `${GATES[GATES.length - 1].id}-T_FA`,
       source: GATES[GATES.length - 1].id,
+      sourceHandle: 'b',
       target: 'T_FA',
+      targetHandle: 't',
       type: 'smoothstep',
       style: { stroke: '#430607', strokeWidth: 3 },
+      markerEnd: { type: 'arrowclosed', color: '#430607', width: 20, height: 20 } as const,
     });
 
     const gospelTerminalY = gospelY + 260;
@@ -473,19 +496,29 @@ export function JourneyMap() {
     edges.push({
       id: `${GOSPEL_GATE.id}-T_GOSPEL`,
       source: GOSPEL_GATE.id,
+      sourceHandle: 'b',
       target: 'T_GOSPEL',
+      targetHandle: 't',
       type: 'smoothstep',
+      label: 'yes',
+      labelStyle: { fontSize: 12, fill: '#430607', fontWeight: 700 },
+      labelBgStyle: { fill: '#FFFFFF', fillOpacity: 0.95 },
+      labelBgPadding: [4, 2],
       style: { stroke: '#430607', strokeWidth: 2 },
+      markerEnd: { type: 'arrowclosed', color: '#430607', width: 18, height: 18 } as const,
     });
-    // After conversion, re-enter the map at P2 or P6
+    // After conversion, re-enter the map at Start
     edges.push({
       id: 'T_GOSPEL-start',
       source: 'T_GOSPEL',
+      sourceHandle: 'b',
       target: 'start',
+      targetHandle: 't',
       type: 'smoothstep',
-      label: 'after conversion,\nre-enter the map',
+      label: 'after conversion, re-enter',
       labelStyle: { fontSize: 11, fill: '#430607' },
       labelBgStyle: { fill: '#FFFFFF', fillOpacity: 0.9 },
+      labelBgPadding: [4, 2],
       style: { stroke: '#430607', strokeWidth: 1, strokeDasharray: '6 4' },
     });
 
@@ -498,6 +531,10 @@ export function JourneyMap() {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        defaultEdgeOptions={{
+          type: 'smoothstep',
+          style: { stroke: '#430607', strokeWidth: 2 },
+        }}
         fitView
         fitViewOptions={{ padding: 0.15 }}
         minZoom={0.1}

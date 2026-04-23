@@ -179,6 +179,16 @@ main > footer .footer-row.legal a {
   color: var(--ar-secondary);
   text-decoration: underline;
 }
+main > footer .attribution {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ar-secondary);
+  opacity: 0.8;
+}
+main > footer .attribution a {
+  color: var(--ar-secondary);
+  text-decoration: underline;
+}
 main > footer a {
   color: var(--ar-tertiary);
   text-decoration: underline;

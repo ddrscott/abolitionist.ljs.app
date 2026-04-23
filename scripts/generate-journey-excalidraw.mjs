@@ -2,18 +2,44 @@
 /**
  * Generate a starter Excalidraw diagram of the reader-journey map.
  *
- * Source of truth: structure and hrefs roughly mirror
- * web/src/components/JourneyMap.tsx. Keep this script in sync
- * conceptually (or regenerate after major changes to the map's
- * content), but do not treat it as authoritative once someone has
- * hand-edited the .excalidraw file.
- *
  * Usage:
- *   node scripts/generate-journey-excalidraw.mjs \
- *     > web/public/journey-map.excalidraw
+ *   node scripts/generate-journey-excalidraw.mjs
+ *   → writes web/public/journey-map.excalidraw
  *
- * Then open web/public/journey-map.excalidraw at excalidraw.com
- * (drag the file onto the canvas) to edit visually.
+ * Then open /draw/ in the browser (in-app Excalidraw editor) or drag
+ * the file onto excalidraw.com.
+ *
+ * ---------------------------------------------------------------------
+ * Structure
+ * ---------------------------------------------------------------------
+ *
+ *  Start terminator
+ *         │
+ *         ▼
+ *  ┌───────────────┐       (yes, trunk cascade)
+ *  │ D1 top diamond│──────────────────────────────► D2 top diamond ► ...
+ *  └───────┬───────┘
+ *          │ no
+ *          ▼
+ *     D1a drill ─(yes)─► R_D1a article rectangle
+ *          │ no
+ *          ▼
+ *     D1b drill ─(yes)─► R_D1b
+ *          │ no
+ *          ▼
+ *     D1c drill ─(yes)─► R_D1c
+ *          │ no
+ *          ▼
+ *         D2 (next top; rejoin trunk)
+ *
+ * Each top's drill cascade runs DOWN a second column. Reads sit in a
+ * third column to the right of their drill. YES at a drill sends the
+ * reader to the targeted article; NO advances to the next drill. NO at
+ * the last drill falls through to the next top. Top YES continues the
+ * main trunk without visiting any drill.
+ *
+ * Data (FLOW[]) is authoritative. To add / change content, edit the
+ * array below and rerun.
  */
 
 import { writeFileSync } from 'node:fs';
@@ -25,202 +51,341 @@ const OUT = resolve(here, '..', 'web', 'public', 'journey-map.excalidraw');
 
 // ---------------------------------------------------------------------------
 // AR palette — same tokens used by the site.
-
-const PRIMARY = '#430607';       // oxblood
-const PRIMARY_SOFT = '#FDE8E8';  // text on oxblood
-const SECONDARY = '#C49A6E';     // tan hairline
-const SECONDARY_SOFT = '#F8F2ED';// cream fill for positions
-const TERTIARY = '#CC3206';      // rust for objection "no" edges
-const GOLD = '#FFC10A';          // fire-CTA border
-const FOOTER = '#0A2029';        // deep teal for gospel terminal
-const INK = '#000000';
-const PAPER = '#FFFFFF';
+const PRIMARY       = '#430607'; // oxblood
+const PRIMARY_SOFT  = '#FDE8E8'; // text on oxblood
+const SECONDARY     = '#C49A6E'; // tan hairline
+const SECONDARY_SOFT= '#F8F2ED'; // cream fill
+const TERTIARY      = '#CC3206'; // rust — yes-branch arrows
+const GOLD          = '#FFC10A'; // fire-CTA border
+const INK           = '#000000';
+const PAPER         = '#FFFFFF';
 
 // ---------------------------------------------------------------------------
-// The map, modeled as a proper flowchart (diamonds for decisions,
-// rectangles for reading steps). Each decision is an assertion the
-// reader might hold about abortion; YES sends them to a challenging
-// article, NO advances to the next assertion. Readers work downward
-// until they hit a NO they can't honestly give — that's where they
-// stop and read.
+// Layout geometry.
+const COL_TRUNK = 100;   // top-assertion column (diamond TL corner)
+const COL_DRILL = 540;   // sub-drill column
+const COL_READ  = 980;   // article-to-read column
 
-// Three-level cascade per top assertion. Each path is:
-//   L1 (top assertion) → L2 (specific reason they hold it)
-//   → L3 (narrower form of that reason)
-//   → YES/NO branching to a targeted article.
-// NO at any decision falls through to the next top assertion.
-// The goal is that readers rule out objections quickly and only read
-// the ONE article that addresses their exact sticking point.
+const DECISION_W = 280;
+const DECISION_H = 180;
+const ARTICLE_W  = 320;
+const ARTICLE_H  = 120;
+const TERMINAL_W = 320;
+const TERMINAL_H = 100;
+
+const TOP_TO_FIRST_DRILL = 240; // y distance from top.y to first drill.y
+const DRILL_STEP         = 220; // y distance between successive drills
+const TOP_GAP            = 120; // y distance from last drill bottom to next top
+const START_Y            = 0;
+const FIRST_TOP_Y        = 180;
+
+// ---------------------------------------------------------------------------
+// FLOW — 7 top propositions, variable drill counts.
+// Each path runs Top → Drill → Read (YES) OR Top → Drill → next Drill (NO).
+// After the last drill of a cluster, NO falls through to the next top.
+// Every article href points at a file that actually exists in pages/.
 
 const FLOW = [
+  // ─── 1. Preborn is a human being ───────────────────────────────
   {
     id: 'D1',
-    question: 'Abortion should\nbe legal.',
-    l2: {
-      id: 'D1_L2',
-      question: "The preborn isn't\nyet fully human.",
-    },
-    l3: {
-      id: 'D1_L3',
-      question: "Viability or heartbeat\nmarks when a person\nbegins.",
-    },
-    readYes: {
-      id: 'R_D1_yes',
-      label: 'Read: FAQ — arbitrary\nthresholds (viability,\nheartbeat, sentience)',
-      href: '/pages/abolitionistsrising.com/faq/',
-    },
-    readNo: {
-      id: 'R_D1_no',
-      label: "Read: FAQ —\n“That's just your belief”\n(embryology cited)",
-      href: '/pages/abolitionistsrising.com/faq/',
-    },
+    question: 'The preborn child is a\nhuman being from the\nmoment of conception',
+    drills: [
+      {
+        id: 'D1a',
+        question: 'Is it because the scientific\nconsensus on when life begins\nis actually unclear?',
+        read: {
+          id: 'R_D1a',
+          label: "Read: FAQ §2 — 'That's\njust your belief'\n(embryology citations)",
+          href: '/pages/abolitionistsrising.com/faq/',
+        },
+      },
+      {
+        id: 'D1b',
+        question: 'Is it because personhood\nbegins at viability,\nheartbeat, or sentience\n— not conception?',
+        read: {
+          id: 'R_D1b',
+          label: 'Read: FAQ §2 —\narbitrary thresholds',
+          href: '/pages/abolitionistsrising.com/faq/',
+        },
+      },
+      {
+        id: 'D1c',
+        question: "Is it because Christ's\nincarnation at conception\nhas no bearing on\npreborn personhood?",
+        read: {
+          id: 'R_D1c',
+          label: "Read: Jesus' Incarnation\nis the Death Knell\nto Abortion",
+          href: '/pages/freethestates.org/jesus-incarnation-is-the-death-knell-to-abortion/',
+        },
+      },
+    ],
   },
+
+  // ─── 2. Equal right to life + legal protection ────────────────
   {
     id: 'D2',
-    question: 'Exceptions for rape,\nincest, or the mother\'s\nlife are acceptable.',
-    l2: {
-      id: 'D2_L2',
-      question: 'A child conceived in\nrape carries less\nweight than other children.',
-    },
-    l3: {
-      id: 'D2_L3',
-      question: 'The attacker\'s crime\njustifies taking\nthe child\'s life.',
-    },
-    readYes: {
-      id: 'R_D2_yes',
-      label: 'Read: No Exceptions\n(the rape case)',
-      href: '/pages/abolitionistsrising.com/no-exceptions/',
-    },
-    readNo: {
-      id: 'R_D2_no',
-      label: 'Read: Criminalization\n(punishing the\nwrong person)',
-      href: '/pages/abolitionistsrising.com/criminalization/',
-    },
+    question: 'Every human being has\nequal right to life and\nlegal protection from\nconception onward',
+    drills: [
+      {
+        id: 'D2a',
+        question: "Is it because the mother's\nbodily autonomy overrides\nthe child's right to life?",
+        read: {
+          id: 'R_D2a',
+          label: 'Read: FAQ §2 —\nbodily autonomy +\norgan donation rebuttal',
+          href: '/pages/abolitionistsrising.com/faq/',
+        },
+      },
+      {
+        id: 'D2b',
+        question: 'Is it because banning\nabortion would cause\nmore maternal deaths\nfrom unsafe abortions?',
+        read: {
+          id: 'R_D2b',
+          label: "Read: FAQ §2 —\n'won't criminalization\nmake abortions unsafe?'",
+          href: '/pages/abolitionistsrising.com/faq/',
+        },
+      },
+      {
+        id: 'D2c',
+        question: 'Is it because the state\nhas no business\nlegislating morality?',
+        read: {
+          id: 'R_D2c',
+          label: 'Read: Biblical, Not Secular\n— on authority, law,\nand public moral claims',
+          href: '/pages/abolitionistsrising.com/biblical-not-secular/',
+        },
+      },
+    ],
   },
+
+  // ─── 3. Every means of preborn killing ─────────────────────────
   {
     id: 'D3',
-    question: 'Incremental laws\nthat save some babies\nare a win.',
-    l2: {
-      id: 'D3_L2',
-      question: 'Saving SOME lives\nis better than\nsaving none.',
-    },
-    l3: {
-      id: 'D3_L3',
-      question: 'Heartbeat bills\nand limits are\na net good.',
-    },
-    readYes: {
-      id: 'R_D3_yes',
-      label: 'Read: Immediatism\n(Garrison, Heyrick,\nand the logic of\n"some" vs. "all")',
-      href: '/pages/abolitionistsrising.com/immediatism/',
-    },
-    readNo: {
-      id: 'R_D3_no',
-      label: "Read: Kristan Hawkins'\nFlawed Reasoning",
-      href: '/pages/abolitionistsrising.com/kristan-hawkins-flawed-reasoning-vs-scripture/',
-    },
+    question: 'Every means of preborn\nkilling — IVF, abortifacient\ncontraceptives, chemical\nabortion, surgical abortion\n— carries equal moral weight',
+    drills: [
+      {
+        id: 'D3a',
+        question: 'Is it because IVF is\nmorally distinct — its goal\nis creating new life,\nnot ending it?',
+        read: {
+          id: 'R_D3a',
+          label: 'Read: FAQ §1 — Do\nabolitionists support IVF?\n+ Weeping Time Documentary',
+          href: '/pages/abolitionistsrising.com/faq/',
+        },
+      },
+      {
+        id: 'D3b',
+        question: 'Is it because hormonal\ncontraceptives and IUDs\nprevent fertilization\nrather than kill after it?',
+        read: {
+          id: 'R_D3b',
+          label: 'Read: National Right to Life\nPro-Abortion (Oklahoma SB 834)\n— abortifacient BC explained',
+          href: '/pages/freethestates.org/national-right-to-life-pro-abortion-oklahoma-sb-834/',
+        },
+      },
+      {
+        id: 'D3c',
+        question: 'Is it because chemical\n(pill) abortion is less\nsevere than surgical?',
+        read: {
+          id: 'R_D3c',
+          label: "Read: Rep. John Talley —\n'we already have enough\nabortion laws'",
+          href: '/pages/freethestates.org/rep-john-talley-r-keep-abortion-legal-because-we-have-enough-abortion-laws/',
+        },
+      },
+    ],
   },
+
+  // ─── 4. No exceptions ──────────────────────────────────────────
   {
     id: 'D4',
-    question: 'I believe abortion\nis wrong, but\nI don\'t need to act.',
-    l2: {
-      id: 'D4_L2',
-      question: 'Activism is a\nspecial calling for\nsome Christians, not me.',
-    },
-    l3: {
-      id: 'D4_L3',
-      question: 'My prayers and\ndonations are enough.',
-    },
-    readYes: {
-      id: 'R_D4_yes',
-      label: 'Read: Stay Steeped\nin Prayer (prayer\nas source, not\nsubstitute)',
-      href: '/pages/abolitionistsrising.com/stay-steeped-in-prayer-as-you-seek-to-abolish-abortion/',
-    },
-    readNo: {
-      id: 'R_D4_no',
-      label: 'Read: All About\nthe Church (every\nmember, not a caste)',
-      href: '/pages/freethestates.org/all-about-the-church/',
-    },
+    question: 'No circumstance — rape,\nincest, fetal abnormality,\nor maternal life — justifies\nintentionally killing\na preborn child',
+    drills: [
+      {
+        id: 'D4a',
+        question: 'Is it because a child\nconceived through rape\nor incest may be\ntreated differently?',
+        read: {
+          id: 'R_D4a',
+          label: 'Read: No Exceptions +\nA Mother is a Magistrate\n— why duress is no defense',
+          href: '/pages/abolitionistsrising.com/no-exceptions/',
+        },
+      },
+      {
+        id: 'D4b',
+        question: 'Is it because ending the\npregnancy can be justified\nto save the mother\'s life?',
+        read: {
+          id: 'R_D4b',
+          label: 'Read: No Exceptions —\nthe medical case and the\nkilling / letting-die distinction',
+          href: '/pages/abolitionistsrising.com/no-exceptions/',
+        },
+      },
+      {
+        id: 'D4c',
+        question: 'Is it because a mother\nwho procures an abortion\nshould not face legal\naccountability at all?',
+        read: {
+          id: 'R_D4c',
+          label: 'Read: Criminalization —\nequal protection under law',
+          href: '/pages/abolitionistsrising.com/criminalization/',
+        },
+      },
+      {
+        id: 'D4d',
+        question: 'Is it because holding\nwomen legally accountable\nis cruel, unmerciful,\nor unloving?',
+        read: {
+          id: 'R_D4d',
+          label: 'Read: Abolitionists Must\nStand Firm to Oppose\nMurder, Love Murderers',
+          href: '/pages/abolitionistsrising.com/abolitionists-must-stand-firm-to-oppose-murder-love-murderers/',
+        },
+      },
+    ],
   },
+
+  // ─── 5. Immediate and total abolition ──────────────────────────
   {
     id: 'D5',
-    question: 'Abolition work\ndoesn\'t require\nthe gospel of Christ.',
-    l2: {
-      id: 'D5_L2',
-      question: 'Secular moral\nreasoning is\nsufficient.',
-    },
-    l3: {
-      id: 'D5_L3',
-      question: 'Shared opposition\nto abortion makes\nany ally a partner.',
-    },
-    readYes: {
-      id: 'R_D5_yes',
-      label: 'Read: FAQ — “Can\nnon-Christians\npartner with\nthe movement?”',
-      href: '/pages/abolitionistsrising.com/faq/',
-    },
-    readNo: {
-      id: 'R_D5_no',
-      label: 'Read: Norman\nStatement Article XI\n+ Theological Foundations',
-      href: '/pages/abolitionistsrising.com/norman-statement/',
-    },
+    question: 'Only immediate and total\nabolition of abortion is\njust — not incremental\nrestrictions or compromises',
+    drills: [
+      {
+        id: 'D5a',
+        question: 'Is it because incremental\nlaws save SOME lives\nand some is better\nthan none?',
+        read: {
+          id: 'R_D5a',
+          label: "Read: Immediatism —\nGarrison and Heyrick on\nthe logic of 'some' vs. 'all'",
+          href: '/pages/abolitionistsrising.com/immediatism/',
+        },
+      },
+      {
+        id: 'D5b',
+        question: 'Is it because total\nabolition is politically\nimpossible to pass\nin the near term?',
+        read: {
+          id: 'R_D5b',
+          label: "Read: Kristan Hawkins'\nFlawed Reasoning\nvs. Scripture",
+          href: '/pages/abolitionistsrising.com/kristan-hawkins-flawed-reasoning-vs-scripture/',
+        },
+      },
+      {
+        id: 'D5c',
+        question: 'Is it because pro-life\norganizations and SBC\nseminaries endorse\ngradualism?',
+        read: {
+          id: 'R_D5c',
+          label: 'Read: Against Pro-Life\nCompromise + Abolitionist,\nNot Pro-Life',
+          href: '/pages/freethestates.org/against-pro-life-compromise-responding-to-denny-burk-andrew-walker-et-al/',
+        },
+      },
+      {
+        id: 'D5d',
+        question: 'Is it because Dobbs\n(2022) already ended\nmost abortions\nin America?',
+        read: {
+          id: 'R_D5d',
+          label: "Read: 4 Abolitionist Rapid\nReactions to Dobbs + FAQ\n'Was Dobbs a step in the\nright direction?'",
+          href: '/pages/freethestates.org/4-abolitionist-rapid-reactions-to-the-wrongly-decided-dobbs-decision/',
+        },
+      },
+    ],
+  },
+
+  // ─── 6. Active Christian obedience ─────────────────────────────
+  {
+    id: 'D6',
+    question: 'Every Christian is called\nto active obedience against\nabortion — belief or prayer\nalone is insufficient',
+    drills: [
+      {
+        id: 'D6a',
+        question: 'Is it because abolition\nactivism is a special\ncalling for some\nChristians, not all?',
+        read: {
+          id: 'R_D6a',
+          label: 'Read: All About the Church\n— every member,\nnot a specialized caste',
+          href: '/pages/freethestates.org/all-about-the-church/',
+        },
+      },
+      {
+        id: 'D6b',
+        question: 'Is it because intercession\nand financial giving\nfulfill the duty?',
+        read: {
+          id: 'R_D6b',
+          label: 'Read: Stay Steeped in Prayer\n— prayer as source,\nnot substitute, of action',
+          href: '/pages/abolitionistsrising.com/stay-steeped-in-prayer-as-you-seek-to-abolish-abortion/',
+        },
+      },
+      {
+        id: 'D6c',
+        question: 'Is it because consistent\npro-life voting alone\nis sufficient Christian\nwitness?',
+        read: {
+          id: 'R_D6c',
+          label: 'Read: How Shall an\nAbolitionist Vote +\nFruits of Abolitionism',
+          href: '/pages/abolitionistsrising.com/how-shall-an-abolitionist-vote/',
+        },
+      },
+      {
+        id: 'D6d',
+        question: 'Is it because voting\nRepublican — even for\nmixed candidates like Trump\n— is faithful witness?',
+        read: {
+          id: 'R_D6d',
+          label: 'Read: Christians Could\nForce Trump + Why Voting\nfor a Pro-Abortion\nCandidate Is a Sin',
+          href: '/pages/abolitionistsrising.com/christians-could-force-trump-to-be-an-abolitionist-of-abortion-with-merely-a-lift-of-the-finger-youdonthavemyvoteyet/',
+        },
+      },
+    ],
+  },
+
+  // ─── 7. Gospel-centered ────────────────────────────────────────
+  {
+    id: 'D7',
+    question: 'The gospel of Jesus Christ\nis central to the abolition\nof abortion — secular moral\nreasoning is not sufficient',
+    drills: [
+      {
+        id: 'D7a',
+        question: 'Is it because shared\nopposition to abortion\nis sufficient common\nground for partnership?',
+        read: {
+          id: 'R_D7a',
+          label: "Read: FAQ §1 — 'Can\nPeople Who Disagree with\nYou Join the Movement?'",
+          href: '/pages/abolitionistsrising.com/faq/',
+        },
+      },
+      {
+        id: 'D7b',
+        question: 'Is it because secular\narguments persuade a\nwider audience more\neffectively?',
+        read: {
+          id: 'R_D7b',
+          label: "Read: FAQ §1 —\n'Shouldn't we argue from\na secular perspective?'\n(Garrison quote)",
+          href: '/pages/abolitionistsrising.com/faq/',
+        },
+      },
+      {
+        id: 'D7c',
+        question: 'Is it because the movement\nshould not require a\ntheological confessional\ntest?',
+        read: {
+          id: 'R_D7c',
+          label: 'Read: Norman Statement\nArticle XI + Theological\nFoundations',
+          href: '/pages/abolitionistsrising.com/norman-statement/',
+        },
+      },
+      {
+        id: 'D7d',
+        question: 'Is it because abolitionist\nrhetoric toward pro-life\nleaders is too divisive,\nharsh, or unloving?',
+        read: {
+          id: 'R_D7d',
+          label: 'Read: Why Do Pro-Lifers\nDespise Abolitionists\n+ Abolitionists Must\nStand Firm',
+          href: '/pages/freethestates.org/why-do-pro-lifers-despise-abolitionists/',
+        },
+      },
+    ],
   },
 ];
 
 // ---------------------------------------------------------------------------
-// Layout geometry. Each top assertion gets one ROW running left-to-right:
-//   trunk diamond (c1) → L2 diamond (c2) → L3 diamond (c3)
-//                                          └─ YES → read rect (c4, row − 60)
-//                                          └─ NO  → read rect (c4, row + 60)
-// Top-level NOs cascade vertically down the trunk column.
+// Excalidraw element helpers — id, seed, version boilerplate.
 
-const COL_TRUNK = 400;
-const COL_L2 = 780;
-const COL_L3 = 1160;
-const COL_READS = 1540;
-
-const DECISION_W = 260;
-const DECISION_H = 140;
-const ARTICLE_W = 300;
-const ARTICLE_H = 100;
-const TERMINAL_W = 300;
-const TERMINAL_H = 90;
-
-// One "row" = one top assertion + its full narrowing cascade. The
-// read rectangles sit ±70 above/below the row's center y, so ROW_STEP
-// needs enough vertical slack for the top read (− 70 + padding) and
-// the bottom read (+ 70 + padding).
-// READ_Y_OFFSET moves each read rect ±N px from the row centerline. The
-// read rects are ARTICLE_H tall, so adjacent-row spacing works out to
-// ROW_STEP − 2·READ_Y_OFFSET − ARTICLE_H. With 320 − 140 − 100 = 80px,
-// reads from neighboring rows are comfortably separated.
-const ROW_STEP = 320;
-const READ_Y_OFFSET = 70;
-const START_Y = 0;
-const FIRST_ROW_Y = START_Y + 180;
-
-// Random-ish IDs — Excalidraw just needs unique strings, not real UUIDs.
 let counter = 0;
 function nextId(prefix) {
   counter += 1;
   return `${prefix}_${counter.toString(36)}`;
 }
-
 function randomSeed() {
-  // Excalidraw uses 32-bit ints for seed / versionNonce.
   return Math.floor(Math.random() * 2 ** 31);
 }
-
-function indexAt(i) {
-  // Excalidraw uses fractional-index strings for z-order ("a0" < "a1").
+let zIndex = 0;
+function indexAt() {
+  const i = zIndex++;
   return `a${i.toString().padStart(3, '0')}`;
 }
 
-// ---------------------------------------------------------------------------
-// Element constructors. Every Excalidraw element shares a common prefix
-// of fields (type, id, x, y, width, height, angle, …). Constructors
-// return the object + a text child bound to it when relevant.
-
 let elements = [];
-let zIndex = 0;
 
 function baseElement(over) {
   return {
@@ -236,7 +401,7 @@ function baseElement(over) {
     fillStyle: over.fillStyle ?? 'solid',
     strokeWidth: over.strokeWidth ?? 2,
     strokeStyle: over.strokeStyle ?? 'solid',
-    roughness: 0, // clean lines to match AR broadside aesthetic
+    roughness: 0,
     opacity: 100,
     roundness: over.roundness ?? null,
     seed: randomSeed(),
@@ -247,17 +412,16 @@ function baseElement(over) {
     updated: Date.now(),
     link: over.link ?? null,
     locked: false,
-    index: indexAt(zIndex++),
+    index: indexAt(),
     customData: null,
     frameId: null,
     groupIds: [],
   };
 }
 
-// Bound-text elements need explicit x/y/width/height; Excalidraw does
-// NOT auto-place them just because `containerId` is set. If the text
-// element ships with width=0, the label is invisible (which is exactly
-// what I shipped first). Center the text inside its container here.
+// Bound-text element centered inside `container`. Excalidraw does NOT
+// auto-place bound text — you have to set x/y/width/height to position
+// it within the container explicitly.
 function textOn(container, text, fontSize, color) {
   const lines = text.split('\n');
   const lineHeight = 1.25;
@@ -275,9 +439,7 @@ function textOn(container, text, fontSize, color) {
       backgroundColor: 'transparent',
     }),
     fontSize,
-    // 2 = Helvetica. Readily available, reliably rendered, no font-file
-    // round-trip before the labels paint.
-    fontFamily: 2,
+    fontFamily: 2, // Helvetica — reliably rendered, no font-file roundtrip
     text,
     textAlign: 'center',
     verticalAlign: 'middle',
@@ -291,12 +453,7 @@ function textOn(container, text, fontSize, color) {
 
 function addShape({ id, type, x, y, width, height, text, fontSize, fill, stroke, textColor, link, roundness }) {
   const shape = baseElement({
-    id,
-    type,
-    x,
-    y,
-    width,
-    height,
+    id, type, x, y, width, height,
     backgroundColor: fill,
     strokeColor: stroke,
     roundness,
@@ -314,35 +471,26 @@ function addShape({ id, type, x, y, width, height, text, fontSize, fill, stroke,
   return shape;
 }
 
-// Pick the edge-midpoint on `shape` that faces (tgtCx, tgtCy). This
-// lets the arrow exit the correct side (top/bottom/left/right) based
-// on the target's direction instead of always using a fixed edge.
-function edgePointToward(shape, tgtCx, tgtCy) {
+// Pick the edge-midpoint on `shape` facing `(tx, ty)`.
+function edgePointToward(shape, tx, ty) {
   const cx = shape.x + shape.width / 2;
   const cy = shape.y + shape.height / 2;
-  const dx = tgtCx - cx;
-  const dy = tgtCy - cy;
+  const dx = tx - cx;
+  const dy = ty - cy;
   if (Math.abs(dx) > Math.abs(dy)) {
     return dx > 0
-      ? { x: shape.x + shape.width, y: cy } // right edge
-      : { x: shape.x, y: cy };              // left edge
+      ? { x: shape.x + shape.width, y: cy }
+      : { x: shape.x, y: cy };
   }
   return dy > 0
-    ? { x: cx, y: shape.y + shape.height }  // bottom edge
-    : { x: cx, y: shape.y };                // top edge
+    ? { x: cx, y: shape.y + shape.height }
+    : { x: cx, y: shape.y };
 }
 
 function addArrow({ from, to, label, dashed = false, strokeColor = INK, strokeWidth = 2, withArrowhead = true }) {
-  // Look up the bound shapes so we can draw the arrow geometrically
-  // between them. Bindings alone do NOT auto-route — the arrow must
-  // already connect the two shapes at authoring time, else Excalidraw
-  // renders it at its stored (x,y,points) which is (0,0,flat) for a
-  // generator that trusted bindings. See the Apr 23 debug session.
   const src = elements.find((e) => e.id === from);
   const tgt = elements.find((e) => e.id === to);
-  if (!src || !tgt) {
-    throw new Error(`addArrow: missing endpoint (from=${from}, to=${to})`);
-  }
+  if (!src || !tgt) throw new Error(`addArrow: missing endpoint (${from} → ${to})`);
   const srcCx = src.x + src.width / 2;
   const srcCy = src.y + src.height / 2;
   const tgtCx = tgt.x + tgt.width / 2;
@@ -354,32 +502,24 @@ function addArrow({ from, to, label, dashed = false, strokeColor = INK, strokeWi
 
   const id = nextId('arr');
   const a = baseElement({
-    id,
-    type: 'arrow',
-    x: sp.x,
-    y: sp.y,
-    width: Math.abs(dx),
-    height: Math.abs(dy),
-    strokeColor,
-    strokeWidth,
+    id, type: 'arrow',
+    x: sp.x, y: sp.y,
+    width: Math.abs(dx), height: Math.abs(dy),
+    strokeColor, strokeWidth,
     strokeStyle: dashed ? 'dashed' : 'solid',
     backgroundColor: 'transparent',
     boundElements: [],
   });
-  a.points = [
-    [0, 0],
-    [dx, dy],
-  ];
+  a.points = [[0, 0], [dx, dy]];
   a.lastCommittedPoint = null;
   a.startBinding = { elementId: from, focus: 0, gap: 4 };
-  a.endBinding = { elementId: to, focus: 0, gap: 4 };
+  a.endBinding   = { elementId: to,   focus: 0, gap: 4 };
   a.startArrowhead = null;
   a.endArrowhead = withArrowhead ? 'arrow' : null;
   a.elbowed = false;
   elements.push(a);
 
-  // Tell the source/target shapes that this arrow is bound to them
-  // (makes Excalidraw keep the arrow attached during drag).
+  // Mirror the binding onto the source/target boundElements.
   for (const refId of [from, to]) {
     const ref = elements.find((e) => e.id === refId);
     if (ref) {
@@ -389,9 +529,6 @@ function addArrow({ from, to, label, dashed = false, strokeColor = INK, strokeWi
   }
 
   if (label) {
-    // Arrow label — Excalidraw does NOT auto-position container text
-    // for arrows either. Place at the geometric midpoint of the
-    // segment with size estimated from label length.
     const fontSize = 14;
     const lines = label.split('\n');
     const widthPx = Math.max(...lines.map((l) => l.length)) * fontSize * 0.6;
@@ -407,7 +544,7 @@ function addArrow({ from, to, label, dashed = false, strokeColor = INK, strokeWi
         width: Math.round(widthPx),
         height: Math.round(heightPx),
         strokeColor,
-        backgroundColor: '#FFFFFF', // opaque so the arrow doesn't show through
+        backgroundColor: '#FFFFFF',
       }),
       fontSize,
       fontFamily: 2,
@@ -431,7 +568,7 @@ function addArrow({ from, to, label, dashed = false, strokeColor = INK, strokeWi
 
 const trunkCX = COL_TRUNK + DECISION_W / 2;
 
-// START terminator — rounded rectangle, top of the flow.
+// START terminator.
 addShape({
   id: 'start',
   type: 'rectangle',
@@ -446,96 +583,75 @@ addShape({
   roundness: { type: 3 },
 });
 
-// For each top assertion, lay out its narrowing cascade L1 → L2 → L3
-// → { read_yes, read_no }. Top's NO falls through to the next top.
-FLOW.forEach((step, i) => {
-  const rowY = FIRST_ROW_Y + i * ROW_STEP;
+// Iterate the flow, laying out each top and its drill cascade. The y
+// cursor advances by each section's required height.
+let cursor = FIRST_TOP_Y;
+const topYAt = {};
+const lastDrillYAt = {};
 
-  // L1 — top assertion (diamond on the trunk column)
+for (const top of FLOW) {
+  const topY = cursor;
+  topYAt[top.id] = topY;
+
+  // Top diamond.
   addShape({
-    id: step.id,
+    id: top.id,
     type: 'diamond',
     x: COL_TRUNK,
-    y: rowY,
+    y: topY,
     width: DECISION_W,
     height: DECISION_H,
-    text: step.question,
+    text: top.question,
     fontSize: 14,
     fill: PRIMARY,
     stroke: PRIMARY,
     textColor: PRIMARY_SOFT,
   });
 
-  // L2 — specific reason they hold it
-  addShape({
-    id: step.l2.id,
-    type: 'diamond',
-    x: COL_L2,
-    y: rowY,
-    width: DECISION_W,
-    height: DECISION_H,
-    text: step.l2.question,
-    fontSize: 14,
-    fill: PRIMARY,
-    stroke: PRIMARY,
-    textColor: PRIMARY_SOFT,
+  // Drill cascade down the second column.
+  let drillY = topY + TOP_TO_FIRST_DRILL;
+  top.drills.forEach((drill, di) => {
+    addShape({
+      id: drill.id,
+      type: 'diamond',
+      x: COL_DRILL,
+      y: drillY,
+      width: DECISION_W,
+      height: DECISION_H,
+      text: drill.question,
+      fontSize: 14,
+      fill: PRIMARY,
+      stroke: PRIMARY,
+      textColor: PRIMARY_SOFT,
+    });
+    // Read rectangle in the third column, vertically centered on drill.
+    addShape({
+      id: drill.read.id,
+      type: 'rectangle',
+      x: COL_READ,
+      y: drillY + (DECISION_H - ARTICLE_H) / 2,
+      width: ARTICLE_W,
+      height: ARTICLE_H,
+      text: drill.read.label,
+      fontSize: 13,
+      fill: SECONDARY_SOFT,
+      stroke: SECONDARY,
+      roundness: { type: 3 },
+      link: drill.read.href,
+    });
+    if (di < top.drills.length - 1) drillY += DRILL_STEP;
   });
+  lastDrillYAt[top.id] = drillY;
 
-  // L3 — narrower form of the reason
-  addShape({
-    id: step.l3.id,
-    type: 'diamond',
-    x: COL_L3,
-    y: rowY,
-    width: DECISION_W,
-    height: DECISION_H,
-    text: step.l3.question,
-    fontSize: 14,
-    fill: PRIMARY,
-    stroke: PRIMARY,
-    textColor: PRIMARY_SOFT,
-  });
+  cursor = drillY + DECISION_H + TOP_GAP;
+}
 
-  // YES read — above the row line
-  addShape({
-    id: step.readYes.id,
-    type: 'rectangle',
-    x: COL_READS,
-    y: rowY + DECISION_H / 2 - READ_Y_OFFSET - ARTICLE_H / 2,
-    width: ARTICLE_W,
-    height: ARTICLE_H,
-    text: step.readYes.label,
-    fontSize: 13,
-    fill: SECONDARY_SOFT,
-    stroke: SECONDARY,
-    roundness: { type: 3 },
-    link: step.readYes.href,
-  });
-
-  // NO read — below the row line
-  addShape({
-    id: step.readNo.id,
-    type: 'rectangle',
-    x: COL_READS,
-    y: rowY + DECISION_H / 2 + READ_Y_OFFSET - ARTICLE_H / 2,
-    width: ARTICLE_W,
-    height: ARTICLE_H,
-    text: step.readNo.label,
-    fontSize: 13,
-    fill: SECONDARY_SOFT,
-    stroke: SECONDARY,
-    roundness: { type: 3 },
-    link: step.readNo.href,
-  });
-});
-
-// Final terminator — "Faithful Abolitionist", gold-bordered fire CTA.
-const terminalY = FIRST_ROW_Y + FLOW.length * ROW_STEP;
+// Final terminator ("Faithful Abolitionist").
 addShape({
   id: 'T_FA',
   type: 'rectangle',
   x: trunkCX - TERMINAL_W / 2,
-  y: terminalY,
+  y: cursor,
   width: TERMINAL_W,
   height: TERMINAL_H,
   text: 'Faithful Abolitionist\nread the next steps',
@@ -547,33 +663,51 @@ addShape({
   link: '/pages/journey/next-steps/',
 });
 
+// ---------------------------------------------------------------------------
 // Arrows.
-// START → D1 (the initial flow in).
+
 addArrow({ from: 'start', to: FLOW[0].id, strokeColor: PRIMARY, strokeWidth: 2 });
 
-FLOW.forEach((step, i) => {
+FLOW.forEach((top, i) => {
   const nextTopId = FLOW[i + 1] ? FLOW[i + 1].id : 'T_FA';
 
-  // L1 YES → L2
-  addArrow({ from: step.id, to: step.l2.id, label: 'yes', strokeColor: TERTIARY, strokeWidth: 2 });
-  // L1 NO → next top (trunk cascade)
-  addArrow({ from: step.id, to: nextTopId, label: 'no', strokeColor: PRIMARY, strokeWidth: 2.5 });
-
-  // L2 YES → L3
-  addArrow({ from: step.l2.id, to: step.l3.id, label: 'yes', strokeColor: TERTIARY, strokeWidth: 2 });
-  // L2 NO → next top (fall-through)
+  // Top YES → next top (main trunk)
   addArrow({
-    from: step.l2.id,
+    from: top.id,
     to: nextTopId,
+    label: 'yes',
+    strokeColor: PRIMARY,
+    strokeWidth: 3,
+  });
+  // Top NO → first drill
+  addArrow({
+    from: top.id,
+    to: top.drills[0].id,
     label: 'no',
     strokeColor: PRIMARY,
-    strokeWidth: 1.5,
-    dashed: true,
+    strokeWidth: 2,
   });
 
-  // L3 YES/NO → the two targeted reads
-  addArrow({ from: step.l3.id, to: step.readYes.id, label: 'yes', strokeColor: TERTIARY, strokeWidth: 2 });
-  addArrow({ from: step.l3.id, to: step.readNo.id, label: 'no', strokeColor: PRIMARY, strokeWidth: 2 });
+  top.drills.forEach((drill, di) => {
+    // Drill YES → targeted read (rust)
+    addArrow({
+      from: drill.id,
+      to: drill.read.id,
+      label: 'yes',
+      strokeColor: TERTIARY,
+      strokeWidth: 2,
+    });
+    // Drill NO → next drill, or fall through to next top
+    const noTarget = top.drills[di + 1] ? top.drills[di + 1].id : nextTopId;
+    addArrow({
+      from: drill.id,
+      to: noTarget,
+      label: 'no',
+      strokeColor: PRIMARY,
+      strokeWidth: 2,
+      dashed: di === top.drills.length - 1, // fall-through looks dashed
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -581,7 +715,7 @@ FLOW.forEach((step, i) => {
 const doc = {
   type: 'excalidraw',
   version: 2,
-  source: 'https://abolitionist.ljs.app/editor',
+  source: 'https://abolitionist.ljs.app/draw',
   elements,
   appState: {
     gridSize: 20,

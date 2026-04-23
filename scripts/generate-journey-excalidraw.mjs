@@ -44,71 +44,158 @@ const PAPER = '#FFFFFF';
 // until they hit a NO they can't honestly give — that's where they
 // stop and read.
 
+// Three-level cascade per top assertion. Each path is:
+//   L1 (top assertion) → L2 (specific reason they hold it)
+//   → L3 (narrower form of that reason)
+//   → YES/NO branching to a targeted article.
+// NO at any decision falls through to the next top assertion.
+// The goal is that readers rule out objections quickly and only read
+// the ONE article that addresses their exact sticking point.
+
 const FLOW = [
   {
     id: 'D1',
     question: 'Abortion should\nbe legal.',
-    read: {
-      id: 'R1',
-      label: 'Read: Equal Protection\n+ FAQ on bodily autonomy',
-      href: '/pages/abolitionistsrising.com/criminalization/',
+    l2: {
+      id: 'D1_L2',
+      question: "The preborn isn't\nyet fully human.",
+    },
+    l3: {
+      id: 'D1_L3',
+      question: "Viability or heartbeat\nmarks when a person\nbegins.",
+    },
+    readYes: {
+      id: 'R_D1_yes',
+      label: 'Read: FAQ — arbitrary\nthresholds (viability,\nheartbeat, sentience)',
+      href: '/pages/abolitionistsrising.com/faq/',
+    },
+    readNo: {
+      id: 'R_D1_no',
+      label: "Read: FAQ —\n“That's just your belief”\n(embryology cited)",
+      href: '/pages/abolitionistsrising.com/faq/',
     },
   },
   {
     id: 'D2',
-    question: 'Exceptions for rape,\nincest, or the mother\'s life\nare acceptable.',
-    read: {
-      id: 'R2',
-      label: 'Read: No Exceptions',
+    question: 'Exceptions for rape,\nincest, or the mother\'s\nlife are acceptable.',
+    l2: {
+      id: 'D2_L2',
+      question: 'A child conceived in\nrape carries less\nweight than other children.',
+    },
+    l3: {
+      id: 'D2_L3',
+      question: 'The attacker\'s crime\njustifies taking\nthe child\'s life.',
+    },
+    readYes: {
+      id: 'R_D2_yes',
+      label: 'Read: No Exceptions\n(the rape case)',
       href: '/pages/abolitionistsrising.com/no-exceptions/',
+    },
+    readNo: {
+      id: 'R_D2_no',
+      label: 'Read: Criminalization\n(punishing the\nwrong person)',
+      href: '/pages/abolitionistsrising.com/criminalization/',
     },
   },
   {
     id: 'D3',
     question: 'Incremental laws\nthat save some babies\nare a win.',
-    read: {
-      id: 'R3',
-      label: 'Read: Immediatism +\nAbolitionist, Not Pro-Life',
+    l2: {
+      id: 'D3_L2',
+      question: 'Saving SOME lives\nis better than\nsaving none.',
+    },
+    l3: {
+      id: 'D3_L3',
+      question: 'Heartbeat bills\nand limits are\na net good.',
+    },
+    readYes: {
+      id: 'R_D3_yes',
+      label: 'Read: Immediatism\n(Garrison, Heyrick,\nand the logic of\n"some" vs. "all")',
       href: '/pages/abolitionistsrising.com/immediatism/',
+    },
+    readNo: {
+      id: 'R_D3_no',
+      label: "Read: Kristan Hawkins'\nFlawed Reasoning",
+      href: '/pages/abolitionistsrising.com/kristan-hawkins-flawed-reasoning-vs-scripture/',
     },
   },
   {
     id: 'D4',
-    question: 'I believe abortion\nis wrong, but I\ndon\'t need to act.',
-    read: {
-      id: 'R4',
-      label: "Read: All About the Church\n+ Stay Steeped in Prayer",
+    question: 'I believe abortion\nis wrong, but\nI don\'t need to act.',
+    l2: {
+      id: 'D4_L2',
+      question: 'Activism is a\nspecial calling for\nsome Christians, not me.',
+    },
+    l3: {
+      id: 'D4_L3',
+      question: 'My prayers and\ndonations are enough.',
+    },
+    readYes: {
+      id: 'R_D4_yes',
+      label: 'Read: Stay Steeped\nin Prayer (prayer\nas source, not\nsubstitute)',
+      href: '/pages/abolitionistsrising.com/stay-steeped-in-prayer-as-you-seek-to-abolish-abortion/',
+    },
+    readNo: {
+      id: 'R_D4_no',
+      label: 'Read: All About\nthe Church (every\nmember, not a caste)',
       href: '/pages/freethestates.org/all-about-the-church/',
     },
   },
   {
     id: 'D5',
     question: 'Abolition work\ndoesn\'t require\nthe gospel of Christ.',
-    read: {
-      id: 'R5',
-      label: 'Read: Norman Statement\n+ Theological Foundations',
+    l2: {
+      id: 'D5_L2',
+      question: 'Secular moral\nreasoning is\nsufficient.',
+    },
+    l3: {
+      id: 'D5_L3',
+      question: 'Shared opposition\nto abortion makes\nany ally a partner.',
+    },
+    readYes: {
+      id: 'R_D5_yes',
+      label: 'Read: FAQ — “Can\nnon-Christians\npartner with\nthe movement?”',
+      href: '/pages/abolitionistsrising.com/faq/',
+    },
+    readNo: {
+      id: 'R_D5_no',
+      label: 'Read: Norman\nStatement Article XI\n+ Theological Foundations',
       href: '/pages/abolitionistsrising.com/norman-statement/',
     },
   },
 ];
 
 // ---------------------------------------------------------------------------
-// Layout geometry. Flowchart runs top-to-bottom in one column; the
-// "read this article" rectangles hang to the right of each decision.
+// Layout geometry. Each top assertion gets one ROW running left-to-right:
+//   trunk diamond (c1) → L2 diamond (c2) → L3 diamond (c3)
+//                                          └─ YES → read rect (c4, row − 60)
+//                                          └─ NO  → read rect (c4, row + 60)
+// Top-level NOs cascade vertically down the trunk column.
 
-const TRUNK_X = 400;        // x of the decision column (diamond TL corner)
-const ARTICLE_X = 900;      // x of the article column (rect TL corner)
+const COL_TRUNK = 400;
+const COL_L2 = 780;
+const COL_L3 = 1160;
+const COL_READS = 1540;
 
 const DECISION_W = 260;
-const DECISION_H = 160;
-const ARTICLE_W = 320;
+const DECISION_H = 140;
+const ARTICLE_W = 300;
 const ARTICLE_H = 100;
 const TERMINAL_W = 300;
 const TERMINAL_H = 90;
 
-const ROW_STEP = 260;       // vertical spacing between successive rows
+// One "row" = one top assertion + its full narrowing cascade. The
+// read rectangles sit ±70 above/below the row's center y, so ROW_STEP
+// needs enough vertical slack for the top read (− 70 + padding) and
+// the bottom read (+ 70 + padding).
+// READ_Y_OFFSET moves each read rect ±N px from the row centerline. The
+// read rects are ARTICLE_H tall, so adjacent-row spacing works out to
+// ROW_STEP − 2·READ_Y_OFFSET − ARTICLE_H. With 320 − 140 − 100 = 80px,
+// reads from neighboring rows are comfortably separated.
+const ROW_STEP = 320;
+const READ_Y_OFFSET = 70;
 const START_Y = 0;
-const DECISIONS_Y = START_Y + 160;
+const FIRST_ROW_Y = START_Y + 180;
 
 // Random-ish IDs — Excalidraw just needs unique strings, not real UUIDs.
 let counter = 0;
@@ -342,7 +429,7 @@ function addArrow({ from, to, label, dashed = false, strokeColor = INK, strokeWi
 // ---------------------------------------------------------------------------
 // Build the flowchart.
 
-const trunkCX = TRUNK_X + DECISION_W / 2;
+const trunkCX = COL_TRUNK + DECISION_W / 2;
 
 // START terminator — rounded rectangle, top of the flow.
 addShape({
@@ -359,44 +446,91 @@ addShape({
   roundness: { type: 3 },
 });
 
-// Decision diamonds + their associated "read this" rectangles.
+// For each top assertion, lay out its narrowing cascade L1 → L2 → L3
+// → { read_yes, read_no }. Top's NO falls through to the next top.
 FLOW.forEach((step, i) => {
-  const y = DECISIONS_Y + i * ROW_STEP;
+  const rowY = FIRST_ROW_Y + i * ROW_STEP;
 
-  // Decision (diamond, oxblood fill, pale text).
+  // L1 — top assertion (diamond on the trunk column)
   addShape({
     id: step.id,
     type: 'diamond',
-    x: TRUNK_X,
-    y,
+    x: COL_TRUNK,
+    y: rowY,
     width: DECISION_W,
     height: DECISION_H,
     text: step.question,
-    fontSize: 16,
+    fontSize: 14,
     fill: PRIMARY,
     stroke: PRIMARY,
     textColor: PRIMARY_SOFT,
   });
 
-  // "Read this" rectangle, offset to the right, deep-linked.
+  // L2 — specific reason they hold it
   addShape({
-    id: step.read.id,
+    id: step.l2.id,
+    type: 'diamond',
+    x: COL_L2,
+    y: rowY,
+    width: DECISION_W,
+    height: DECISION_H,
+    text: step.l2.question,
+    fontSize: 14,
+    fill: PRIMARY,
+    stroke: PRIMARY,
+    textColor: PRIMARY_SOFT,
+  });
+
+  // L3 — narrower form of the reason
+  addShape({
+    id: step.l3.id,
+    type: 'diamond',
+    x: COL_L3,
+    y: rowY,
+    width: DECISION_W,
+    height: DECISION_H,
+    text: step.l3.question,
+    fontSize: 14,
+    fill: PRIMARY,
+    stroke: PRIMARY,
+    textColor: PRIMARY_SOFT,
+  });
+
+  // YES read — above the row line
+  addShape({
+    id: step.readYes.id,
     type: 'rectangle',
-    x: ARTICLE_X,
-    y: y + (DECISION_H - ARTICLE_H) / 2,
+    x: COL_READS,
+    y: rowY + DECISION_H / 2 - READ_Y_OFFSET - ARTICLE_H / 2,
     width: ARTICLE_W,
     height: ARTICLE_H,
-    text: step.read.label,
-    fontSize: 16,
+    text: step.readYes.label,
+    fontSize: 13,
     fill: SECONDARY_SOFT,
     stroke: SECONDARY,
     roundness: { type: 3 },
-    link: step.read.href,
+    link: step.readYes.href,
+  });
+
+  // NO read — below the row line
+  addShape({
+    id: step.readNo.id,
+    type: 'rectangle',
+    x: COL_READS,
+    y: rowY + DECISION_H / 2 + READ_Y_OFFSET - ARTICLE_H / 2,
+    width: ARTICLE_W,
+    height: ARTICLE_H,
+    text: step.readNo.label,
+    fontSize: 13,
+    fill: SECONDARY_SOFT,
+    stroke: SECONDARY,
+    roundness: { type: 3 },
+    link: step.readNo.href,
   });
 });
 
 // Final terminator — "Faithful Abolitionist", gold-bordered fire CTA.
-const terminalY = DECISIONS_Y + FLOW.length * ROW_STEP;
+const terminalY = FIRST_ROW_Y + FLOW.length * ROW_STEP;
 addShape({
   id: 'T_FA',
   type: 'rectangle',
@@ -415,64 +549,31 @@ addShape({
 
 // Arrows.
 // START → D1 (the initial flow in).
-addArrow({
-  from: 'start',
-  to: FLOW[0].id,
-  strokeColor: PRIMARY,
-  strokeWidth: 2,
-});
+addArrow({ from: 'start', to: FLOW[0].id, strokeColor: PRIMARY, strokeWidth: 2 });
 
-// For each decision: YES to the article on its right, NO to the next
-// decision (or the terminal for the last one). After reading, the
-// article's bottom points at the next decision so the loop is explicit
-// and the reader sees "read, then continue."
 FLOW.forEach((step, i) => {
-  const next = FLOW[i + 1];
-  // YES branch — diamond → article.
+  const nextTopId = FLOW[i + 1] ? FLOW[i + 1].id : 'T_FA';
+
+  // L1 YES → L2
+  addArrow({ from: step.id, to: step.l2.id, label: 'yes', strokeColor: TERTIARY, strokeWidth: 2 });
+  // L1 NO → next top (trunk cascade)
+  addArrow({ from: step.id, to: nextTopId, label: 'no', strokeColor: PRIMARY, strokeWidth: 2.5 });
+
+  // L2 YES → L3
+  addArrow({ from: step.l2.id, to: step.l3.id, label: 'yes', strokeColor: TERTIARY, strokeWidth: 2 });
+  // L2 NO → next top (fall-through)
   addArrow({
-    from: step.id,
-    to: step.read.id,
-    label: 'yes',
-    strokeColor: TERTIARY,
-    strokeWidth: 2,
+    from: step.l2.id,
+    to: nextTopId,
+    label: 'no',
+    strokeColor: PRIMARY,
+    strokeWidth: 1.5,
+    dashed: true,
   });
-  if (next) {
-    // NO branch — diamond → next decision (main trunk).
-    addArrow({
-      from: step.id,
-      to: next.id,
-      label: 'no',
-      strokeColor: PRIMARY,
-      strokeWidth: 2.5,
-    });
-    // After-reading arrow — article → next decision (re-joins trunk).
-    addArrow({
-      from: step.read.id,
-      to: next.id,
-      strokeColor: SECONDARY,
-      strokeWidth: 1,
-      dashed: true,
-      withArrowhead: true,
-    });
-  } else {
-    // Last decision's NO → the terminal.
-    addArrow({
-      from: step.id,
-      to: 'T_FA',
-      label: 'no',
-      strokeColor: PRIMARY,
-      strokeWidth: 3,
-    });
-    // After-reading on the final decision rejoins the terminal too.
-    addArrow({
-      from: step.read.id,
-      to: 'T_FA',
-      strokeColor: SECONDARY,
-      strokeWidth: 1,
-      dashed: true,
-      withArrowhead: true,
-    });
-  }
+
+  // L3 YES/NO → the two targeted reads
+  addArrow({ from: step.l3.id, to: step.readYes.id, label: 'yes', strokeColor: TERTIARY, strokeWidth: 2 });
+  addArrow({ from: step.l3.id, to: step.readNo.id, label: 'no', strokeColor: PRIMARY, strokeWidth: 2 });
 });
 
 // ---------------------------------------------------------------------------

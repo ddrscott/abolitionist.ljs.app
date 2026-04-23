@@ -35,13 +35,13 @@ const SAMPLE_QUESTIONS = [
 
 /** Strip ".md" and turn the R2 key into a relative /docs URL. */
 function citationToHref(filename: string): string {
-  const slug = filename.replace(/\.md$/i, '');
+  const slug = filename.replace(/\.mdx?$/i, '');
   return `/docs/${slug}`;
 }
 
 /** Pretty label for a citation chip — last path segment, no extension. */
 function citationLabel(filename: string): string {
-  const base = filename.replace(/\.md$/i, '').split('/').pop() ?? filename;
+  const base = filename.replace(/\.mdx?$/i, '').split('/').pop() ?? filename;
   return base.replace(/-/g, ' ');
 }
 

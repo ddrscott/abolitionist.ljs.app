@@ -29,7 +29,7 @@ fi
 
 # Build the file list. We include only <site>/<slug>.md, excluding the
 # auto-generated README.md and index.json at the docs root.
-mapfile -t files < <(find "$DOCS_DIR" -mindepth 2 -maxdepth 2 -name '*.md' | sort)
+mapfile -t files < <(find "$DOCS_DIR" -mindepth 2 -maxdepth 2 \( -name '*.md' -o -name '*.mdx' \) | sort)
 total="${#files[@]}"
 
 if [[ "$total" -eq 0 ]]; then

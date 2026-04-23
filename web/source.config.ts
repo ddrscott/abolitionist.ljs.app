@@ -31,7 +31,7 @@ export const docs = defineDocs({
   dir: '../docs',
   docs: {
     schema: articleSchema,
-    files: ['*/*.md'],
+    files: ['*/*.{md,mdx}'],
   },
   meta: {
     files: ['*/meta.json'],

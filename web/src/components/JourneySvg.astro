@@ -1,13 +1,9 @@
 ---
 /**
- * Inlines web/public/journey-map.svg into the MDX output so that:
- *   - the <a> elements inside the SVG stay clickable (can't do that
- *     via <img>; can do it via <object> but styling is awkward),
- *   - CSS scales it responsively (width: 100% of the content column),
- *   - we don't have to ship @excalidraw/excalidraw JS at runtime.
- *
- * The SVG is regenerated from web/public/journey-map.excalidraw at
- * build time by scripts/generate-journey-svg.mjs.
+ * Inlines web/public/journey-map.svg and wires the desktop
+ * side-panel preview. Clicking a "Read:" node on a wide viewport
+ * opens the article in a right-hand iframe; on narrow viewports
+ * the <a> just navigates normally.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,28 +18,42 @@ const raw = fs
 ---
 
 <figure class="journey-figure">
-  <div class="journey-scroll" set:html={raw} />
+  <div class="journey-stage">
+    <div class="journey-scroll" set:html={raw} />
+    <aside class="journey-preview" aria-hidden="true" hidden>
+      <header>
+        <span class="preview-title">Article preview</span>
+        <a class="preview-pop" target="_blank" rel="noopener" href="#">Open full</a>
+        <button class="preview-close" type="button" aria-label="Close preview">&times;</button>
+      </header>
+      <iframe title="Article preview" src="about:blank"></iframe>
+    </aside>
+  </div>
   <figcaption>
-    Pan / scroll to explore. Click any &ldquo;Read:&rdquo; box to open
-    the article that addresses that sticking point.
+    Scroll to explore. Click any &ldquo;Read:&rdquo; box to open the
+    article that addresses that sticking point &mdash; on desktop it
+    opens in a side panel; on phones it opens the article full-page.
   </figcaption>
 </figure>
 
 <style is:global>
-  .journey-figure {
-    margin: 1.5rem 0;
-  }
+  .journey-figure { margin: 1.5rem 0; }
   .journey-figure figcaption {
     margin-top: 0.5rem;
     font-size: 0.9rem;
     color: var(--sl-color-gray-3, #666);
     text-align: center;
   }
-  /* Full-bleed horizontal scroll so the tall flowchart stays legible
-     on narrow screens. The inner SVG keeps its aspect ratio; height
-     is capped so desktop doesn't have to scroll an 8000px-tall figure. */
+  /* Stage holds the map and (on desktop) a side panel beside it. */
+  .journey-stage {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+    min-height: 75vh;
+  }
   .journey-scroll {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     max-height: 75vh;
     overflow: auto;
     border: 1px solid var(--sl-color-hairline, #c49a6e);
@@ -55,8 +65,101 @@ const raw = fs
     height: auto;
     display: block;
   }
-  /* "Read:" boxes: hover affordance */
   .journey-svg a { cursor: pointer; }
   .journey-svg a:hover rect { filter: brightness(0.95); }
   .journey-svg a:focus-visible rect { outline: 3px solid #cc3206; }
+
+  /* Side panel — only visible on wide viewports. */
+  .journey-preview {
+    display: none;
+    flex: 0 0 42%;
+    flex-direction: column;
+    border: 1px solid var(--sl-color-hairline, #c49a6e);
+    background: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .journey-preview[data-open] {
+    display: flex;
+  }
+  .journey-preview > header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    background: #430607;
+    color: #fde8e8;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 0.9rem;
+  }
+  .journey-preview .preview-title { flex: 1; }
+  .journey-preview .preview-pop {
+    color: #fde8e8;
+    text-decoration: underline;
+    font-size: 0.8rem;
+  }
+  .journey-preview .preview-close {
+    background: transparent;
+    border: none;
+    color: #fde8e8;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.2rem;
+  }
+  .journey-preview iframe {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: #fff;
+  }
+
+  @media (min-width: 1024px) {
+    .journey-stage:has(.journey-preview[data-open]) .journey-scroll {
+      flex: 0 0 55%;
+    }
+  }
+  @media (max-width: 1023px) {
+    .journey-preview { display: none !important; }
+  }
 </style>
+
+<script>
+  // Intercept clicks on any <a> inside the journey SVG. On desktop
+  // (viewport ≥ 1024px) open the target in the side-panel iframe; on
+  // narrow viewports fall through to the default full-page
+  // navigation.
+  const DESKTOP_MIN = 1024;
+  document.addEventListener('click', (ev) => {
+    if (window.innerWidth < DESKTOP_MIN) return;
+    if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button !== 0) return;
+    const target = ev.target as Element | null;
+    if (!target) return;
+    const anchor = target.closest('.journey-svg a');
+    if (!anchor) return;
+    const href = anchor.getAttribute('href');
+    if (!href) return;
+
+    const panel = document.querySelector<HTMLElement>('.journey-preview');
+    const iframe = panel?.querySelector<HTMLIFrameElement>('iframe');
+    const popOut = panel?.querySelector<HTMLAnchorElement>('.preview-pop');
+    if (!panel || !iframe || !popOut) return;
+
+    ev.preventDefault();
+    iframe.src = href;
+    popOut.href = href;
+    panel.dataset.open = '';
+    panel.setAttribute('aria-hidden', 'false');
+  });
+
+  document.addEventListener('click', (ev) => {
+    const target = ev.target as Element | null;
+    if (!target?.classList.contains('preview-close')) return;
+    const panel = target.closest<HTMLElement>('.journey-preview');
+    const iframe = panel?.querySelector<HTMLIFrameElement>('iframe');
+    if (!panel || !iframe) return;
+    delete panel.dataset.open;
+    panel.setAttribute('aria-hidden', 'true');
+    iframe.src = 'about:blank';
+  });
+</script>

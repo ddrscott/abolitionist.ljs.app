@@ -3,11 +3,9 @@
  * Render web/public/journey-map.excalidraw → web/public/journey-map.svg.
  *
  * This exists so the runtime journey page doesn't have to load
- * @excalidraw/excalidraw (the viewer component). The file is authored
- * with `roughness: 0` everywhere and uses only four primitive element
- * types — rectangle, diamond, arrow, text — so a tiny hand-rolled
- * renderer is sufficient and avoids pulling Excalidraw into the build
- * pipeline. The `/draw/` editor still uses Excalidraw for authoring.
+ * @excalidraw/excalidraw (the viewer component). The file uses only
+ * four primitive element types — rectangle, diamond, arrow, text —
+ * with roughness 0, so a tiny hand-rolled renderer is sufficient.
  *
  * Node 18+. No external deps. Idempotent.
  */
@@ -20,8 +18,8 @@ const ROOT = path.resolve(__dirname, '..');
 const SRC = path.join(ROOT, 'web/public/journey-map.excalidraw');
 const OUT = path.join(ROOT, 'web/public/journey-map.svg');
 
-const PAD = 40; // viewBox padding so strokes don't clip
-const CORNER_RX = 8; // for rounded rectangles
+const PAD = 40;
+const CORNER_RX = 8;
 
 function escape(s) {
   return String(s)
@@ -36,9 +34,41 @@ function elementBBox(el) {
   if (el.type === 'arrow') {
     const xs = el.points.map((p) => el.x + p[0]);
     const ys = el.points.map((p) => el.y + p[1]);
-    return { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
+    return {
+      x: Math.min(...xs),
+      y: Math.min(...ys),
+      w: Math.max(...xs) - Math.min(...xs),
+      h: Math.max(...ys) - Math.min(...ys),
+    };
   }
   return { x: el.x, y: el.y, w: el.width, h: el.height };
+}
+
+/** Midpoint of an arrow's polyline (by arc length). Excalidraw
+ *  stores arrow-bound text with positions computed when the label
+ *  was first placed; once the arrow is moved, those positions go
+ *  stale. Recompute from the current points. */
+function arrowMidpoint(arrow) {
+  const pts = arrow.points.map((p) => [arrow.x + p[0], arrow.y + p[1]]);
+  if (pts.length < 2) return pts[0];
+  let total = 0;
+  const segs = [];
+  for (let i = 1; i < pts.length; i++) {
+    const dx = pts[i][0] - pts[i - 1][0];
+    const dy = pts[i][1] - pts[i - 1][1];
+    const len = Math.hypot(dx, dy);
+    segs.push({ from: pts[i - 1], to: pts[i], len });
+    total += len;
+  }
+  let target = total / 2;
+  for (const s of segs) {
+    if (target <= s.len) {
+      const t = s.len === 0 ? 0 : target / s.len;
+      return [s.from[0] + (s.to[0] - s.from[0]) * t, s.from[1] + (s.to[1] - s.from[1]) * t];
+    }
+    target -= s.len;
+  }
+  return pts[pts.length - 1];
 }
 
 function renderRect(el) {
@@ -48,7 +78,6 @@ function renderRect(el) {
 }
 
 function renderDiamond(el) {
-  // Vertices: top, right, bottom, left
   const { x, y, width: w, height: h } = el;
   const cx = x + w / 2;
   const cy = y + h / 2;
@@ -58,7 +87,6 @@ function renderDiamond(el) {
 }
 
 function renderArrow(el, arrowMarkers) {
-  // Register this color's arrowhead marker
   arrowMarkers.add(el.strokeColor);
   const markerId = `arrowhead-${el.strokeColor.replace('#', '')}`;
   const abs = el.points.map((p) => [el.x + p[0], el.y + p[1]]);
@@ -68,16 +96,23 @@ function renderArrow(el, arrowMarkers) {
   return `<path d="${d}" fill="none" stroke="${el.strokeColor}" stroke-width="${el.strokeWidth}"${markerEnd}${markerStart} />`;
 }
 
-function renderText(el) {
-  // Dataset is uniform: all text is inside a container, center/middle aligned,
-  // fontFamily 2 (Helvetica). The text bbox (el.x, el.y, el.width, el.height)
-  // already accounts for multi-line wrapping — lines are split on "\n".
+/** Render a text element. For text whose container is an arrow, use
+ *  the arrow's current midpoint instead of the stale stored x/y. */
+function renderText(el, byId) {
   const lines = String(el.text).split('\n');
-  const cx = el.x + el.width / 2;
   const lineHeight = (el.lineHeight ?? 1.25) * el.fontSize;
-  // Place first line's baseline so the block is vertically centered on el.y+el.h/2
   const blockHeight = lineHeight * lines.length;
-  const cy = el.y + el.height / 2;
+
+  let cx = el.x + el.width / 2;
+  let cy = el.y + el.height / 2;
+
+  const container = el.containerId ? byId.get(el.containerId) : null;
+  if (container && container.type === 'arrow') {
+    const [mx, my] = arrowMidpoint(container);
+    cx = mx;
+    cy = my;
+  }
+
   const firstBaseline = cy - blockHeight / 2 + el.fontSize * 0.82;
   const tspans = lines
     .map((ln, i) => {
@@ -91,8 +126,22 @@ function renderText(el) {
 function render() {
   const doc = JSON.parse(fs.readFileSync(SRC, 'utf8'));
   const elements = doc.elements.filter((e) => !e.isDeleted);
+  const byId = new Map(elements.map((e) => [e.id, e]));
 
-  // ViewBox — union bounding box of everything, plus padding.
+  // Which text elements belong inside a linked container's <a> tag?
+  // We emit them as children of the <a> and skip them in the main
+  // iteration so they only render once — AND so clicks on the text
+  // hit the anchor, not a sibling <text>.
+  const foldedTextIds = new Set();
+  for (const el of elements) {
+    if (!el.link) continue;
+    if (!Array.isArray(el.boundElements)) continue;
+    for (const b of el.boundElements) {
+      if (b.type === 'text') foldedTextIds.add(b.id);
+    }
+  }
+
+  // ViewBox
   let minX = Infinity,
     minY = Infinity,
     maxX = -Infinity,
@@ -113,7 +162,12 @@ function render() {
 
   const arrowMarkers = new Set();
   const bodyParts = [];
+
   for (const el of elements) {
+    // Text elements already folded into a linked container's <a>:
+    // skip; they'll be emitted with their container.
+    if (el.type === 'text' && foldedTextIds.has(el.id)) continue;
+
     let snippet;
     switch (el.type) {
       case 'rectangle':
@@ -126,20 +180,28 @@ function render() {
         snippet = renderArrow(el, arrowMarkers);
         break;
       case 'text':
-        snippet = renderText(el);
+        snippet = renderText(el, byId);
         break;
       default:
         continue;
     }
+
+    // If this container has a link, fold its bound text inside the <a>
+    // so the whole visible box (rect + label) is clickable.
     if (el.link) {
-      // target="_top" breaks out of any embedding frame. rel prevents
-      // tabnapping.
-      snippet = `<a href="${escape(el.link)}" target="_top" rel="noopener">${snippet}</a>`;
+      const children = [snippet];
+      if (Array.isArray(el.boundElements)) {
+        for (const b of el.boundElements) {
+          if (b.type !== 'text') continue;
+          const t = byId.get(b.id);
+          if (t) children.push(renderText(t, byId));
+        }
+      }
+      snippet = `<a href="${escape(el.link)}" target="_top" rel="noopener">${children.join('')}</a>`;
     }
     bodyParts.push(snippet);
   }
 
-  // Arrowhead markers (one per distinct stroke color used on arrows)
   const defs = [...arrowMarkers]
     .map(
       (c) =>

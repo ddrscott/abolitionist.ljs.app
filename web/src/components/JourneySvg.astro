@@ -1,0 +1,62 @@
+---
+/**
+ * Inlines web/public/journey-map.svg into the MDX output so that:
+ *   - the <a> elements inside the SVG stay clickable (can't do that
+ *     via <img>; can do it via <object> but styling is awkward),
+ *   - CSS scales it responsively (width: 100% of the content column),
+ *   - we don't have to ship @excalidraw/excalidraw JS at runtime.
+ *
+ * The SVG is regenerated from web/public/journey-map.excalidraw at
+ * build time by scripts/generate-journey-svg.mjs.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import url from 'node:url';
+
+const here = path.dirname(url.fileURLToPath(import.meta.url));
+const svgPath = path.resolve(here, '../../public/journey-map.svg');
+const raw = fs
+  .readFileSync(svgPath, 'utf8')
+  .replace(/^<\?xml[^?]*\?>\s*/, '')
+  .replace('<svg ', '<svg class="journey-svg" ');
+---
+
+<figure class="journey-figure">
+  <div class="journey-scroll" set:html={raw} />
+  <figcaption>
+    Pan / scroll to explore. Click any &ldquo;Read:&rdquo; box to open
+    the article that addresses that sticking point.
+  </figcaption>
+</figure>
+
+<style is:global>
+  .journey-figure {
+    margin: 1.5rem 0;
+  }
+  .journey-figure figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--sl-color-gray-3, #666);
+    text-align: center;
+  }
+  /* Full-bleed horizontal scroll so the tall flowchart stays legible
+     on narrow screens. The inner SVG keeps its aspect ratio; height
+     is capped so desktop doesn't have to scroll an 8000px-tall figure. */
+  .journey-scroll {
+    width: 100%;
+    max-height: 75vh;
+    overflow: auto;
+    border: 1px solid var(--sl-color-hairline, #c49a6e);
+    background: #fff;
+    border-radius: 4px;
+  }
+  .journey-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  /* "Read:" boxes: hover affordance */
+  .journey-svg a { cursor: pointer; }
+  .journey-svg a:hover rect { filter: brightness(0.95); }
+  .journey-svg a:focus-visible rect { outline: 3px solid #cc3206; }
+</style>

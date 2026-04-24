@@ -1,9 +1,12 @@
 ---
 /**
- * Inlines web/public/journey-map.svg and wires the desktop
- * side-panel preview. Clicking a "Read:" node on a wide viewport
- * opens the article in a right-hand iframe; on narrow viewports
- * the <a> just navigates normally.
+ * Inlines web/public/journey-map.svg into the journey page in
+ * normal document flow — no inner scroll container, so the map
+ * scrolls with the rest of the page. On desktop (lg+ breakpoint)
+ * clicks on Read: nodes hijack Starlight's right "On this page"
+ * sidebar and load the article into an iframe there, preserving
+ * the reader's place in the map. Narrow viewports fall through to
+ * normal full-page navigation.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,21 +21,11 @@ const raw = fs
 ---
 
 <figure class="journey-figure">
-  <div class="journey-stage">
-    <div class="journey-scroll" set:html={raw} />
-    <aside class="journey-preview" aria-hidden="true" hidden>
-      <header>
-        <span class="preview-title">Article preview</span>
-        <a class="preview-pop" target="_blank" rel="noopener" href="#">Open full</a>
-        <button class="preview-close" type="button" aria-label="Close preview">&times;</button>
-      </header>
-      <iframe title="Article preview" src="about:blank"></iframe>
-    </aside>
-  </div>
+  <div class="journey-map" set:html={raw} />
   <figcaption>
-    Scroll to explore. Click any &ldquo;Read:&rdquo; box to open the
-    article that addresses that sticking point &mdash; on desktop it
-    opens in a side panel; on phones it opens the article full-page.
+    Click any &ldquo;Read:&rdquo; box to open the article. On desktop
+    it loads in the right sidebar so you keep your place in the map;
+    on phones it opens the article full-page.
   </figcaption>
 </figure>
 
@@ -44,23 +37,7 @@ const raw = fs
     color: var(--sl-color-gray-3, #666);
     text-align: center;
   }
-  /* Stage holds the map and (on desktop) a side panel beside it. */
-  .journey-stage {
-    display: flex;
-    gap: 1rem;
-    align-items: stretch;
-    min-height: 75vh;
-  }
-  .journey-scroll {
-    flex: 1;
-    min-width: 0;
-    max-height: 75vh;
-    overflow: auto;
-    border: 1px solid var(--sl-color-hairline, #c49a6e);
-    background: #fff;
-    border-radius: 4px;
-  }
-  .journey-svg {
+  .journey-map .journey-svg {
     width: 100%;
     height: auto;
     display: block;
@@ -69,20 +46,17 @@ const raw = fs
   .journey-svg a:hover rect { filter: brightness(0.95); }
   .journey-svg a:focus-visible rect { outline: 3px solid #cc3206; }
 
-  /* Side panel — only visible on wide viewports. */
-  .journey-preview {
-    display: none;
-    flex: 0 0 42%;
+  /* Right-sidebar iframe panel (injected on click). */
+  .journey-rs-panel {
+    display: flex;
     flex-direction: column;
+    height: calc(100vh - var(--sl-nav-height, 4rem) - 1rem);
     border: 1px solid var(--sl-color-hairline, #c49a6e);
-    background: #fff;
     border-radius: 4px;
     overflow: hidden;
+    background: #fff;
   }
-  .journey-preview[data-open] {
-    display: flex;
-  }
-  .journey-preview > header {
+  .journey-rs-panel > header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -90,76 +64,114 @@ const raw = fs
     background: #430607;
     color: #fde8e8;
     font-family: 'EB Garamond', Georgia, serif;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
-  .journey-preview .preview-title { flex: 1; }
-  .journey-preview .preview-pop {
+  .journey-rs-panel .rs-title { flex: 1; }
+  .journey-rs-panel .rs-pop {
     color: #fde8e8;
     text-decoration: underline;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
-  .journey-preview .preview-close {
+  .journey-rs-panel .rs-close {
     background: transparent;
-    border: none;
+    border: 0;
     color: #fde8e8;
     font-size: 1.4rem;
     line-height: 1;
     cursor: pointer;
-    padding: 0 0.2rem;
+    padding: 0 0.25rem;
   }
-  .journey-preview iframe {
+  .journey-rs-panel iframe {
     flex: 1;
     width: 100%;
     border: 0;
     background: #fff;
   }
-
-  @media (min-width: 1024px) {
-    .journey-stage:has(.journey-preview[data-open]) .journey-scroll {
-      flex: 0 0 55%;
+  /* Widen the right column while the preview is open so an article
+     body is actually legible. Only on xl and above to avoid crunching
+     the map column. */
+  @media (min-width: 80rem) {
+    body.journey-preview-open {
+      --sl-sidebar-width: 22rem;
     }
-  }
-  @media (max-width: 1023px) {
-    .journey-preview { display: none !important; }
+    body.journey-preview-open .right-sidebar-container,
+    body.journey-preview-open .right-sidebar {
+      width: 26rem;
+      max-width: 26rem;
+    }
   }
 </style>
 
 <script>
-  // Intercept clicks on any <a> inside the journey SVG. On desktop
-  // (viewport ≥ 1024px) open the target in the side-panel iframe; on
-  // narrow viewports fall through to the default full-page
-  // navigation.
+  // Desktop-only: clicking a Read: anchor inside .journey-svg swaps
+  // Starlight's right-sidebar ToC for an iframe loaded with the
+  // article. Close restores the ToC.
   const DESKTOP_MIN = 1024;
+  let originalChildren: Element[] | null = null;
+  let panel: HTMLElement | null = null;
+
+  function getHost(): HTMLElement | null {
+    return document.querySelector<HTMLElement>('.right-sidebar-panel .sl-container');
+  }
+
+  function openPreview(href: string) {
+    const host = getHost();
+    if (!host) return;
+
+    if (!originalChildren) {
+      originalChildren = Array.from(host.children) as Element[];
+      for (const el of originalChildren) (el as HTMLElement).style.display = 'none';
+    }
+
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.className = 'journey-rs-panel';
+      panel.innerHTML = `
+        <header>
+          <span class="rs-title">Article preview</span>
+          <a class="rs-pop" target="_blank" rel="noopener" href="#">Open full</a>
+          <button class="rs-close" type="button" aria-label="Close preview">&times;</button>
+        </header>
+        <iframe title="Article preview" src="about:blank"></iframe>
+      `;
+      host.append(panel);
+    }
+
+    const iframe = panel.querySelector<HTMLIFrameElement>('iframe');
+    const pop = panel.querySelector<HTMLAnchorElement>('.rs-pop');
+    if (iframe) iframe.src = href;
+    if (pop) pop.href = href;
+    document.body.classList.add('journey-preview-open');
+  }
+
+  function closePreview() {
+    if (panel) {
+      panel.remove();
+      panel = null;
+    }
+    if (originalChildren) {
+      for (const el of originalChildren) (el as HTMLElement).style.display = '';
+      originalChildren = null;
+    }
+    document.body.classList.remove('journey-preview-open');
+  }
+
   document.addEventListener('click', (ev) => {
+    const target = ev.target as Element | null;
+    if (target?.classList.contains('rs-close')) {
+      closePreview();
+      return;
+    }
+
     if (window.innerWidth < DESKTOP_MIN) return;
     if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button !== 0) return;
-    const target = ev.target as Element | null;
     if (!target) return;
     const anchor = target.closest('.journey-svg a');
     if (!anchor) return;
     const href = anchor.getAttribute('href');
     if (!href) return;
 
-    const panel = document.querySelector<HTMLElement>('.journey-preview');
-    const iframe = panel?.querySelector<HTMLIFrameElement>('iframe');
-    const popOut = panel?.querySelector<HTMLAnchorElement>('.preview-pop');
-    if (!panel || !iframe || !popOut) return;
-
     ev.preventDefault();
-    iframe.src = href;
-    popOut.href = href;
-    panel.dataset.open = '';
-    panel.setAttribute('aria-hidden', 'false');
-  });
-
-  document.addEventListener('click', (ev) => {
-    const target = ev.target as Element | null;
-    if (!target?.classList.contains('preview-close')) return;
-    const panel = target.closest<HTMLElement>('.journey-preview');
-    const iframe = panel?.querySelector<HTMLIFrameElement>('iframe');
-    if (!panel || !iframe) return;
-    delete panel.dataset.open;
-    panel.setAttribute('aria-hidden', 'true');
-    iframe.src = 'about:blank';
+    openPreview(href);
   });
 </script>

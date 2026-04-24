@@ -1,12 +1,15 @@
 ---
 /**
- * Inlines web/public/journey-map.svg into the journey page in
- * normal document flow — no inner scroll container, so the map
- * scrolls with the rest of the page. On desktop (lg+ breakpoint)
- * clicks on Read: nodes hijack Starlight's right "On this page"
- * sidebar and load the article into an iframe there, preserving
- * the reader's place in the map. Narrow viewports fall through to
- * normal full-page navigation.
+ * Inlines the Journey flowchart SVG into the page in normal flow.
+ * On desktop (≥ 1024px), clicking a Read: node fetches the article
+ * body as a pre-rendered fragment and injects it into the right
+ * sidebar panel — no iframe, full Starlight article styling, with
+ * support for `#anchor` in the link scrolling the panel to the
+ * targeted section. On narrow viewports the click falls through to
+ * a normal full-page navigation.
+ *
+ * Fragments are emitted post-build by
+ * scripts/generate-journey-article-fragments.mjs.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,9 +26,8 @@ const raw = fs
 <figure class="journey-figure">
   <div class="journey-map" set:html={raw} />
   <figcaption>
-    Click any &ldquo;Read:&rdquo; box to open the article. On desktop
-    it loads in the right sidebar so you keep your place in the map;
-    on phones it opens the article full-page.
+    Click any &ldquo;Read:&rdquo; box to open that article beside the
+    map. On phones it opens the article full-page.
   </figcaption>
 </figure>
 
@@ -46,7 +48,7 @@ const raw = fs
   .journey-svg a:hover rect { filter: brightness(0.95); }
   .journey-svg a:focus-visible rect { outline: 3px solid #cc3206; }
 
-  /* Right-sidebar iframe panel (injected on click). */
+  /* Right-sidebar article panel — injected on Read: click. */
   .journey-rs-panel {
     display: flex;
     flex-direction: column;
@@ -65,12 +67,21 @@ const raw = fs
     color: #fde8e8;
     font-family: 'EB Garamond', Georgia, serif;
     font-size: 0.85rem;
+    position: sticky;
+    top: 0;
+    z-index: 2;
   }
-  .journey-rs-panel .rs-title { flex: 1; }
+  .journey-rs-panel .rs-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .journey-rs-panel .rs-pop {
     color: #fde8e8;
     text-decoration: underline;
     font-size: 0.75rem;
+    white-space: nowrap;
   }
   .journey-rs-panel .rs-close {
     background: transparent;
@@ -81,67 +92,148 @@ const raw = fs
     cursor: pointer;
     padding: 0 0.25rem;
   }
-  .journey-rs-panel iframe {
+  .journey-rs-panel .rs-body {
     flex: 1;
-    width: 100%;
-    border: 0;
-    background: #fff;
+    overflow-y: auto;
+    padding: 1rem 1.25rem;
   }
-  /* Widen the right column while the preview is open so an article
-     body is actually legible. Only on xl and above to avoid crunching
-     the map column. */
-  @media (min-width: 80rem) {
-    body.journey-preview-open {
-      --sl-sidebar-width: 22rem;
-    }
+  .journey-rs-panel .rs-body :is(h1, h2, h3, h4, h5, h6):first-child {
+    margin-top: 0;
+  }
+  .journey-rs-panel .rs-loading,
+  .journey-rs-panel .rs-error {
+    padding: 1rem 1.25rem;
+    color: var(--sl-color-gray-3, #666);
+    font-style: italic;
+  }
+  .journey-rs-panel .rs-error { color: #cc3206; font-style: normal; }
+  /* Transient highlight on the paragraph we scrolled to. */
+  .journey-rs-panel .rs-body :target {
+    background: #fff6c2;
+    transition: background 1.5s ease-out;
+  }
+
+  /* Width tiers — map stays usable, article gets real line length. */
+  @media (min-width: 1024px) {
     body.journey-preview-open .right-sidebar-container,
     body.journey-preview-open .right-sidebar {
-      width: 26rem;
-      max-width: 26rem;
+      width: 22rem;
+      max-width: 22rem;
+    }
+  }
+  @media (min-width: 1280px) {
+    body.journey-preview-open .right-sidebar-container,
+    body.journey-preview-open .right-sidebar {
+      width: 28rem;
+      max-width: 28rem;
+    }
+  }
+  @media (min-width: 1600px) {
+    body.journey-preview-open .right-sidebar-container,
+    body.journey-preview-open .right-sidebar {
+      width: 34rem;
+      max-width: 34rem;
     }
   }
 </style>
 
 <script>
-  // Desktop-only: clicking a Read: anchor inside .journey-svg swaps
-  // Starlight's right-sidebar ToC for an iframe loaded with the
-  // article. Close restores the ToC.
   const DESKTOP_MIN = 1024;
+  const CACHE = new Map<string, string>(); // url (no hash) → fragment HTML
   let originalChildren: Element[] | null = null;
   let panel: HTMLElement | null = null;
+  let manifest: Record<string, { title?: string; fragment: string }> | null = null;
 
   function getHost(): HTMLElement | null {
     return document.querySelector<HTMLElement>('.right-sidebar-panel .sl-container');
   }
 
-  function openPreview(href: string) {
+  async function getManifest() {
+    if (manifest) return manifest;
+    try {
+      const res = await fetch('/journey-fragments.json');
+      if (res.ok) manifest = await res.json();
+    } catch {}
+    return manifest;
+  }
+
+  async function fetchFragment(pathname: string): Promise<string> {
+    if (CACHE.has(pathname)) return CACHE.get(pathname)!;
+    const m = await getManifest();
+    const fragmentUrl = m?.[pathname]?.fragment ?? pathname + 'fragment';
+    const res = await fetch(fragmentUrl);
+    if (!res.ok) throw new Error(`fragment fetch failed: ${res.status}`);
+    const text = await res.text();
+    CACHE.set(pathname, text);
+    return text;
+  }
+
+  function titleFor(pathname: string): string {
+    return manifest?.[pathname]?.title ?? 'Article preview';
+  }
+
+  function ensurePanel(): HTMLElement | null {
+    if (panel) return panel;
     const host = getHost();
-    if (!host) return;
-
-    if (!originalChildren) {
-      originalChildren = Array.from(host.children) as Element[];
-      for (const el of originalChildren) (el as HTMLElement).style.display = 'none';
-    }
-
-    if (!panel) {
-      panel = document.createElement('div');
-      panel.className = 'journey-rs-panel';
-      panel.innerHTML = `
-        <header>
-          <span class="rs-title">Article preview</span>
-          <a class="rs-pop" target="_blank" rel="noopener" href="#">Open full</a>
-          <button class="rs-close" type="button" aria-label="Close preview">&times;</button>
-        </header>
-        <iframe title="Article preview" src="about:blank"></iframe>
-      `;
-      host.append(panel);
-    }
-
-    const iframe = panel.querySelector<HTMLIFrameElement>('iframe');
-    const pop = panel.querySelector<HTMLAnchorElement>('.rs-pop');
-    if (iframe) iframe.src = href;
-    if (pop) pop.href = href;
+    if (!host) return null;
+    originalChildren = Array.from(host.children) as Element[];
+    for (const el of originalChildren) (el as HTMLElement).style.display = 'none';
+    panel = document.createElement('div');
+    panel.className = 'journey-rs-panel sl-markdown-content';
+    panel.innerHTML = `
+      <header>
+        <span class="rs-title">Article preview</span>
+        <a class="rs-pop" target="_blank" rel="noopener" href="#">Open full →</a>
+        <button class="rs-close" type="button" aria-label="Close preview">&times;</button>
+      </header>
+      <div class="rs-body"><p class="rs-loading">Loading…</p></div>
+    `;
+    host.append(panel);
     document.body.classList.add('journey-preview-open');
+    return panel;
+  }
+
+  async function openPreview(pathname: string, hash: string) {
+    const p = ensurePanel();
+    if (!p) return;
+    const body = p.querySelector<HTMLElement>('.rs-body');
+    const titleEl = p.querySelector<HTMLElement>('.rs-title');
+    const pop = p.querySelector<HTMLAnchorElement>('.rs-pop');
+    if (!body || !titleEl || !pop) return;
+
+    pop.href = pathname + (hash ? '#' + hash : '');
+    body.innerHTML = `<p class="rs-loading">Loading…</p>`;
+    try {
+      await getManifest();
+      titleEl.textContent = titleFor(pathname);
+      const html = await fetchFragment(pathname);
+      body.innerHTML = html;
+      // Rewrite in-article hash links to scroll within the panel,
+      // and open article-to-article links in a new tab (user chose
+      // this article as their reading focus; opening another inside
+      // the panel would be disorienting).
+      body.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) => {
+        const href = a.getAttribute('href') || '';
+        if (href.startsWith('#')) return; // hash links handled below
+        if (href.startsWith('/') && !href.startsWith(pathname)) {
+          a.target = '_blank';
+          a.rel = 'noopener';
+        }
+      });
+      body.scrollTop = 0;
+      if (hash) {
+        const target = body.querySelector<HTMLElement>(`#${CSS.escape(hash)}`);
+        if (target) {
+          body.scrollTop = target.offsetTop - body.offsetTop - 8;
+          // Fire :target highlight by briefly moving the URL hash, then
+          // taking it back — without causing the parent page to scroll.
+          target.setAttribute('id', hash);
+          target.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    } catch (err) {
+      body.innerHTML = `<p class="rs-error">Couldn't load the article preview. <a href="${pathname}">Open it full-page instead →</a></p>`;
+    }
   }
 
   function closePreview() {
@@ -156,22 +248,59 @@ const raw = fs
     document.body.classList.remove('journey-preview-open');
   }
 
+  // Main click delegation.
   document.addEventListener('click', (ev) => {
     const target = ev.target as Element | null;
-    if (target?.classList.contains('rs-close')) {
+    if (!target) return;
+
+    // Close button inside the panel.
+    if (target.closest('.rs-close')) {
       closePreview();
       return;
     }
 
+    // Hash-only links INSIDE the panel: scroll the panel body, not
+    // the parent page.
+    const panelAnchor = target.closest<HTMLAnchorElement>('.journey-rs-panel .rs-body a[href^="#"]');
+    if (panelAnchor) {
+      ev.preventDefault();
+      const hash = panelAnchor.getAttribute('href')!.slice(1);
+      const body = panelAnchor.closest<HTMLElement>('.rs-body');
+      const dest = body?.querySelector<HTMLElement>(`#${CSS.escape(hash)}`);
+      if (body && dest) body.scrollTop = dest.offsetTop - body.offsetTop - 8;
+      return;
+    }
+
+    // Read: nodes on the map.
     if (window.innerWidth < DESKTOP_MIN) return;
     if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button !== 0) return;
-    if (!target) return;
-    const anchor = target.closest('.journey-svg a');
+    const anchor = target.closest<HTMLAnchorElement>('.journey-svg a');
     if (!anchor) return;
     const href = anchor.getAttribute('href');
     if (!href) return;
-
+    const [pathname, hash = ''] = href.split('#');
     ev.preventDefault();
-    openPreview(href);
+    openPreview(pathname, hash);
   });
+
+  // Esc closes the panel.
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && panel) closePreview();
+  });
+
+  // Prefetch the manifest + hovered article's fragment for snappy first click.
+  document.addEventListener(
+    'pointerover',
+    (ev) => {
+      if (window.innerWidth < DESKTOP_MIN) return;
+      const target = ev.target as Element | null;
+      const anchor = target?.closest<HTMLAnchorElement>('.journey-svg a');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href) return;
+      const [pathname] = href.split('#');
+      if (!CACHE.has(pathname)) fetchFragment(pathname).catch(() => {});
+    },
+    { passive: true },
+  );
 </script>

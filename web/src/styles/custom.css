@@ -20,6 +20,11 @@
    per-line readability. */
 :root {
   --sl-content-width: 68rem;
+  /* Curated sidebar — 16rem so existing path labels don't wrap to 3
+     lines at the default width. */
+  --sl-sidebar-width: 16rem;
+  /* Body font-size + line-height come from tokens.css (Norman
+     reader values: 17–19px fluid, 1.55 leading). */
 }
 
 :root,
@@ -81,16 +86,22 @@ a.site-title {
 }
 .site-title:hover { color: var(--ar-secondary); }
 
-/* Headings inside content area use Cinzel Decorative (display) for H1,
-   EB Garamond for the rest. Oxblood for H1 on paper. */
+/* Display headings in Cinzel Decorative to match the Norman Statement
+   reference — H1 and H2 get the creed look, H3+ stay EB Garamond to
+   keep sub-section scannability. Page title (`#_top`) also picks up
+   Cinzel via Starlight's PageTitle selector. !important because
+   Starlight ships its own h2 typography at higher specificity. */
 .sl-markdown-content h1,
+.sl-markdown-content h2,
+h1#_top,
 h1.content-title,
 article h1 {
-  font-family: var(--ar-font-display);
+  font-family: var(--ar-font-display) !important;
   color: var(--ar-primary);
-  font-weight: var(--ar-weight-heading);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
 }
-.sl-markdown-content h2,
 .sl-markdown-content h3,
 .sl-markdown-content h4,
 .sl-markdown-content h5,
@@ -108,14 +119,36 @@ article h1 {
   color: var(--ar-tertiary-hover);
 }
 
-/* Content body sizing — AR reads at 22px body, not 16. */
+/* Body sizing + reading measure. Body is 20px at 1.55 so paragraphs
+   feel like prose, not a wall. `--ar-reading-max: 72ch` caps line
+   length to ~65 chars at EB Garamond's actual glyph width — the
+   panel critics' target. Figures (journey map, code blocks) opt out
+   so they can span the full content column. */
 .sl-markdown-content {
   font-size: var(--ar-text-body);
   line-height: var(--ar-leading-body);
 }
-.sl-markdown-content p,
-.sl-markdown-content li {
+.sl-markdown-content :is(p, li, blockquote, h1, h2, h3, h4, h5, h6) {
   max-width: var(--ar-reading-max);
+}
+.sl-markdown-content :is(figure, .journey-figure, details, table, pre) {
+  max-width: none;
+}
+
+/* Widen the right rail so multi-word ToC links aren't cramped. */
+.right-sidebar-container,
+.right-sidebar {
+  width: 15rem;
+  max-width: 15rem;
+}
+
+/* Responsive priority: at tighter widths, collapse the LEFT nav
+   first (it's navigation) and keep the RIGHT column (reading
+   content). Starlight's mobile toggle still handles <800px. */
+@media (max-width: 72rem) {
+  :root { --sl-sidebar-width: 0; }
+  .sidebar-pane { display: none !important; }
+  .main-frame { grid-template-columns: 1fr !important; }
 }
 
 /* Cards / code blocks — hard corners, paper background, tan hairline. */

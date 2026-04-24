@@ -1,0 +1,29 @@
+---
+/**
+ * Article body without site chrome — served at
+ * `/pages/<site>/<slug>/fragment/`. Used by the Journey map's
+ * right-sidebar preview. Works in both `pnpm dev` (on demand) and
+ * `pnpm build` (prerendered static file). Replaces the post-build
+ * HTML extractor.
+ */
+import { getCollection, render } from 'astro:content';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const entries = await getCollection('docs');
+  return entries.map((entry) => ({
+    params: { slug: entry.id.replace(/^pages\//, '') },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const title = entry.data.title;
+---
+
+<h1 id="_top">{title}</h1>
+<div class="sl-markdown-content">
+  <Content />
+</div>

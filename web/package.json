@@ -6,7 +6,7 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "node ../scripts/build-questions-index.mjs && node ../scripts/generate-journey-svg.mjs && astro dev",
-    "build": "node ../scripts/build-questions-index.mjs && node ../scripts/generate-journey-svg.mjs && astro build && node ../scripts/generate-journey-article-fragments.mjs",
+    "build": "node ../scripts/build-questions-index.mjs && node ../scripts/generate-journey-svg.mjs && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },

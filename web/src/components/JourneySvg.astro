@@ -1,15 +1,20 @@
 ---
 /**
- * Inlines the Journey flowchart SVG into the page in normal flow.
- * On desktop (≥ 1024px), clicking a Read: node fetches the article
- * body as a pre-rendered fragment and injects it into the right
- * sidebar panel — no iframe, full Starlight article styling, with
- * support for `#anchor` in the link scrolling the panel to the
- * targeted section. On narrow viewports the click falls through to
- * a normal full-page navigation.
+ * Journey map + article preview sheet.
  *
- * Fragments are emitted post-build by
- * scripts/generate-journey-article-fragments.mjs.
+ * On MOBILE (<900px), the sheet slides up from the bottom like a
+ * Google-Maps / Norman-Statement bottom-sheet, max 80vh.
+ * On DESKTOP (≥900px), the sheet snaps to the right side of the
+ * viewport as a sticky rail, 420px wide, full height.
+ *
+ * Clicking a Read: node on the map opens the sheet with the
+ * matching article body fetched from /pages/<slug>/fragment/. The
+ * link can carry a `#hash` that scrolls the sheet body to the
+ * targeted section. Esc / close button / scrim dismiss.
+ *
+ * The panel deliberately does NOT hijack Starlight's right
+ * sidebar — that approach pushed Starlight's layout around and
+ * competed with the ToC. This is a standalone overlay/rail.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,19 +22,30 @@ import url from 'node:url';
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
 const svgPath = path.resolve(here, '../../public/journey-map.svg');
-const raw = fs
-  .readFileSync(svgPath, 'utf8')
-  .replace(/^<\?xml[^?]*\?>\s*/, '')
-  .replace('<svg ', '<svg class="journey-svg" ');
+const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
 ---
 
 <figure class="journey-figure">
   <div class="journey-map" set:html={raw} />
   <figcaption>
     Click any &ldquo;Read:&rdquo; box to open that article beside the
-    map. On phones it opens the article full-page.
+    map &mdash; from the right on desktop, from the bottom on phones.
   </figcaption>
 </figure>
+
+<div class="js-sheet-scrim" aria-hidden="true"></div>
+<aside class="js-sheet" aria-hidden="true" hidden>
+  <div class="js-sheet__handle" aria-hidden="true"></div>
+  <header class="js-sheet__head">
+    <span class="js-sheet__eyebrow">Article</span>
+    <h2 class="js-sheet__title">Article preview</h2>
+    <a class="js-sheet__pop" target="_blank" rel="noopener" href="#">Open full →</a>
+    <button class="js-sheet__close" type="button" aria-label="Close preview">&times;</button>
+  </header>
+  <div class="js-sheet__body sl-markdown-content">
+    <p class="js-sheet__loading">Loading…</p>
+  </div>
+</aside>
 
 <style is:global>
   .journey-figure { margin: 1.5rem 0; }
@@ -39,182 +55,238 @@ const raw = fs
     color: var(--sl-color-gray-3, #666);
     text-align: center;
   }
-  .journey-map .journey-svg {
+  .journey-map svg {
     width: 100%;
     height: auto;
     display: block;
   }
-  .journey-svg a { cursor: pointer; }
-  .journey-svg a:hover rect { filter: brightness(0.95); }
-  .journey-svg a:focus-visible rect { outline: 3px solid #cc3206; }
+  .journey-map svg a { cursor: pointer; }
+  .journey-map svg a:hover rect { filter: brightness(0.95); }
+  .journey-map svg a:focus-visible rect { outline: 3px solid var(--ar-tertiary); }
 
-  /* Right-sidebar article panel — injected on Read: click. */
-  .journey-rs-panel {
+  /* ---- Sheet: mobile-first (bottom-up) ---- */
+  .js-sheet-scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    pointer-events: none;
+    z-index: 100;
+    transition: background 0.3s var(--ar-ease, ease-in-out);
+  }
+  .js-sheet-scrim.open {
+    background: rgba(35, 1, 2, 0.38);
+    pointer-events: auto;
+    cursor: pointer;
+  }
+  .js-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 82vh;
+    background: var(--ar-paper, #fff);
+    border-top: 3px solid var(--ar-secondary, #c49a6e);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    transform: translateY(100%);
+    transition: transform 0.35s var(--ar-ease, ease-in-out);
+    z-index: 101;
+    box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.35);
+    padding-bottom: env(safe-area-inset-bottom, 0);
     display: flex;
     flex-direction: column;
-    height: calc(100vh - var(--sl-nav-height, 4rem) - 1rem);
-    border: 1px solid var(--sl-color-hairline, #c49a6e);
-    border-radius: 4px;
+  }
+  .js-sheet[hidden] { display: none; }
+  .js-sheet.open { transform: translateY(0); }
+  .js-sheet__handle {
+    width: 48px;
+    height: 4px;
+    background: var(--ar-secondary, #c49a6e);
+    border-radius: 2px;
+    margin: 0.65rem auto 0;
+    flex: 0 0 auto;
+  }
+  .js-sheet__head {
+    position: relative;
+    padding: 0.6rem 3.25rem 0.7rem 1.25rem;
+    border-bottom: 1px solid rgba(196, 154, 110, 0.4);
+    flex: 0 0 auto;
+  }
+  .js-sheet__eyebrow {
+    display: block;
+    font-family: var(--ar-font-caps, 'Oswald', Impact, sans-serif);
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ar-secondary, #c49a6e);
+    margin: 0 0 0.1rem;
+  }
+  .js-sheet__title {
+    font-family: var(--ar-font-display, 'Cinzel Decorative', serif);
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1.2;
+    color: var(--ar-primary, #430607);
+    margin: 0;
+    /* Wrap long titles to at most 2 lines instead of a single
+       ellipsed line — the old absolute-positioned "Open full" link
+       was colliding with ellipses on long titles. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    background: #fff;
   }
-  .journey-rs-panel > header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.6rem;
-    background: #430607;
-    color: #fde8e8;
-    font-family: 'EB Garamond', Georgia, serif;
-    font-size: 0.85rem;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-  }
-  .journey-rs-panel .rs-title {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .journey-rs-panel .rs-pop {
-    color: #fde8e8;
-    text-decoration: underline;
+  .js-sheet__pop {
+    display: inline-block;
+    margin-top: 0.3rem;
+    font-family: var(--ar-font-body, 'EB Garamond', serif);
     font-size: 0.75rem;
-    white-space: nowrap;
+    color: var(--ar-tertiary, #cc3206);
+    text-decoration: underline;
   }
-  .journey-rs-panel .rs-close {
-    background: transparent;
-    border: 0;
-    color: #fde8e8;
-    font-size: 1.4rem;
+  .js-sheet__pop:hover { color: var(--ar-tertiary-hover, #e93807); }
+  .js-sheet__close {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.6rem;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    background: var(--ar-paper, #fff);
+    border: 1.5px solid var(--ar-secondary, #c49a6e);
+    border-radius: 999px;
+    color: var(--ar-primary, #430607);
+    font-size: 1.2rem;
     line-height: 1;
+    padding: 0;
     cursor: pointer;
-    padding: 0 0.25rem;
+    transition: background 0.2s, transform 0.2s;
   }
-  .journey-rs-panel .rs-body {
-    flex: 1;
+  .js-sheet__close:hover {
+    background: var(--ar-primary, #430607);
+    color: var(--ar-secondary-cream, #f8f2ed);
+  }
+  .js-sheet__close:active { transform: scale(0.92); }
+  .js-sheet__body {
+    padding: 1rem 1.25rem 1.25rem;
     overflow-y: auto;
-    padding: 1rem 1.25rem;
+    -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto;
+    font-size: 17px;
+    line-height: 1.55;
   }
-  .journey-rs-panel .rs-body :is(h1, h2, h3, h4, h5, h6):first-child {
-    margin-top: 0;
+  .js-sheet__body :is(p, li, blockquote) { font-size: 17px; }
+  .js-sheet__body :is(h1, h2, h3, h4, h5, h6):first-child { margin-top: 0; }
+  .js-sheet__body h1 { font-size: 1.75rem; line-height: 1.15; }
+  .js-sheet__body h2 { font-size: 1.35rem; line-height: 1.2; }
+  .js-sheet__body h3 { font-size: 1.15rem; }
+  .js-sheet__body h4 { font-size: 1.05rem; }
+  .js-sheet__loading { color: var(--ar-secondary, #c49a6e); font-style: italic; }
+  .js-sheet__error { color: var(--ar-tertiary, #cc3206); }
+  .js-sheet__body .rs-flash {
+    animation: rs-flash-fade 1.8s ease-out;
+    border-radius: 2px;
   }
-  .journey-rs-panel .rs-loading,
-  .journey-rs-panel .rs-error {
-    padding: 1rem 1.25rem;
-    color: var(--sl-color-gray-3, #666);
-    font-style: italic;
-  }
-  .journey-rs-panel .rs-error { color: #cc3206; font-style: normal; }
-  /* Transient highlight on the paragraph we scrolled to. */
-  .journey-rs-panel .rs-body :target {
-    background: #fff6c2;
-    transition: background 1.5s ease-out;
+  @keyframes rs-flash-fade {
+    from { background-color: #fff3b0; }
+    to   { background-color: transparent; }
   }
 
-  /* Width tiers — map stays usable, article gets real line length. */
-  @media (min-width: 1024px) {
-    body.journey-preview-open .right-sidebar-container,
-    body.journey-preview-open .right-sidebar {
-      width: 22rem;
-      max-width: 22rem;
+  /* Lock body scroll while sheet is open on mobile. */
+  body.journey-preview-open { overflow: hidden; }
+
+  /* ---- Sheet: desktop (right-side rail) ---- */
+  @media (min-width: 900px) {
+    body.journey-preview-open { overflow: auto; } /* no lock on desktop */
+    .js-sheet-scrim { display: none !important; }
+    .js-sheet {
+      top: var(--sl-nav-height, 4rem);
+      bottom: 0;
+      left: auto;
+      right: 0;
+      width: 26rem;
+      max-height: none;
+      height: calc(100vh - var(--sl-nav-height, 4rem));
+      transform: translateX(100%);
+      transition: transform 0.3s var(--ar-ease, ease-in-out);
+      border-top: none;
+      border-left: 1px solid var(--ar-secondary, #c49a6e);
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      box-shadow: -4px 0 30px rgba(0, 0, 0, 0.22);
+      padding-bottom: 0;
     }
+    .js-sheet.open { transform: translateX(0); }
+    .js-sheet__handle { display: none; }
+    /* The sheet floats over the map — main content keeps its full
+       width so the flowchart doesn't reflow on open/close. The right
+       edge of the map is covered while the sheet is up; clicking
+       anywhere on the map dismisses the sheet. */
   }
   @media (min-width: 1280px) {
-    body.journey-preview-open .right-sidebar-container,
-    body.journey-preview-open .right-sidebar {
-      width: 28rem;
-      max-width: 28rem;
-    }
+    .js-sheet { width: 30rem; }
   }
   @media (min-width: 1600px) {
-    body.journey-preview-open .right-sidebar-container,
-    body.journey-preview-open .right-sidebar {
-      width: 34rem;
-      max-width: 34rem;
-    }
+    .js-sheet { width: 36rem; }
   }
 </style>
 
 <script>
-  const DESKTOP_MIN = 1024;
-  const CACHE = new Map<string, string>(); // url (no hash) → fragment HTML
-  let originalChildren: Element[] | null = null;
-  let panel: HTMLElement | null = null;
-  let manifest: Record<string, { title?: string; fragment: string }> | null = null;
+  // pathname (no hash) → { title, body }
+  const CACHE = new Map<string, { title: string; body: string }>();
 
-  function getHost(): HTMLElement | null {
-    return document.querySelector<HTMLElement>('.right-sidebar-panel .sl-container');
+  function $<E extends Element = HTMLElement>(sel: string, root: ParentNode = document): E | null {
+    return root.querySelector<E>(sel);
   }
 
-  async function getManifest() {
-    if (manifest) return manifest;
-    try {
-      const res = await fetch('/journey-fragments.json');
-      if (res.ok) manifest = await res.json();
-    } catch {}
-    return manifest;
+  function fragmentUrlFor(pathname: string): string {
+    const p = pathname.endsWith('/') ? pathname : pathname + '/';
+    return p + 'fragment/';
   }
 
-  async function fetchFragment(pathname: string): Promise<string> {
-    if (CACHE.has(pathname)) return CACHE.get(pathname)!;
-    const m = await getManifest();
-    const fragmentUrl = m?.[pathname]?.fragment ?? pathname + 'fragment';
-    const res = await fetch(fragmentUrl);
+  async function fetchFragment(pathname: string) {
+    const cached = CACHE.get(pathname);
+    if (cached) return cached;
+    const res = await fetch(fragmentUrlFor(pathname));
     if (!res.ok) throw new Error(`fragment fetch failed: ${res.status}`);
-    const text = await res.text();
-    CACHE.set(pathname, text);
-    return text;
+    const html = await res.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const title = doc.querySelector('h1')?.textContent?.trim() || 'Article preview';
+    const body = doc.body.innerHTML;
+    const entry = { title, body };
+    CACHE.set(pathname, entry);
+    return entry;
   }
 
-  function titleFor(pathname: string): string {
-    return manifest?.[pathname]?.title ?? 'Article preview';
-  }
+  async function openSheet(pathname: string, hash: string) {
+    const sheet = $<HTMLElement>('.js-sheet');
+    const scrim = $<HTMLElement>('.js-sheet-scrim');
+    const body = $<HTMLElement>('.js-sheet__body');
+    const titleEl = $<HTMLElement>('.js-sheet__title');
+    const pop = $<HTMLAnchorElement>('.js-sheet__pop');
+    if (!sheet || !scrim || !body || !titleEl || !pop) return;
 
-  function ensurePanel(): HTMLElement | null {
-    if (panel) return panel;
-    const host = getHost();
-    if (!host) return null;
-    originalChildren = Array.from(host.children) as Element[];
-    for (const el of originalChildren) (el as HTMLElement).style.display = 'none';
-    panel = document.createElement('div');
-    panel.className = 'journey-rs-panel sl-markdown-content';
-    panel.innerHTML = `
-      <header>
-        <span class="rs-title">Article preview</span>
-        <a class="rs-pop" target="_blank" rel="noopener" href="#">Open full →</a>
-        <button class="rs-close" type="button" aria-label="Close preview">&times;</button>
-      </header>
-      <div class="rs-body"><p class="rs-loading">Loading…</p></div>
-    `;
-    host.append(panel);
+    sheet.hidden = false;
+    sheet.setAttribute('aria-hidden', 'false');
+    // force reflow so the transform transition runs
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    sheet.offsetWidth;
+    sheet.classList.add('open');
+    scrim.classList.add('open');
     document.body.classList.add('journey-preview-open');
-    return panel;
-  }
-
-  async function openPreview(pathname: string, hash: string) {
-    const p = ensurePanel();
-    if (!p) return;
-    const body = p.querySelector<HTMLElement>('.rs-body');
-    const titleEl = p.querySelector<HTMLElement>('.rs-title');
-    const pop = p.querySelector<HTMLAnchorElement>('.rs-pop');
-    if (!body || !titleEl || !pop) return;
 
     pop.href = pathname + (hash ? '#' + hash : '');
-    body.innerHTML = `<p class="rs-loading">Loading…</p>`;
+    body.innerHTML = `<p class="js-sheet__loading">Loading…</p>`;
     try {
-      await getManifest();
-      titleEl.textContent = titleFor(pathname);
-      const html = await fetchFragment(pathname);
+      const { title, body: html } = await fetchFragment(pathname);
+      titleEl.textContent = title;
       body.innerHTML = html;
-      // Rewrite in-article hash links to scroll within the panel,
-      // and open article-to-article links in a new tab (user chose
-      // this article as their reading focus; opening another inside
-      // the panel would be disorienting).
+      // Route internal links: anchors within the fetched article stay
+      // inside the sheet; cross-article links open full-page.
       body.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) => {
         const href = a.getAttribute('href') || '';
-        if (href.startsWith('#')) return; // hash links handled below
+        if (href.startsWith('#')) return;
         if (href.startsWith('/') && !href.startsWith(pathname)) {
           a.target = '_blank';
           a.rel = 'noopener';
@@ -224,77 +296,89 @@ const raw = fs
       if (hash) {
         const target = body.querySelector<HTMLElement>(`#${CSS.escape(hash)}`);
         if (target) {
-          body.scrollTop = target.offsetTop - body.offsetTop - 8;
-          // Fire :target highlight by briefly moving the URL hash, then
-          // taking it back — without causing the parent page to scroll.
-          target.setAttribute('id', hash);
-          target.scrollIntoView({ block: 'nearest' });
+          const t = target.getBoundingClientRect().top;
+          const p = body.getBoundingClientRect().top;
+          body.scrollTop += t - p - 12;
+          target.classList.add('rs-flash');
+          window.setTimeout(() => target.classList.remove('rs-flash'), 1800);
         }
       }
-    } catch (err) {
-      body.innerHTML = `<p class="rs-error">Couldn't load the article preview. <a href="${pathname}">Open it full-page instead →</a></p>`;
+    } catch {
+      body.innerHTML = `<p class="js-sheet__error">Couldn't load the article preview. <a href="${pathname}">Open it full-page →</a></p>`;
     }
   }
 
-  function closePreview() {
-    if (panel) {
-      panel.remove();
-      panel = null;
-    }
-    if (originalChildren) {
-      for (const el of originalChildren) (el as HTMLElement).style.display = '';
-      originalChildren = null;
-    }
+  function closeSheet() {
+    const sheet = $<HTMLElement>('.js-sheet');
+    const scrim = $<HTMLElement>('.js-sheet-scrim');
+    if (!sheet || !scrim) return;
+    sheet.classList.remove('open');
+    scrim.classList.remove('open');
+    sheet.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('journey-preview-open');
+    window.setTimeout(() => {
+      sheet.hidden = true;
+    }, 400);
   }
 
-  // Main click delegation.
   document.addEventListener('click', (ev) => {
-    const target = ev.target as Element | null;
-    if (!target) return;
+    const t = ev.target as Element | null;
+    if (!t) return;
 
-    // Close button inside the panel.
-    if (target.closest('.rs-close')) {
-      closePreview();
+    // Close button or scrim click → close.
+    if (t.closest('.js-sheet__close') || t.classList.contains('js-sheet-scrim')) {
+      closeSheet();
       return;
     }
 
-    // Hash-only links INSIDE the panel: scroll the panel body, not
-    // the parent page.
-    const panelAnchor = target.closest<HTMLAnchorElement>('.journey-rs-panel .rs-body a[href^="#"]');
-    if (panelAnchor) {
+    // Hash-only links inside the sheet body → scroll the sheet body.
+    const innerHashAnchor = t.closest<HTMLAnchorElement>(
+      '.js-sheet__body a[href^="#"]',
+    );
+    if (innerHashAnchor) {
       ev.preventDefault();
-      const hash = panelAnchor.getAttribute('href')!.slice(1);
-      const body = panelAnchor.closest<HTMLElement>('.rs-body');
+      const hash = innerHashAnchor.getAttribute('href')!.slice(1);
+      const body = innerHashAnchor.closest<HTMLElement>('.js-sheet__body');
       const dest = body?.querySelector<HTMLElement>(`#${CSS.escape(hash)}`);
-      if (body && dest) body.scrollTop = dest.offsetTop - body.offsetTop - 8;
+      if (body && dest) {
+        const a = dest.getBoundingClientRect().top;
+        const b = body.getBoundingClientRect().top;
+        body.scrollTop += a - b - 12;
+      }
       return;
     }
 
-    // Read: nodes on the map.
-    if (window.innerWidth < DESKTOP_MIN) return;
     if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button !== 0) return;
-    const anchor = target.closest<HTMLAnchorElement>('.journey-svg a');
-    if (!anchor) return;
-    const href = anchor.getAttribute('href');
-    if (!href) return;
-    const [pathname, hash = ''] = href.split('#');
-    ev.preventDefault();
-    openPreview(pathname, hash);
+    const anchor = t.closest<HTMLAnchorElement>('.journey-map svg a');
+    if (anchor) {
+      // Read: node on the map → open / switch the sheet.
+      const href = anchor.getAttribute('href');
+      if (!href) return;
+      const [pathname, hash = ''] = href.split('#');
+      ev.preventDefault();
+      openSheet(pathname, hash);
+      return;
+    }
+
+    // Click on the map (or anywhere outside the sheet) while the sheet
+    // is open → dismiss. Lets the reader tap the same map a second
+    // time to close the passage panel.
+    const sheet = $<HTMLElement>('.js-sheet');
+    if (sheet?.classList.contains('open') && !t.closest('.js-sheet')) {
+      closeSheet();
+    }
   });
 
-  // Esc closes the panel.
   document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape' && panel) closePreview();
+    if (ev.key === 'Escape') closeSheet();
   });
 
-  // Prefetch the manifest + hovered article's fragment for snappy first click.
+  // Prefetch on hover — negligible cost, snappy first open.
   document.addEventListener(
     'pointerover',
     (ev) => {
-      if (window.innerWidth < DESKTOP_MIN) return;
-      const target = ev.target as Element | null;
-      const anchor = target?.closest<HTMLAnchorElement>('.journey-svg a');
+      const t = ev.target as Element | null;
+      const anchor = t?.closest<HTMLAnchorElement>('.journey-map svg a');
       if (!anchor) return;
       const href = anchor.getAttribute('href');
       if (!href) return;

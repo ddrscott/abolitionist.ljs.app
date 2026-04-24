@@ -43,27 +43,30 @@
   --ar-font-caps:        "Oswald", Impact, sans-serif;
 
   /* ------- Typography: fluid scale ---------------------------------- */
-  --ar-h1:       clamp(2.163rem, 1.5rem + 2.9vw, 3.85rem);
-  --ar-h2:       clamp(1.313rem, 1.1rem + 1.0vw, 2rem);
-  --ar-h3:       clamp(1.5rem, 1.25rem + 1.1vw, 2.166rem);
-  --ar-h4:       clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
-  --ar-h5:       clamp(0.813rem, 0.75rem + 0.3vw, 1.219rem);
-  --ar-h6:       clamp(0.75rem, 0.71rem + 0.2vw, 0.913rem);
-  --ar-text-body: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
-  --ar-text-l:   clamp(1.35rem, 1.15rem + 0.8vw, 1.831rem);
+  /* Scale tuned to match the Norman Statement reader on cdn.ljs.app —
+     slightly smaller than the canonical AR tokens because this is a
+     reading app, not a marketing surface. */
+  --ar-h1:       clamp(2rem, 6vw + 1rem, 3.5rem);            /* 32 → 56 */
+  --ar-h2:       clamp(1.75rem, 4.5vw + 1rem, 2.75rem);      /* 28 → 44 */
+  --ar-h3:       clamp(1.35rem, 1.2rem + 0.8vw, 1.85rem);    /* 21.6 → 29.6 */
+  --ar-h4:       clamp(1.15rem, 1.05rem + 0.5vw, 1.45rem);   /* 18.4 → 23.2 */
+  --ar-h5:       clamp(0.95rem, 0.9rem + 0.2vw, 1.1rem);
+  --ar-h6:       clamp(0.85rem, 0.8rem + 0.2vw, 0.95rem);
+  --ar-text-body: clamp(1.0625rem, 0.5vw + 0.95rem, 1.1875rem); /* 17 → 19 */
+  --ar-text-l:   clamp(1.2rem, 1.1rem + 0.5vw, 1.45rem);
 
   /* ------- Typography: rules ---------------------------------------- */
   --ar-weight-heading: 400;
   --ar-weight-body:    400;
   --ar-weight-bold:    700;
-  --ar-leading-body:   1.265;
+  --ar-leading-body:   1.55;  /* Norman reader value; paragraphs breathe */
   --ar-leading-heading:1.2;
   --ar-tracking:       normal;
   --ar-tracking-cta:   0.5px;
 
   /* ------- Layout --------------------------------------------------- */
   --ar-container-max: 85.375rem;
-  --ar-reading-max:   72ch;
+  --ar-reading-max:   58ch;  /* EB Garamond's `ch` runs ~10% wide; 58ch renders ~65 chars */
   --ar-section-px:    clamp(0.9375rem, 2.485vw + 0.378rem, 2.5rem);
   --ar-section-py:    clamp(1.55rem,   1.25vw  + 1.27rem,  2.33rem);
   --ar-container-gap: clamp(1.833rem,  1.26vw  + 1.55rem,  2.625rem);

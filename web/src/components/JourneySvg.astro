@@ -2,31 +2,100 @@
 /**
  * Journey map + article preview sheet.
  *
- * On MOBILE (<900px), the sheet slides up from the bottom like a
- * Google-Maps / Norman-Statement bottom-sheet, max 80vh.
- * On DESKTOP (≥900px), the sheet snaps to the right side of the
- * viewport as a sticky rail, 420px wide, full height.
+ * The flowchart is rendered as an <img> referencing
+ * /journey-map.svg with absolutely-positioned <a> overlays for
+ * each linked Read: node. Inline SVG was being color-inverted by
+ * browsers running force-dark modes (Vivaldi's "Force Dark Pages",
+ * Chrome's auto-dark) — they double-invert <img> elements back to
+ * their original colors but leave inline SVG inverted along with
+ * the page. The <img> approach keeps the diagram readable in those
+ * environments without requiring the user to disable a browser-
+ * level accessibility option.
  *
- * Clicking a Read: node on the map opens the sheet with the
- * matching article body fetched from /pages/<slug>/fragment/. The
- * link can carry a `#hash` that scrolls the sheet body to the
- * targeted section. Esc / close button / scrim dismiss.
+ * On MOBILE (<900px), the sheet slides up from the bottom.
+ * On DESKTOP (≥900px), the sheet snaps to the right side.
  *
- * The panel deliberately does NOT hijack Starlight's right
- * sidebar — that approach pushed Starlight's layout around and
- * competed with the ToC. This is a standalone overlay/rail.
+ * Clicking a Read: overlay opens the sheet; clicking the map
+ * anywhere else (or the scrim) dismisses it.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
-const svgPath = path.resolve(here, '../../public/journey-map.svg');
-const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
+const excaliPath = path.resolve(here, '../../public/journey-map.excalidraw');
+
+const PAD = 40; // must match scripts/generate-journey-svg.mjs
+const doc = JSON.parse(fs.readFileSync(excaliPath, 'utf8'));
+const elements = doc.elements.filter((e: any) => !e.isDeleted);
+
+// Recompute the SVG viewBox the same way the generator does so the
+// overlay's percentage coords land on the right pixels.
+let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+for (const el of elements) {
+  if (el.type === 'arrow') {
+    const xs = el.points.map((p: number[]) => el.x + p[0]);
+    const ys = el.points.map((p: number[]) => el.y + p[1]);
+    minX = Math.min(minX, ...xs);
+    minY = Math.min(minY, ...ys);
+    maxX = Math.max(maxX, ...xs);
+    maxY = Math.max(maxY, ...ys);
+  } else {
+    minX = Math.min(minX, el.x);
+    minY = Math.min(minY, el.y);
+    maxX = Math.max(maxX, el.x + el.width);
+    maxY = Math.max(maxY, el.y + el.height);
+  }
+}
+minX -= PAD; minY -= PAD; maxX += PAD; maxY += PAD;
+const vbW = maxX - minX;
+const vbH = maxY - minY;
+
+interface LinkOverlay {
+  href: string;
+  left: number;
+  top: number;
+  w: number;
+  h: number;
+  label: string;
+}
+const byId = new Map<string, any>(elements.map((e: any) => [e.id, e]));
+const links: LinkOverlay[] = elements
+  .filter((e: any) => e.link && (e.type === 'rectangle' || e.type === 'diamond'))
+  .map((el: any) => {
+    const boundText = (el.boundElements || []).find((b: any) => b.type === 'text');
+    const labelText = boundText ? (byId.get(boundText.id)?.text || '') : '';
+    return {
+      href: el.link as string,
+      left: ((el.x - minX) / vbW) * 100,
+      top: ((el.y - minY) / vbH) * 100,
+      w: (el.width / vbW) * 100,
+      h: (el.height / vbH) * 100,
+      label: labelText.replace(/\n/g, ' ').trim(),
+    };
+  });
 ---
 
 <figure class="journey-figure">
-  <div class="journey-map" set:html={raw} />
+  <div class="journey-map" style={`aspect-ratio: ${vbW} / ${vbH};`}>
+    <img
+      class="journey-map-img"
+      src="/journey-map.svg"
+      alt="Reader Journey flowchart"
+      loading="lazy"
+      decoding="async"
+    />
+    <div class="journey-map-overlay" aria-hidden="false">
+      {links.map((l) => (
+        <a
+          class="journey-link"
+          href={l.href}
+          aria-label={l.label}
+          style={`left:${l.left.toFixed(3)}%;top:${l.top.toFixed(3)}%;width:${l.w.toFixed(3)}%;height:${l.h.toFixed(3)}%;`}
+        ></a>
+      ))}
+    </div>
+  </div>
   <figcaption>
     Click any &ldquo;Read:&rdquo; box to open that article beside the
     map &mdash; from the right on desktop, from the bottom on phones.
@@ -55,29 +124,38 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
     color: var(--sl-color-gray-3, #666);
     text-align: center;
   }
-  /* The SVG itself is transparent; pin a paper background and force
-     a light color-scheme on the wrapper so the flowchart renders the
-     same in browsers running auto-dark-mode (Chrome's "Auto Dark
-     Mode for Web Contents" flag, Edge's "force dark", iOS dark
-     accessibility shading, etc.). The fills on the rectangles and
-     diamonds are explicit colors but rely on a light surface
-     behind them. */
+
   .journey-map {
+    position: relative;
     background: var(--ar-paper, #fff);
-    color-scheme: light;
-    forced-color-adjust: none;
     border: 1px solid var(--ar-secondary, #c49a6e);
     border-radius: 4px;
     padding: 0.5rem;
+    color-scheme: only light;
   }
-  .journey-map svg {
+  .journey-map-img {
+    display: block;
     width: 100%;
     height: auto;
-    display: block;
   }
-  .journey-map svg a { cursor: pointer; }
-  .journey-map svg a:hover rect { filter: brightness(0.95); }
-  .journey-map svg a:focus-visible rect { outline: 3px solid var(--ar-tertiary); }
+  .journey-map-overlay {
+    position: absolute;
+    inset: 0.5rem; /* matches .journey-map padding so overlay aligns with image */
+    pointer-events: none;
+  }
+  .journey-link {
+    position: absolute;
+    display: block;
+    pointer-events: auto;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s ease, outline 0.15s ease;
+  }
+  .journey-link:hover { background: rgba(204, 50, 6, 0.07); }
+  .journey-link:focus-visible {
+    outline: 3px solid var(--ar-tertiary, #cc3206);
+    outline-offset: 2px;
+  }
 
   /* ---- Sheet: mobile-first (bottom-up) ---- */
   .js-sheet-scrim {
@@ -143,9 +221,6 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
     line-height: 1.2;
     color: var(--ar-primary, #430607);
     margin: 0;
-    /* Wrap long titles to at most 2 lines instead of a single
-       ellipsed line — the old absolute-positioned "Open full" link
-       was colliding with ellipses on long titles. */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -208,12 +283,11 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
     to   { background-color: transparent; }
   }
 
-  /* Lock body scroll while sheet is open on mobile. */
   body.journey-preview-open { overflow: hidden; }
 
   /* ---- Sheet: desktop (right-side rail) ---- */
   @media (min-width: 900px) {
-    body.journey-preview-open { overflow: auto; } /* no lock on desktop */
+    body.journey-preview-open { overflow: auto; }
     .js-sheet-scrim { display: none !important; }
     .js-sheet {
       top: var(--sl-nav-height, 4rem);
@@ -234,10 +308,6 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
     }
     .js-sheet.open { transform: translateX(0); }
     .js-sheet__handle { display: none; }
-    /* The sheet floats over the map — main content keeps its full
-       width so the flowchart doesn't reflow on open/close. The right
-       edge of the map is covered while the sheet is up; clicking
-       anywhere on the map dismisses the sheet. */
   }
   @media (min-width: 1280px) {
     .js-sheet { width: 30rem; }
@@ -248,7 +318,6 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
 </style>
 
 <script>
-  // pathname (no hash) → { title, body }
   const CACHE = new Map<string, { title: string; body: string }>();
 
   function $<E extends Element = HTMLElement>(sel: string, root: ParentNode = document): E | null {
@@ -284,7 +353,6 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
 
     sheet.hidden = false;
     sheet.setAttribute('aria-hidden', 'false');
-    // force reflow so the transform transition runs
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     sheet.offsetWidth;
     sheet.classList.add('open');
@@ -297,8 +365,6 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
       const { title, body: html } = await fetchFragment(pathname);
       titleEl.textContent = title;
       body.innerHTML = html;
-      // Route internal links: anchors within the fetched article stay
-      // inside the sheet; cross-article links open full-page.
       body.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) => {
         const href = a.getAttribute('href') || '';
         if (href.startsWith('#')) return;
@@ -331,22 +397,18 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
     scrim.classList.remove('open');
     sheet.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('journey-preview-open');
-    window.setTimeout(() => {
-      sheet.hidden = true;
-    }, 400);
+    window.setTimeout(() => { sheet.hidden = true; }, 400);
   }
 
   document.addEventListener('click', (ev) => {
     const t = ev.target as Element | null;
     if (!t) return;
 
-    // Close button or scrim click → close.
     if (t.closest('.js-sheet__close') || t.classList.contains('js-sheet-scrim')) {
       closeSheet();
       return;
     }
 
-    // Hash-only links inside the sheet body → scroll the sheet body.
     const innerHashAnchor = t.closest<HTMLAnchorElement>(
       '.js-sheet__body a[href^="#"]',
     );
@@ -364,9 +426,8 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
     }
 
     if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button !== 0) return;
-    const anchor = t.closest<HTMLAnchorElement>('.journey-map svg a');
+    const anchor = t.closest<HTMLAnchorElement>('.journey-map a.journey-link');
     if (anchor) {
-      // Read: node on the map → open / switch the sheet.
       const href = anchor.getAttribute('href');
       if (!href) return;
       const [pathname, hash = ''] = href.split('#');
@@ -375,9 +436,7 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
       return;
     }
 
-    // Click on the map (or anywhere outside the sheet) while the sheet
-    // is open → dismiss. Lets the reader tap the same map a second
-    // time to close the passage panel.
+    // Click on the map (or anywhere outside the sheet) while open → dismiss.
     const sheet = $<HTMLElement>('.js-sheet');
     if (sheet?.classList.contains('open') && !t.closest('.js-sheet')) {
       closeSheet();
@@ -388,12 +447,12 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
     if (ev.key === 'Escape') closeSheet();
   });
 
-  // Prefetch on hover — negligible cost, snappy first open.
+  // Prefetch fragment on hover for snappy first open.
   document.addEventListener(
     'pointerover',
     (ev) => {
       const t = ev.target as Element | null;
-      const anchor = t?.closest<HTMLAnchorElement>('.journey-map svg a');
+      const anchor = t?.closest<HTMLAnchorElement>('.journey-map a.journey-link');
       if (!anchor) return;
       const href = anchor.getAttribute('href');
       if (!href) return;

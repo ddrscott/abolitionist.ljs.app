@@ -113,5 +113,5 @@ against your own mirrors of the two sites.
 
 Ask the Abolitionist is an independent project produced by
 [askscottpierce.com](https://askscottpierce.com) and
-[Left Join Studio](https://leftjoinstudio.com). It is not affiliated with or
-endorsed by the two source publications.
+[Left Join Studio](https://leftjoinstudio.com). It is not a product of,
+nor endorsed by, the two source publications.

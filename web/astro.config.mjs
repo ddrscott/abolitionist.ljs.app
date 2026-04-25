@@ -27,7 +27,7 @@ export default defineConfig({
     starlight({
       title: 'Ask the Abolitionist (Beta)',
       description:
-        'Beta. Straight answers on abortion from the abolitionist movement. An independent project — not affiliated with abolitionistsrising.com or freethestates.org, whose writings it draws from.',
+        'Beta. Straight answers on abortion from the abolitionist movement. An independent project — not a product of abolitionistsrising.com or freethestates.org, whose writings it draws from.',
       // Self-hosted Plausible at plausible.ljs.app — needs `data-api` since
       // the default script ships to plausible.io. Injects into every
       // Starlight-rendered route; the custom home/draw pages wire it up

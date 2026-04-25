@@ -7,10 +7,24 @@
 
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700&family=Oswald:wght@400;500&display=swap');
 
-/* Force light theme — the AR aesthetic is black-on-paper. Dark mode
-   would invert the palette into something that isn't AR. */
-:root {
-  color-scheme: light;
+/* Force light theme — the AR aesthetic is black-on-paper. The
+   `only light` keyword is stronger than plain `light`: it tells the
+   browser this page does NOT have a dark variant, so user-agent
+   auto-darkening (Chrome's "Auto Dark Mode for Web Contents",
+   Edge's "force dark", Safari's website-tinting on macOS) should
+   not repaint it. Reinforce on html and body so a deeper element
+   that asks for `dark` can't override. */
+:root,
+html,
+body {
+  color-scheme: only light;
+  background: var(--ar-paper, #fff);
+}
+html[data-theme='dark'] {
+  /* Starlight may still flip this attribute via its own toggle, but
+     no toggle is exposed and our overrides below force light tokens
+     regardless of which value sits on data-theme. */
+  color-scheme: only light;
 }
 
 /* Give articles more horizontal breathing room on desktop. Default

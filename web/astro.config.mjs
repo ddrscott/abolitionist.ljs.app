@@ -34,6 +34,14 @@ export default defineConfig({
       // in their own <head>.
       head: [
         {
+          tag: 'meta',
+          attrs: { name: 'color-scheme', content: 'only light' },
+        },
+        {
+          tag: 'meta',
+          attrs: { name: 'theme-color', content: '#430607' },
+        },
+        {
           tag: 'script',
           attrs: {
             defer: true,

@@ -125,12 +125,19 @@ const links: LinkOverlay[] = elements
     text-align: center;
   }
 
+  /* No padding here — the overlay percentages assume that the
+     overlay box and the image box are identical. Any padding
+     creates a content area larger than the image (height grows
+     more than width because the SVG is tall+narrow), and the
+     percentage-positioned overlays drift further down with each
+     successive node. The visual breathing room comes from the
+     <figure>'s margin. */
   .journey-map {
     position: relative;
     background: var(--ar-paper, #fff);
     border: 1px solid var(--ar-secondary, #c49a6e);
     border-radius: 4px;
-    padding: 0.5rem;
+    overflow: hidden; /* keep border-radius from clipping awkwardly */
     color-scheme: only light;
   }
   .journey-map-img {
@@ -140,7 +147,7 @@ const links: LinkOverlay[] = elements
   }
   .journey-map-overlay {
     position: absolute;
-    inset: 0.5rem; /* matches .journey-map padding so overlay aligns with image */
+    inset: 0;
     pointer-events: none;
   }
   .journey-link {

@@ -55,6 +55,21 @@ const raw = fs.readFileSync(svgPath, 'utf8').replace(/^<\?xml[^?]*\?>\s*/, '');
     color: var(--sl-color-gray-3, #666);
     text-align: center;
   }
+  /* The SVG itself is transparent; pin a paper background and force
+     a light color-scheme on the wrapper so the flowchart renders the
+     same in browsers running auto-dark-mode (Chrome's "Auto Dark
+     Mode for Web Contents" flag, Edge's "force dark", iOS dark
+     accessibility shading, etc.). The fills on the rectangles and
+     diamonds are explicit colors but rely on a light surface
+     behind them. */
+  .journey-map {
+    background: var(--ar-paper, #fff);
+    color-scheme: light;
+    forced-color-adjust: none;
+    border: 1px solid var(--ar-secondary, #c49a6e);
+    border-radius: 4px;
+    padding: 0.5rem;
+  }
   .journey-map svg {
     width: 100%;
     height: auto;

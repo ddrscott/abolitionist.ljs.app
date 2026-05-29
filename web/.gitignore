@@ -2,6 +2,10 @@ node_modules
 *.tsbuildinfo
 .env*.local
 
+# Local Worker secrets (e.g. AYC_TOKEN) loaded by `wrangler dev`. NEVER commit.
+.dev.vars
+.dev.vars.*
+
 # Astro build artifacts — generated fresh by `pnpm build` before each deploy.
 dist
 .astro

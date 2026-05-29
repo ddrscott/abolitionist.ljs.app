@@ -6,11 +6,21 @@
  * no instance ID exposed to the browser.
  */
 
-interface Env {
+import { runAsk, type AnswerEnv } from './answer';
+import {
+  handleSessionsCollection,
+  handleSessionItem,
+  handleSharedShell,
+  type SessionEnv,
+  type D1Database,
+} from './sessions';
+
+interface Env extends AnswerEnv, SessionEnv {
   // Bound to the AI Search instance "abolitionist-r2" via wrangler.jsonc.
   // Methods land on the binding directly (no `.get()` needed for instance
-  // bindings).
-  AI_SEARCH: {
+  // bindings). `.search()` (retrieval-only) is declared on AnswerEnv and
+  // drives /api/ask; `.chatCompletions()` here still backs legacy /api/chat.
+  AI_SEARCH: AnswerEnv['AI_SEARCH'] & {
     chatCompletions: (input: {
       messages: { role: string; content: string }[];
       stream?: boolean;
@@ -21,22 +31,9 @@ interface Env {
       };
     }) => Promise<ReadableStream<Uint8Array>>;
   };
-  ASSETS: Fetcher;
-  // D1 database binding for POST /api/feedback writes. Defined in
-  // wrangler.jsonc under `d1_databases`. Schema in
-  // web/migrations/0001_feedback.sql.
-  FEEDBACK_DB: D1Database;
-}
-
-// Minimal D1Database typing — enough for the `.prepare().bind().run()`
-// usage below. The real type lives in @cloudflare/workers-types but we
-// don't install it here.
-interface D1Database {
-  prepare(query: string): D1PreparedStatement;
-}
-interface D1PreparedStatement {
-  bind(...values: unknown[]): D1PreparedStatement;
-  run(): Promise<{ success: boolean; meta?: unknown }>;
+  // `DB` (bound in wrangler.jsonc) holds BOTH the feedback table
+  // (migrations/0001) and the chat `sessions` table (worker/sessions.ts).
+  // ASSETS + DB are declared on SessionEnv.
 }
 
 // The model tends to mirror the register of the retrieved articles, which
@@ -80,6 +77,24 @@ export default {
 
     if (url.pathname === '/api/feedback') {
       return handleFeedback(request, env);
+    }
+
+    if (url.pathname === '/api/ask') {
+      return handleAsk(request, env);
+    }
+
+    // Chat session persistence + sharing.
+    if (url.pathname === '/api/sessions') {
+      return handleSessionsCollection(request, env);
+    }
+    const sessionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/?$/);
+    if (sessionMatch) {
+      return handleSessionItem(request, env, decodeURIComponent(sessionMatch[1]));
+    }
+    // Shared-link shell: /c/<id> renders the SPA with OG tags injected.
+    const shareMatch = url.pathname.match(/^\/c\/([^/]+)\/?$/);
+    if (shareMatch) {
+      return handleSharedShell(request, env, decodeURIComponent(shareMatch[1]));
     }
 
     if (url.pathname !== '/api/chat') {
@@ -140,6 +155,89 @@ export default {
     }
   },
 };
+
+// POST /api/ask — the agentic, multi-resource answer endpoint. Streams an
+// SSE event sequence so the client can "show the work":
+//
+//   event: step    data: {"phase":"writings","status":"searching"}
+//   event: step    data: {"phase":"talks","status":"done","found":6}
+//   event: sources data: [{type:"article",...},{type:"clip",...}]
+//   event: token   data: {"text":"…"}            (synthesis deltas)
+//   event: done    data: {}
+//   event: error   data: {"message":"…"}
+//
+// Body: { question: string } OR { messages: [{role, content}] } (we take
+// the last user message as the question — keeps the existing chat client
+// contract usable).
+async function handleAsk(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return new Response('method not allowed', {
+      status: 405,
+      headers: { allow: 'POST' },
+    });
+  }
+
+  let body: {
+    question?: string;
+    messages?: { role: string; content: string }[];
+  };
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('invalid JSON', { status: 400 });
+  }
+
+  const question =
+    typeof body.question === 'string' && body.question.trim()
+      ? body.question.trim()
+      : [...(body.messages ?? [])]
+          .reverse()
+          .find((m) => m.role === 'user')
+          ?.content?.trim();
+
+  if (!question) {
+    return new Response('missing question', { status: 400 });
+  }
+
+  const encoder = new TextEncoder();
+  const sse = (event: string, data: unknown): Uint8Array =>
+    encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for await (const ev of runAsk(env, question)) {
+          if (ev.type === 'token') {
+            controller.enqueue(sse('token', { text: ev.text }));
+          } else if (ev.type === 'sources') {
+            controller.enqueue(sse('sources', ev.sources));
+          } else if (ev.type === 'done') {
+            controller.enqueue(sse('done', {}));
+          } else if (ev.type === 'error') {
+            controller.enqueue(sse('error', { message: ev.message }));
+          } else {
+            // step events
+            controller.enqueue(sse('step', ev));
+          }
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'answer engine failed';
+        controller.enqueue(sse('error', { message }));
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'content-type': 'text/event-stream',
+      'cache-control': 'no-cache',
+      'x-content-type-options': 'nosniff',
+    },
+  });
+}
 
 // Idempotent schema bootstrap. Runs once per Worker isolate the first
 // time /api/feedback is hit — avoids needing `wrangler d1 execute` to
@@ -206,8 +304,8 @@ async function handleFeedback(request: Request, env: Env): Promise<Response> {
     return new Response('missing answer', { status: 400 });
   }
   try {
-    await ensureSchema(env.FEEDBACK_DB);
-    await env.FEEDBACK_DB.prepare(
+    await ensureSchema(env.DB);
+    await env.DB.prepare(
       'INSERT INTO feedback (rating, question, answer, source) VALUES (?, ?, ?, ?)',
     )
       .bind(rating, question.slice(0, 2000), answer.slice(0, 10_000), source)

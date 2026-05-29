@@ -111,6 +111,16 @@ main {
   max-width: var(--ar-reading-max);
 }
 
+/* Chat-first home: the chat IS the hero. Compact identity above it. */
+.hero--compact h1 {
+  font-size: var(--ar-h2);
+  margin: 0 0 1rem;
+}
+.home-chat .chatbox {
+  /* Let the conversation dominate the first screen. */
+  min-height: min(72vh, 640px);
+}
+
 /* --------- Journey CTA (single "fire" area) ----------------------- */
 
 .journey-cta {
@@ -211,12 +221,121 @@ main > footer code {
   background: var(--ar-paper);
   border-radius: var(--ar-radius-card);
   overflow: hidden;
+  position: relative; /* anchors the history drawer overlay */
 }
+
+/* Top bar: New chat · History · Share */
+.chatbox .chat-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--ar-secondary);
+  background: var(--ar-secondary-cream);
+}
+.chatbox .chat-bar-spacer { flex: 1; }
+.chatbox .chat-bar-btn {
+  font-family: var(--ar-font-caps);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ar-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--ar-radius-btn);
+  cursor: pointer;
+  transition: background var(--ar-duration-fast), border-color var(--ar-duration-fast);
+}
+.chatbox .chat-bar-btn:hover:not(:disabled) {
+  background: var(--ar-paper);
+  border-color: var(--ar-secondary);
+}
+.chatbox .chat-bar-btn.share { color: var(--ar-tertiary); }
+.chatbox .chat-bar-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.chatbox .shared-banner {
+  padding: 0.5rem 1.5rem;
+  background: var(--ar-blush);
+  border-bottom: 1px solid var(--ar-secondary);
+  color: var(--ar-primary);
+  font-size: 0.9rem;
+}
+
 .chatbox .transcript {
-  max-height: 60vh;
+  flex: 1;
+  max-height: 64vh;
   min-height: 220px;
   overflow-y: auto;
   padding: 1.25rem 1.5rem;
+}
+
+/* History drawer — slides over the transcript from the left. */
+.chatbox .history-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--ar-overlay-soft);
+  z-index: 5;
+  display: flex;
+}
+.chatbox .history-drawer {
+  width: min(20rem, 82%);
+  background: var(--ar-paper);
+  border-right: 1px solid var(--ar-secondary);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--ar-shadow-sticky);
+  animation: drawerIn var(--ar-duration-fast) var(--ar-ease);
+}
+@keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+.chatbox .history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--ar-secondary);
+  font-family: var(--ar-font-caps);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ar-secondary);
+}
+.chatbox .history-head button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ar-secondary);
+  font-size: 0.95rem;
+}
+.chatbox .history-empty { padding: 1rem; color: var(--ar-secondary); font-size: 0.9rem; }
+.chatbox .history-drawer ul { gap: 0; overflow-y: auto; }
+.chatbox .history-drawer li { width: 100%; }
+.chatbox .history-drawer li button {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--ar-secondary-cream);
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.chatbox .history-drawer li button:hover { background: var(--ar-secondary-cream); }
+.chatbox .history-drawer li button.active { background: var(--ar-blush); }
+.chatbox .history-title {
+  color: var(--ar-ink);
+  font-size: 0.92rem;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chatbox .history-time {
+  color: var(--ar-secondary);
+  font-size: 0.72rem;
+  font-style: italic;
 }
 .chatbox ul {
   list-style: none;
@@ -331,8 +450,83 @@ main > footer code {
 }
 @keyframes pulse { 50% { opacity: 0.3; } }
 
+/* Agent "show your work" trace — sits above the streamed answer. */
+.chatbox .trace {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0.5rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--ar-secondary-cream);
+  border: 1px solid var(--ar-secondary);
+  border-radius: var(--ar-radius-btn);
+  font-family: var(--ar-font-caps);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--ar-secondary);
+}
+.chatbox .trace li { display: flex; align-items: center; gap: 0.4rem; max-width: 100%; }
+.chatbox .trace .trace-icon { font-size: 0.8rem; line-height: 1; width: 0.9rem; text-align: center; }
+.chatbox .trace .trace-done { color: var(--ar-primary); }
+.chatbox .trace .trace-error { color: var(--ar-tertiary); }
+.chatbox .trace .trace-searching .trace-icon,
+.chatbox .trace .trace-start .trace-icon { animation: pulse 1s infinite; }
+
+/* Source groups under an answer. */
+.chatbox .sources { margin-top: 0.85rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.chatbox .sources-label {
+  font-family: var(--ar-font-caps);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ar-secondary);
+  margin-bottom: 0.35rem;
+}
+
+/* Video-clip cards — deep-link to YouTube at the cited timestamp. */
+.chatbox .clips { display: flex; flex-direction: column; gap: 0.4rem; }
+.chatbox .clip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--ar-secondary);
+  border-radius: var(--ar-radius-btn);
+  background: var(--ar-paper);
+  color: var(--ar-ink);
+  text-decoration: none;
+  transition: background var(--ar-duration-fast), border-color var(--ar-duration-fast);
+}
+.chatbox .clip:hover { background: var(--ar-secondary-cream); border-color: var(--ar-primary); }
+.chatbox .clip-play {
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  background: var(--ar-tertiary);
+  color: var(--ar-paper);
+  font-size: 0.7rem;
+  padding-left: 2px;
+}
+.chatbox .clip-meta { display: flex; flex-direction: column; min-width: 0; }
+.chatbox .clip-title {
+  font-size: 0.92rem;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chatbox .clip-sub {
+  font-size: 0.74rem;
+  color: var(--ar-secondary);
+  font-style: italic;
+}
+
 .chatbox .citations {
-  margin-top: 0.75rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.375rem;
@@ -425,4 +619,637 @@ main > footer code {
   background: var(--ar-primary);
   color: var(--ar-blush);
   border-color: var(--ar-primary);
+}
+
+/* =====================================================================
+   App-shell layout (claude.ai-style): top navbar + left sidebar + chat.
+   Adopts the LAYOUT pattern in the AR light/warm brand (not a dark theme).
+   ===================================================================== */
+
+body.app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* --- top navbar ---------------------------------------------------- */
+.topnav {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  height: 56px;
+  padding: 0 clamp(0.75rem, 2vw, 1.5rem);
+  border-bottom: 1px solid var(--ar-secondary);
+  background: var(--ar-paper);
+}
+.topnav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  font-family: var(--ar-font-display);
+  font-size: 1.15rem;
+  color: var(--ar-primary);
+  white-space: nowrap;
+}
+.topnav-brand img { display: block; border-radius: 4px; }
+.topnav-brand .beta-badge {
+  font-family: var(--ar-font-caps);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ar-blush);
+  background: var(--ar-tertiary);
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+}
+.topnav-links {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  font-family: var(--ar-font-caps);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+.topnav-links a {
+  color: var(--ar-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.topnav-links a:hover { color: var(--ar-tertiary); }
+.topnav-extern { color: var(--ar-secondary) !important; }
+
+/* --- app shell row ------------------------------------------------- */
+.app-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
+
+/* --- sidebar ------------------------------------------------------- */
+.sidebar {
+  flex: none;
+  width: 264px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--ar-secondary);
+  background: var(--ar-secondary-cream);
+  padding: 0.85rem;
+  gap: 0.85rem;
+  min-height: 0;
+}
+.sidebar .new-chat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background: var(--ar-primary);
+  color: var(--ar-blush);
+  border: 2px solid var(--ar-primary);
+  border-radius: var(--ar-radius-btn);
+  font-family: var(--ar-font-body);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background var(--ar-duration-fast);
+}
+.sidebar .new-chat:hover { background: var(--ar-primary-dark); border-color: var(--ar-primary-dark); }
+.sidebar .recents { flex: 1; min-height: 0; overflow-y: auto; }
+.sidebar .recents-label {
+  font-family: var(--ar-font-caps);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ar-secondary);
+  padding: 0.25rem 0.3rem 0.4rem;
+}
+.sidebar .recents-empty { color: var(--ar-secondary); font-size: 0.85rem; padding: 0 0.3rem; }
+.sidebar .recents ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.sidebar .recents li button {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: var(--ar-radius-btn);
+  padding: 0.45rem 0.5rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.sidebar .recents li button:hover { background: var(--ar-blush); }
+.sidebar .recents li button.active { background: var(--ar-blush); box-shadow: inset 2px 0 0 var(--ar-tertiary); }
+.sidebar .recent-title {
+  color: var(--ar-ink);
+  font-size: 0.9rem;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar .recent-time { color: var(--ar-secondary); font-size: 0.7rem; font-style: italic; }
+.sidebar .sidebar-foot {
+  flex: none;
+  border-top: 1px solid var(--ar-secondary);
+  padding-top: 0.7rem;
+  font-size: 0.72rem;
+  color: var(--ar-secondary);
+  line-height: 1.45;
+}
+.sidebar .sidebar-foot code { font-size: 0.7rem; color: var(--ar-primary); }
+.sidebar .sidebar-foot-links { margin-top: 0.4rem; display: flex; gap: 0.4rem; }
+.sidebar .sidebar-foot-links a { color: var(--ar-secondary); }
+
+.sidebar-scrim { display: none; }
+
+/* --- chat panel (overrides the old card styling) ------------------- */
+.app-shell .chatbox {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  border-radius: 0;
+  background: var(--ar-paper);
+  min-height: 0;
+}
+.app-shell .chatbox .chat-bar {
+  background: var(--ar-paper);
+  border-bottom: 1px solid var(--ar-secondary-cream);
+}
+.app-shell .chatbox .icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--ar-primary);
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+.app-shell .chatbox .menu-btn { display: none; } /* shown on mobile only */
+
+.app-shell .chatbox .transcript {
+  flex: 1;
+  max-height: none;
+  min-height: 0;
+}
+.app-shell .chatbox .transcript > ul {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+/* Answer now streams in BELOW the trace + sources, so give it top spacing. */
+.app-shell .chatbox p.answer { margin-top: 0.9rem; }
+
+/* --- empty hero: centered greeting + composer ---------------------- */
+.empty-hero {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+.empty-hero-inner { width: 100%; max-width: 44rem; }
+.empty-hero .greeting {
+  font-family: var(--ar-font-display);
+  font-size: var(--ar-h2);
+  color: var(--ar-primary);
+  text-align: center;
+  margin: 0 0 0.6rem;
+  line-height: 1.15;
+}
+.empty-hero .greeting-sub {
+  text-align: center;
+  color: var(--ar-ink);
+  max-width: 36rem;
+  margin: 0 auto 1.5rem;
+}
+.empty-hero .composer { border-top: none; padding: 0; }
+.empty-hero .sample-questions { justify-content: center; margin-top: 1.1rem; }
+
+/* --- composer (rounded input, send button) ------------------------- */
+.composer {
+  flex: none;
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 1rem;
+  position: relative;
+}
+.app-shell .chatbox > .composer { border-top: 1px solid var(--ar-secondary-cream); }
+.composer form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  border: 2px solid var(--ar-secondary);
+  background: var(--ar-paper);
+  border-radius: 22px;
+  padding: 0.4rem 0.4rem 0.4rem 0.9rem;
+  transition: border-color var(--ar-duration-fast);
+}
+.composer form:focus-within { border-color: var(--ar-primary); }
+.composer textarea {
+  flex: 1;
+  min-height: 28px;
+  max-height: 40vh;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ar-ink);
+  padding: 0.35rem 0;
+  font-size: 1.05rem;
+  font-family: var(--ar-font-body);
+  line-height: 1.4;
+}
+.composer textarea:disabled { opacity: 0.6; }
+.composer button[type='submit'] {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--ar-primary);
+  color: var(--ar-blush);
+  border: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--ar-duration-fast);
+}
+.composer button[type='submit']:hover:not(:disabled) { background: var(--ar-primary-dark); }
+.composer button[type='submit']:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* suggestions float above the composer input */
+.composer .suggestions {
+  border: 1px solid var(--ar-secondary);
+  border-radius: var(--ar-radius-btn);
+  margin-bottom: 0.5rem;
+  max-height: 240px;
+  box-shadow: var(--ar-shadow-sticky);
+}
+
+/* --- responsive: collapse the sidebar into a drawer ---------------- */
+@media (max-width: 860px) {
+  .sidebar {
+    position: absolute;
+    z-index: 20;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(20rem, 84%);
+    transform: translateX(-100%);
+    transition: transform var(--ar-duration-fast) var(--ar-ease);
+    box-shadow: var(--ar-shadow-sticky);
+    pointer-events: none; /* off-screen drawer must not steal taps from the ☰ */
+  }
+  .app-shell.sidebar-open .sidebar { transform: translateX(0); pointer-events: auto; }
+  .app-shell.sidebar-open .sidebar-scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    background: var(--ar-overlay-heavy);
+  }
+  .app-shell .chatbox .menu-btn { display: inline-block; }
+  .topnav { gap: 0.75rem; }
+  .topnav-links { gap: 0.85rem; font-size: 0.74rem; }
+  .topnav-extern { display: none; }
+}
+
+/* Very narrow: keep just the mark so the nav links never overflow. */
+@media (max-width: 520px) {
+  .topnav-brand span:not(.beta-badge) { display: none; }
+}
+
+/* =====================================================================
+   Source detail panel — in-app viewer for an article or a video clip.
+   Right-docked on desktop, bottom sheet on mobile.
+   ===================================================================== */
+.detail-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--ar-overlay-med);
+  display: flex;
+  justify-content: flex-end; /* dock right on desktop */
+}
+.detail-panel {
+  width: min(460px, 100%);
+  height: 100%;
+  background: var(--ar-paper);
+  border-left: 1px solid var(--ar-secondary);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--ar-shadow-sticky);
+  animation: panelInRight var(--ar-duration-fast) var(--ar-ease);
+}
+@keyframes panelInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+.detail-grip { display: none; } /* drag handle — mobile only */
+.detail-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--ar-secondary-cream);
+}
+.detail-kind {
+  font-family: var(--ar-font-caps);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ar-secondary);
+}
+.detail-close {
+  background: none;
+  border: 1px solid var(--ar-secondary);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  color: var(--ar-primary);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+.detail-close:hover { background: var(--ar-secondary-cream); }
+.detail-body { flex: 1; min-height: 0; overflow-y: auto; padding: 1rem 1.25rem; }
+.detail-loading { color: var(--ar-secondary); }
+.detail-foot {
+  flex: none;
+  border-top: 1px solid var(--ar-secondary-cream);
+  padding: 0.75rem 1.25rem;
+}
+.detail-foot a {
+  font-family: var(--ar-font-caps);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--ar-tertiary);
+  text-decoration: none;
+}
+.detail-foot a:hover { text-decoration: underline; }
+
+/* clip detail */
+.clip-embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: var(--ar-radius-btn);
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+.clip-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.clip-detail h3 { font-family: var(--ar-font-display); color: var(--ar-primary); margin: 0 0 0.25rem; font-size: 1.15rem; }
+.clip-detail-meta { color: var(--ar-secondary); font-size: 0.82rem; margin: 0 0 0.85rem; }
+.clip-detail-q { font-weight: var(--ar-weight-bold); margin: 0 0 0.5rem; }
+.clip-detail-a { margin: 0 0 0.85rem; }
+.clip-topics { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.clip-topics span {
+  font-size: 0.72rem;
+  color: var(--ar-secondary);
+  background: var(--ar-secondary-cream);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+}
+
+/* article fragment prose (Starlight styles aren't loaded on the home shell) */
+.detail-article h1 { font-family: var(--ar-font-display); color: var(--ar-primary); font-size: 1.4rem; margin: 0 0 0.75rem; line-height: 1.2; }
+.detail-article h2 { font-family: var(--ar-font-display); color: var(--ar-primary); font-size: 1.15rem; margin: 1.25rem 0 0.5rem; }
+.detail-article h3 { font-size: 1.02rem; margin: 1rem 0 0.4rem; }
+.detail-article p { margin: 0 0 0.85rem; }
+.detail-article a { color: var(--ar-tertiary); }
+.detail-article ul, .detail-article ol { margin: 0 0 0.85rem; padding-left: 1.4rem; }
+.detail-article li { margin: 0.2rem 0; }
+.detail-article blockquote {
+  margin: 0 0 0.85rem;
+  padding-left: 0.9rem;
+  border-left: 3px solid var(--ar-secondary);
+  color: var(--ar-primary-dark);
+  font-style: italic;
+}
+.detail-article img { max-width: 100%; height: auto; border-radius: var(--ar-radius-btn); }
+.detail-article pre { overflow-x: auto; background: var(--ar-secondary-cream); padding: 0.75rem; border-radius: var(--ar-radius-btn); }
+
+/* mobile: bottom sheet */
+@media (max-width: 860px) {
+  .detail-scrim { align-items: flex-end; justify-content: stretch; }
+  .detail-panel {
+    width: 100%;
+    height: auto;
+    max-height: 88dvh;
+    border-left: none;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    animation: panelInUp var(--ar-duration-fast) var(--ar-ease);
+  }
+  @keyframes panelInUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .detail-grip {
+    display: block;
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--ar-secondary);
+    margin: 0.5rem auto 0;
+    flex: none;
+  }
+}
+
+/* =====================================================================
+   Sidebar-only navigation (claude.ai-style): brand + collapse toggle +
+   resource links live in the sidebar; no top navbar.
+   ===================================================================== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sidebar .sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.sidebar .sidebar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-decoration: none;
+  font-family: var(--ar-font-display);
+  font-size: 1.05rem;
+  color: var(--ar-primary);
+  min-width: 0;
+}
+.sidebar .sidebar-brand > span:not(.beta-badge) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar .sidebar-brand img { border-radius: 4px; flex: none; }
+.sidebar .sidebar-brand .beta-badge {
+  flex: none;
+  font-family: var(--ar-font-caps);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ar-blush);
+  background: var(--ar-tertiary);
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}
+.sidebar .sidebar-collapse {
+  flex: none;
+  background: none;
+  border: none;
+  color: var(--ar-secondary);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--ar-radius-btn);
+}
+.sidebar .sidebar-collapse:hover { background: var(--ar-blush); color: var(--ar-primary); }
+
+.sidebar .sidebar-nav { display: flex; flex-direction: column; gap: 0.1rem; }
+.sidebar .sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.42rem 0.5rem;
+  border-radius: var(--ar-radius-btn);
+  color: var(--ar-primary);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+.sidebar .sidebar-nav a:hover { background: var(--ar-blush); }
+.sidebar .sidebar-nav .nav-ico { width: 1.15rem; text-align: center; font-size: 0.85rem; }
+
+/* Desktop: sidebar shown by default; collapse hides it and reveals the ☰. */
+@media (min-width: 861px) {
+  .app-shell.sidebar-collapsed .sidebar { display: none; }
+  .app-shell.sidebar-collapsed .chatbox .menu-btn { display: inline-flex; }
+}
+
+/* =====================================================================
+   Lucide icon alignment + spin animation.
+   ===================================================================== */
+@keyframes spin { to { transform: rotate(360deg); } }
+.app-shell .spin { animation: spin 0.9s linear infinite; }
+
+/* Icons sit on the text baseline cleanly and never shrink in flex rows. */
+.app-shell svg.lucide { vertical-align: middle; flex: none; }
+
+/* Buttons that are just an icon → center it. */
+.chatbox .icon-btn,
+.sidebar .sidebar-collapse,
+.detail-close,
+.chatbox .feedback button,
+.composer button[type='submit'],
+.clip-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icon + label rows. */
+.chatbox .chat-bar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.sidebar .sidebar-nav .nav-ico { color: var(--ar-secondary); }
+.sidebar .sidebar-nav a:hover .nav-ico { color: var(--ar-primary); }
+
+/* The send arrow already lives in a 38px circle; keep the glyph centered. */
+.composer button[type='submit'] svg { display: block; }
+
+/* =====================================================================
+   Readability pass — this is a reading-heavy site. Reading surfaces get
+   larger type, looser leading (~1.7), and a controlled measure (~66ch).
+   Scoped overrides only; tokens.css stays the design-system source.
+   ===================================================================== */
+
+/* The streamed answer — the primary thing people read. */
+.app-shell .chatbox li.assistant { font-size: 1.0625rem; line-height: 1.7; }
+.app-shell .chatbox p.answer {
+  font-size: 1.1875rem;       /* ~19px */
+  line-height: 1.75;
+  max-width: 66ch;            /* comfortable measure for long-form */
+  letter-spacing: 0.003em;
+}
+/* Pre-curated index answers read the same. */
+.app-shell .chatbox li.assistant > p { line-height: 1.72; }
+
+/* User's own question bubble. */
+.app-shell .chatbox li.user { font-size: 1.0625rem; line-height: 1.6; }
+
+/* Empty-state copy. */
+.app-shell .empty-hero .greeting { line-height: 1.18; }
+.app-shell .empty-hero .greeting-sub { font-size: 1.125rem; line-height: 1.65; }
+
+/* Composer input shouldn't feel cramped either. */
+.app-shell .composer textarea { font-size: 1.1rem; line-height: 1.5; }
+
+/* Article preview prose in the detail panel. */
+.detail-body .detail-article { font-size: 1.0625rem; line-height: 1.72; }
+.detail-body .detail-article p { margin: 0 0 1em; }
+.detail-body .detail-article li { margin: 0.35em 0; line-height: 1.65; }
+.detail-body .detail-article h2 { margin-top: 1.5em; }
+
+/* Clip transcript text. */
+.clip-detail-q { font-size: 1.0625rem; line-height: 1.55; }
+.clip-detail-a { font-size: 1.0625rem; line-height: 1.7; }
+
+/* A touch more air between turns. */
+.app-shell .chatbox .transcript > ul { gap: 1.75rem; }
+
+/* =====================================================================
+   Share moved into the conversation (off the top bar). The top bar now
+   only hosts the sidebar toggle, so make it invisible when that's hidden.
+   ===================================================================== */
+.app-shell .chatbox .chat-bar {
+  background: transparent;
+  border-bottom: none;
+  padding: 0.5rem;
+  min-height: 0;
+}
+
+/* Action row under an answer: feedback thumbs + Share, together. */
+.app-shell .chatbox .msg-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+.app-shell .chatbox .msg-actions .feedback { margin-top: 0; }
+
+.app-shell .chatbox .share-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--ar-secondary);
+  background: var(--ar-paper);
+  color: var(--ar-tertiary);
+  padding: 0.28rem 0.7rem;
+  border-radius: var(--ar-radius-btn);
+  font-family: var(--ar-font-caps);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background var(--ar-duration-fast), border-color var(--ar-duration-fast);
+}
+.app-shell .chatbox .share-inline:hover {
+  background: var(--ar-secondary-cream);
+  border-color: var(--ar-tertiary);
 }

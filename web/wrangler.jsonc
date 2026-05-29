@@ -18,6 +18,11 @@
   // Instance binding for the AI Search RAG instance in the default
   // namespace. Browser traffic comes in → Worker calls the binding →
   // AI Search returns a streamed SSE response → Worker pipes it back.
+  //
+  // As of the agentic /api/ask endpoint we use this binding's RETRIEVAL-
+  // ONLY method (`.search()`) — not `.chatCompletions()` — so article
+  // chunks can be merged with AYC video chunks and synthesized together.
+  // See worker/answer.ts.
   "ai_search": [
     {
       "binding": "AI_SEARCH",
@@ -25,12 +30,20 @@
     }
   ],
 
-  // D1 database for /api/feedback writes. The `database_id` value is
-  // filled in after running `wrangler d1 create abolitionist-feedback`.
-  // Schema: web/migrations/0001_feedback.sql.
+  // Workers AI binding — the synthesis model for /api/ask. We retrieve
+  // from two sources (writings via AI_SEARCH.search, talks via the AYC
+  // read API) and have this model write ONE blended, cited answer in the
+  // abolitionist voice. No external API key needed; runs in-worker.
+  "ai": {
+    "binding": "AI"
+  },
+
+  // D1 database. Holds the feedback table (migrations/0001) AND the chat
+  // `sessions` table (bootstrapped in worker/sessions.ts). Binding renamed
+  // FEEDBACK_DB → DB now that it stores more than feedback.
   "d1_databases": [
     {
-      "binding": "FEEDBACK_DB",
+      "binding": "DB",
       "database_name": "abolitionist-feedback",
       "database_id": "b39516a1-3159-4879-be92-b89c8b4c9e6e"
     }

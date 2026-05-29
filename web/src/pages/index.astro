@@ -1,6 +1,5 @@
 ---
 import { ChatBox } from '@/components/ChatBox';
-import SiteHeader from '@/components/SiteHeader.astro';
 import '@/styles/home.css';
 ---
 
@@ -24,6 +23,14 @@ import '@/styles/home.css';
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://abolitionist.ljs.app/" />
     <meta name="twitter:card" content="summary" />
+    {/* twitter:title / :description default to the site; the Worker rewrites
+        all OG/twitter tags when serving a shared /c/<id> link so it unfurls
+        with the asked question. */}
+    <meta name="twitter:title" content="Ask the Abolitionist (Beta)" />
+    <meta
+      name="twitter:description"
+      content="Straight answers on abortion from the abolitionist movement — grounded in its writings and talks, with every source shown."
+    />
     <link rel="icon" href="/icon-full.png" type="image/png" />
     <link rel="apple-touch-icon" href="/icon-full.png" />
     <script
@@ -32,61 +39,13 @@ import '@/styles/home.css';
       data-api="https://plausible.ljs.app/api/event"
       src="https://plausible.ljs.app/js/script.js"></script>
   </head>
-  <body>
-    <SiteHeader />
+  <body class="app">
+    {/* Server-rendered heading for SEO — the visible brand lives in the
+        (client-rendered) sidebar, claude.ai-style. */}
+    <h1 class="sr-only">Ask the Abolitionist</h1>
 
-    <main>
-      <section class="hero">
-        <h1>
-          Ask the Abolitionist
-          <span class="beta-badge" title="Beta — expect rough edges. Feedback welcome via the 👍/👎 on answers.">Beta</span>
-        </h1>
-        <p class="subhead">
-          Straight answers on abortion, grounded in the writings of the
-          abolitionist movement to abolish it. For street dialog, for
-          conversations with skeptics, or if you&rsquo;re hearing about
-          us for the first time.
-        </p>
-      </section>
-
-      <ChatBox client:load />
-
-      <section class="journey-cta">
-        <h2>New to all this? Start where you are.</h2>
-        <p>
-          The Journey is a short reading path tailored to the position you
-          hold today. Seven starting points &mdash; from &ldquo;abortion
-          should be legal&rdquo; to &ldquo;I believe it&rsquo;s wrong but
-          I&rsquo;m not doing anything.&rdquo; Pick yours.
-        </p>
-        <a href="/pages/journey/" class="button">Find your starting point →</a>
-      </section>
-
-      <footer>
-        <div class="footer-row">
-          <a href="/pages/">Browse every article →</a>
-          <span aria-hidden="true">·</span>
-          <code>abolitionistsrising.com</code>
-          <code>freethestates.org</code>
-        </div>
-        <p class="disclaimer">
-          Independent project. Not a product of, nor endorsed by,
-          abolitionistsrising.com or freethestates.org &mdash; this
-          site collects and indexes their public writings so readers
-          can search and ask questions across both corpora.
-        </p>
-        <div class="footer-row legal">
-          <a href="/pages/legal/privacy/">Privacy</a>
-          <span aria-hidden="true">·</span>
-          <a href="/pages/legal/terms/">Terms</a>
-        </div>
-        <p class="attribution">
-          Produced independently by
-          <a href="https://askscottpierce.com" rel="noopener">askscottpierce.com</a>
-          and
-          <a href="https://leftjoinstudio.com" rel="noopener">Left Join Studio</a>.
-        </p>
-      </footer>
-    </main>
+    {/* The full-height chat application: collapsible sidebar (brand, nav,
+        chat history) + conversation. */}
+    <ChatBox client:load />
   </body>
 </html>

@@ -1,0 +1,42 @@
+---
+import SiteHeader from '@/components/SiteHeader.astro';
+import { BingoBoard } from '@/components/BingoBoard';
+import '@/styles/bingo.css';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="only light" />
+    <meta name="theme-color" content="#430607" />
+    <title>Abolitionist Bingo · Ask the Abolitionist</title>
+    <meta
+      name="description"
+      content="The arguments abortion abolitionists constantly hear — tap any square to pull up video clips from the movement that answer it."
+    />
+    <meta property="og:title" content="Abolitionist Bingo · Ask the Abolitionist" />
+    <meta
+      property="og:description"
+      content="Tap a square on the bingo card to find clips from the movement that answer that pro-choice argument."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://abolitionist.ljs.app/bingo/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="og:image" content="https://abolitionist.ljs.app/bingo.png" />
+    <link rel="icon" href="/icon-full.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/icon-full.png" />
+    <script
+      defer
+      data-domain="abolitionist.ljs.app"
+      data-api="https://plausible.ljs.app/api/event"
+      src="https://plausible.ljs.app/js/script.js"></script>
+  </head>
+  <body class="app">
+    <header class="topbar"><SiteHeader showSearch={false} /></header>
+    <main class="bingo-main">
+      <BingoBoard client:load />
+    </main>
+  </body>
+</html>

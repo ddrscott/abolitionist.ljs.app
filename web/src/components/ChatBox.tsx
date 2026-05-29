@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   PenLine,
   MessageCircleQuestion,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   DetailPanel,
@@ -608,6 +609,9 @@ export function ChatBox() {
         <nav className="sidebar-nav" aria-label="Resources">
           <a href="/questions/">
             <MessageCircleQuestion size={16} className="nav-ico" aria-hidden="true" /> Questions
+          </a>
+          <a href="/bingo/">
+            <LayoutGrid size={16} className="nav-ico" aria-hidden="true" /> Bingo
           </a>
           <a href="/pages/">
             <FileText size={16} className="nav-ico" aria-hidden="true" /> Articles

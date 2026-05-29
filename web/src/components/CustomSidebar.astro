@@ -68,6 +68,11 @@ const isCurrent = (id: string) => currentPath === `/${id}`;
         </a>
       </li>
       <li>
+        <a href="/bingo/" aria-current={currentPath === '/bingo' ? 'page' : undefined}>
+          Argument bingo
+        </a>
+      </li>
+      <li>
         <a href="/pages/" aria-current={currentPath === '/pages' ? 'page' : undefined}>
           All articles
         </a>

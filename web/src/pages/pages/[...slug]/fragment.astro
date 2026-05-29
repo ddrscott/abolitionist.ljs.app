@@ -21,9 +21,12 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 const title = entry.data.title;
+// Canonical original-source URL (e.g. https://freethestates.org/…). Exposed
+// as a data attribute so the in-app source panel can link "Read the original".
+const sourceUrl = entry.data.source_url;
 ---
 
-<h1 id="_top">{title}</h1>
+<h1 id="_top" data-source-url={sourceUrl}>{title}</h1>
 <div class="sl-markdown-content">
   <Content />
 </div>

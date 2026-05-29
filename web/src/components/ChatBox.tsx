@@ -96,6 +96,15 @@ function mmss(total: number): string {
   return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
 }
 
+/** Bare hostname for a source link label, e.g. "freethestates.org". */
+function sourceHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+
 const GENERIC_SPEAKERS = new Set(['host', 'abolitionist', 'speaker', 'narrator', 'unknown']);
 function realSpeaker(s?: string): string | null {
   if (!s) return null;
@@ -875,20 +884,27 @@ function Sources({
  *  on desktop, rises as a bottom sheet on mobile (CSS). */
 function DetailPanel({ detail, onClose }: { detail: DetailTarget | null; onClose: () => void }) {
   const [articleHtml, setArticleHtml] = useState<string | null>(null);
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (detail?.kind !== 'article') {
       setArticleHtml(null);
+      setSourceUrl(null);
       return;
     }
     let cancelled = false;
     setLoading(true);
     setArticleHtml(null);
+    setSourceUrl(null);
     fetch(`${detail.source.url}fragment/`)
       .then((r) => (r.ok ? r.text() : null))
       .then((html) => {
         if (!cancelled) {
+          // The fragment carries the canonical original URL on the <h1>
+          // (data-source-url) so we can cite the source site, not our copy.
+          const src = html?.match(/data-source-url="([^"]+)"/i);
+          setSourceUrl(src ? src[1] : null);
           // The fragment is prefixed with a doctype + an Astro <script>;
           // keep only from the article's <h1> onward (scripts wouldn't run
           // via innerHTML anyway, and we only want the prose).
@@ -919,8 +935,17 @@ function DetailPanel({ detail, onClose }: { detail: DetailTarget | null; onClose
 
   const isClip = detail.kind === 'clip';
   const heading = isClip ? detail.source.videoTitle : detail.source.title;
-  const externHref = isClip ? detail.source.youtubeUrl : detail.source.url;
-  const externLabel = isClip ? 'Watch on YouTube ↗' : 'Open full article ↗';
+  // Cite the original source as canonical: clips → YouTube, articles →
+  // the source site (source_url). Falls back to our own page if missing.
+  const hasOriginal = isClip || !!sourceUrl;
+  const externHref = isClip
+    ? detail.source.youtubeUrl
+    : sourceUrl ?? detail.source.url;
+  const externLabel = isClip
+    ? 'Watch on YouTube ↗'
+    : sourceUrl
+      ? `Read the original${sourceHost(sourceUrl) ? ` at ${sourceHost(sourceUrl)}` : ''} ↗`
+      : 'Open the full article ↗';
 
   return (
     <div className="detail-scrim" onClick={onClose}>
@@ -958,7 +983,7 @@ function DetailPanel({ detail, onClose }: { detail: DetailTarget | null; onClose
         </div>
 
         <footer className="detail-foot">
-          <a href={externHref} target={isClip ? '_blank' : undefined} rel="noopener noreferrer">
+          <a href={externHref} target={hasOriginal ? '_blank' : undefined} rel="noopener noreferrer">
             {externLabel}
           </a>
         </footer>

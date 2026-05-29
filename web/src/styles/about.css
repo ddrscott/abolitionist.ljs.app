@@ -1,0 +1,69 @@
+/* /about/ — mission + credits. Light, matches the rest of the site. */
+@import './tokens.css';
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700&family=Oswald:wght@400;500&display=swap');
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--ar-font-body);
+  color: var(--ar-ink);
+  background: var(--ar-paper);
+  line-height: 1.72;
+}
+a { color: var(--ar-tertiary); }
+
+.topbar { position: sticky; top: 0; z-index: 50; }
+
+.about-main { max-width: 44rem; margin: 0 auto; padding: 2.5rem clamp(1rem, 3vw, 2rem) 4rem; }
+.about-main h1 {
+  font-family: var(--ar-font-display);
+  color: var(--ar-primary);
+  font-size: var(--ar-h1);
+  line-height: 1.1;
+  margin: 0 0 0.25rem;
+}
+.about-tagline {
+  font-family: var(--ar-font-display);
+  color: var(--ar-tertiary);
+  font-size: var(--ar-h3);
+  margin: 0 0 1.75rem;
+}
+.about-main h2 {
+  font-family: var(--ar-font-display);
+  color: var(--ar-primary);
+  font-size: var(--ar-h3);
+  margin: 2rem 0 0.6rem;
+}
+.about-main p { font-size: 1.1875rem; margin: 0 0 1rem; }
+.about-main strong { color: var(--ar-primary); }
+
+.about-sources { list-style: none; padding: 0; margin: 0 0 1rem; }
+.about-sources li {
+  padding: 0.6rem 0 0.6rem 0;
+  border-top: 1px solid var(--ar-secondary-cream);
+  font-size: 1.0625rem;
+}
+.about-sources li:first-child { border-top: none; }
+.about-sources .src-name { font-weight: var(--ar-weight-bold); color: var(--ar-primary); }
+
+.about-cta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1.25rem 0 0.5rem; }
+.about-cta a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--ar-radius-btn);
+  text-decoration: none;
+  font-family: var(--ar-font-caps);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.about-cta .yt { background: var(--ar-primary); color: var(--ar-blush); border: 2px solid var(--ar-primary); }
+.about-cta .yt:hover { background: var(--ar-primary-dark); border-color: var(--ar-primary-dark); }
+.about-cta .dc { background: var(--ar-paper); color: var(--ar-primary); border: 2px solid var(--ar-secondary); }
+.about-cta .dc:hover { background: var(--ar-secondary-cream); border-color: var(--ar-primary); }
+.about-cta svg { flex: none; }
+
+.about-fine { font-size: 0.95rem; color: var(--ar-secondary); line-height: 1.6; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--ar-secondary-cream); }
+.about-fine a { color: var(--ar-secondary); }

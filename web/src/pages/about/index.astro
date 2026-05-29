@@ -1,0 +1,98 @@
+---
+import SiteHeader from '@/components/SiteHeader.astro';
+import '@/styles/about.css';
+
+const YT = 'https://www.youtube.com/@AbolitionistsRising';
+const DISCORD = 'https://discord.gg/jfUrwKsPcx';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="only light" />
+    <meta name="theme-color" content="#430607" />
+    <title>About · Ask the Abolitionist</title>
+    <meta
+      name="description"
+      content="Ask the Abolitionist is an independent tool that gives straight, sourced answers on abortion from the abolitionist movement. Saving babies with data."
+    />
+    <meta property="og:title" content="About · Ask the Abolitionist" />
+    <meta property="og:description" content="Straight, sourced answers on abortion from the abolitionist movement. Saving babies with data." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://abolitionist.ljs.app/about/" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/icon-full.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/icon-full.png" />
+    <script
+      defer
+      data-domain="abolitionist.ljs.app"
+      data-api="https://plausible.ljs.app/api/event"
+      src="https://plausible.ljs.app/js/script.js"></script>
+  </head>
+  <body class="app">
+    <header class="topbar"><SiteHeader showSearch={false} /></header>
+    <main class="about-main">
+      <h1>About</h1>
+      <p class="about-tagline">Saving babies with data.</p>
+
+      <p>
+        <strong>Ask the Abolitionist</strong> is a fast, honest way to get straight
+        answers on abortion — grounded entirely in the writings and talks of the
+        movement working to abolish it. Type a question (or an objection you just
+        heard on the sidewalk) and you get a clear, first-person answer with every
+        source shown, so you can read the article or watch the clip yourself.
+      </p>
+      <p>
+        It&rsquo;s built for the moment it matters: a conversation with a skeptic, a
+        question from someone hearing about abolition for the first time, or your own
+        wrestling with a hard case. No spin, no hedging — just the movement&rsquo;s
+        own case, made findable.
+      </p>
+
+      <h2>Where the answers come from</h2>
+      <p>Every answer is drawn from these sources — and cited back to them:</p>
+      <ul class="about-sources">
+        <li>
+          <span class="src-name">Abolitionists Rising</span> —
+          <a href="https://abolitionistsrising.com" rel="noopener">abolitionistsrising.com</a>
+          and its <a href={YT} rel="noopener">YouTube channel</a>, the source of the
+          written articles and the video clips.
+        </li>
+        <li>
+          <span class="src-name">Free the States</span> —
+          <a href="https://freethestates.org" rel="noopener">freethestates.org</a>, the
+          source of much of the written corpus.
+        </li>
+        <li>
+          <span class="src-name">The movement&rsquo;s YouTube channels</span> — thousands of
+          talk and street-dialog clips, searchable here and linked back to the original
+          videos at the exact moment.
+        </li>
+      </ul>
+
+      <h2>Join the movement</h2>
+      <p>This site only indexes the work — the movement is the people doing it.</p>
+      <div class="about-cta">
+        <a class="yt" href={YT} rel="noopener" target="_blank">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path></svg>
+          Watch on YouTube
+        </a>
+        <a class="dc" href={DISCORD} rel="noopener" target="_blank">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.037 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 0 .0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"></path></svg>
+          Join the Discord
+        </a>
+      </div>
+
+      <p class="about-fine">
+        Independent project — not a product of, nor endorsed by, abolitionistsrising.com
+        or freethestates.org. It collects and indexes their public writings and talks so
+        readers can search and ask across them. Produced by
+        <a href="https://askscottpierce.com" rel="noopener">Scott Pierce</a> and
+        <a href="https://leftjoinstudio.com" rel="noopener">Left Join Studio</a>.
+        <a href="/pages/legal/privacy/">Privacy</a> · <a href="/pages/legal/terms/">Terms</a>
+      </p>
+    </main>
+  </body>
+</html>

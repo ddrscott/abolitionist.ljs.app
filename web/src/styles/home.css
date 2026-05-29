@@ -1176,3 +1176,27 @@ body.app {
 }
 .chatbox .suggestion-topic:hover { background: var(--ar-blush); color: var(--ar-primary); }
 .chatbox .suggestion-topic-n { color: var(--ar-secondary); font-size: 0.7rem; font-variant-numeric: tabular-nums; }
+
+/* Community links below the welcome sample questions. */
+.chatbox .welcome-community {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem 1.1rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ar-secondary-cream);
+}
+.chatbox .welcome-community a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ar-tertiary);
+  text-decoration: none;
+  font-family: var(--ar-font-caps);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.chatbox .welcome-community a:hover { color: var(--ar-primary); text-decoration: underline; }

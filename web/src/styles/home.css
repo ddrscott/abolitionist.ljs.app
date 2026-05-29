@@ -1143,3 +1143,36 @@ body.app {
   font-size: 1.02rem;
   color: var(--ar-primary);
 }
+
+/* In-chat clip-topic typeahead — chips at the top of the suggestions list
+   that pull video snippets into the conversation. */
+.chatbox .suggestions .suggestion-topics {
+  padding: 0.5rem 0.85rem 0.6rem;
+  border-bottom: 1px solid var(--ar-secondary-cream);
+  cursor: default;
+}
+.chatbox .suggestion-topics-label {
+  font-family: var(--ar-font-caps);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ar-secondary);
+  margin-bottom: 0.35rem;
+}
+.chatbox .suggestion-topics-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.chatbox .suggestion-topic {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--ar-secondary);
+  background: var(--ar-paper);
+  color: var(--ar-tertiary);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-family: var(--ar-font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background var(--ar-duration-fast), color var(--ar-duration-fast);
+}
+.chatbox .suggestion-topic:hover { background: var(--ar-blush); color: var(--ar-primary); }
+.chatbox .suggestion-topic-n { color: var(--ar-secondary); font-size: 0.7rem; font-variant-numeric: tabular-nums; }

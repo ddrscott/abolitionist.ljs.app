@@ -50,6 +50,8 @@ type Message = {
 
 type IndexedQA = { q: string; a: string; t: string; u: string; qt?: string };
 
+type TopicCount = { t: string; n: number };
+
 type SessionSummary = { id: string; title: string; updated_at: string };
 
 const MAX_SUGGESTIONS = 6;
@@ -96,6 +98,9 @@ export function ChatBox() {
   const fuseRef = useRef<Fuse<IndexedQA> | null>(null);
   const [suggestions, setSuggestions] = useState<IndexedQA[]>([]);
   const [selectedIdx, setSelectedIdx] = useState(-1);
+  // Clip-topic typeahead → jump straight to video snippets in the chat.
+  const topicsFuseRef = useRef<Fuse<TopicCount> | null>(null);
+  const [topicSuggestions, setTopicSuggestions] = useState<TopicCount[]>([]);
   const [feedback, setFeedback] = useState<Record<number, 'up' | 'down'>>({});
 
   // --- session + shell state ---
@@ -201,7 +206,7 @@ export function ChatBox() {
     setReadonly(false);
     setFeedback({});
     setInput('');
-    setSuggestions([]);
+    clearSuggest();
     closeSidebarIfMobile();
     window.history.pushState({}, '', '/');
     setTimeout(() => inputRef.current?.focus(), 0);
@@ -286,6 +291,23 @@ export function ChatBox() {
       .catch(() => {});
   }, []);
 
+  // Clip topics index — powers the in-chat "topics → snippets" typeahead.
+  useEffect(() => {
+    fetch('/clip-topics.json', { cache: 'force-cache' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((raw: unknown) => {
+        const topics = raw as TopicCount[] | null;
+        if (!topics || !Array.isArray(topics) || topics.length === 0) return;
+        topicsFuseRef.current = new Fuse(topics, {
+          keys: ['t'],
+          ignoreLocation: true,
+          threshold: 0.4,
+          minMatchCharLength: 2,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
   const sendFeedback = async (messageIndex: number, rating: 1 | -1, m: Message, userQuestion: string) => {
     if (feedback[messageIndex] || !userQuestion) return;
     setFeedback((prev) => ({ ...prev, [messageIndex]: rating === 1 ? 'up' : 'down' }));
@@ -311,14 +333,55 @@ export function ChatBox() {
   }
 
   function updateSuggestions(value: string) {
-    if (!fuseRef.current || value.trim().length < 2) {
+    const v = value.trim();
+    setSelectedIdx(-1);
+    if (v.length < 2) {
       setSuggestions([]);
-      setSelectedIdx(-1);
+      setTopicSuggestions([]);
       return;
     }
-    const hits = fuseRef.current.search(value, { limit: MAX_SUGGESTIONS });
-    setSuggestions(hits.map((h) => h.item));
+    setSuggestions(fuseRef.current ? fuseRef.current.search(v, { limit: MAX_SUGGESTIONS }).map((h) => h.item) : []);
+    setTopicSuggestions(topicsFuseRef.current ? topicsFuseRef.current.search(v, { limit: 4 }).map((h) => h.item) : []);
+  }
+
+  function clearSuggest() {
+    setSuggestions([]);
+    setTopicSuggestions([]);
     setSelectedIdx(-1);
+  }
+
+  /** Pick a clip topic → pull its snippets into the conversation as a result.
+   *  Reuses the assistant message's `sources` (clip cards open the shared
+   *  DetailPanel), so it persists with the session like any other turn. */
+  async function pickTopic(topic: string) {
+    if (pending) return;
+    ensureOwnThread();
+    clearSuggest();
+    setInput('');
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content: `Clips on “${topic}”` },
+      { role: 'assistant', content: 'Finding clips…' },
+    ]);
+    try {
+      const res = await fetch(`/api/clips?topic=${encodeURIComponent(topic)}&limit=12`);
+      const data = (await res.json()) as { clips?: ClipSource[]; error?: string };
+      if (!res.ok) throw new Error(data.error || `clips ${res.status}`);
+      const clips = data.clips ?? [];
+      patchLastAssistant((m) => ({
+        ...m,
+        content: '',
+        sources: clips,
+        error: clips.length === 0 ? `No clips found for “${topic}”.` : undefined,
+      }));
+    } catch (err) {
+      patchLastAssistant((m) => ({ ...m, content: '', error: err instanceof Error ? err.message : 'failed to load clips' }));
+    } finally {
+      setTimeout(() => {
+        saveCurrent(messagesRef.current);
+        inputRef.current?.focus();
+      }, 0);
+    }
   }
 
   function ensureOwnThread() {
@@ -339,8 +402,7 @@ export function ChatBox() {
       { role: 'assistant', content: hit.a, sources: [indexHitSource(hit)], fromIndex: true },
     ]);
     setInput('');
-    setSuggestions([]);
-    setSelectedIdx(-1);
+    clearSuggest();
     setTimeout(() => {
       saveCurrent(messagesRef.current);
       inputRef.current?.focus();
@@ -424,7 +486,7 @@ export function ChatBox() {
   function submitTyped() {
     const q = input;
     setInput('');
-    setSuggestions([]);
+    clearSuggest();
     askAgent(q);
   }
 
@@ -435,8 +497,29 @@ export function ChatBox() {
 
   const composer = (
     <div className="composer">
-      {suggestions.length > 0 && (
-        <ul className="suggestions" role="listbox" aria-label="Matching questions">
+      {(suggestions.length > 0 || topicSuggestions.length > 0) && (
+        <ul className="suggestions" role="listbox" aria-label="Matching questions and clip topics">
+          {topicSuggestions.length > 0 && (
+            <li className="suggestion-topics" role="presentation">
+              <div className="suggestion-topics-label">Jump to clips on</div>
+              <div className="suggestion-topics-chips">
+                {topicSuggestions.map((t) => (
+                  <button
+                    key={t.t}
+                    type="button"
+                    className="suggestion-topic"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      pickTopic(t.t);
+                    }}
+                  >
+                    <Play size={10} fill="currentColor" aria-hidden="true" /> {t.t}
+                    {t.n ? <span className="suggestion-topic-n">{t.n}</span> : null}
+                  </button>
+                ))}
+              </div>
+            </li>
+          )}
           {suggestions.map((s, i) => (
             <li
               key={`${s.u}-${i}`}
@@ -477,10 +560,9 @@ export function ChatBox() {
             } else if (e.key === 'ArrowUp' && suggestions.length > 0) {
               e.preventDefault();
               setSelectedIdx((i) => Math.max(i - 1, -1));
-            } else if (e.key === 'Escape' && suggestions.length > 0) {
+            } else if (e.key === 'Escape' && (suggestions.length > 0 || topicSuggestions.length > 0)) {
               e.preventDefault();
-              setSuggestions([]);
-              setSelectedIdx(-1);
+              clearSuggest();
             } else if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               if (selectedIdx >= 0 && suggestions[selectedIdx]) pickSuggestion(suggestions[selectedIdx]);

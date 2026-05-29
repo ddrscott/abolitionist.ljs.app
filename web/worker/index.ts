@@ -6,7 +6,7 @@
  * no instance ID exposed to the browser.
  */
 
-import { runAsk, type AnswerEnv } from './answer';
+import { runAsk, searchTalks, listTalks, type AnswerEnv } from './answer';
 import {
   handleSessionsCollection,
   handleSessionItem,
@@ -81,6 +81,11 @@ export default {
 
     if (url.pathname === '/api/ask') {
       return handleAsk(request, env);
+    }
+
+    // Clip browse/search for the /questions Talks tab.
+    if (url.pathname === '/api/clips') {
+      return handleClips(request, env);
     }
 
     // Chat session persistence + sharing.
@@ -237,6 +242,44 @@ async function handleAsk(request: Request, env: Env): Promise<Response> {
       'x-content-type-options': 'nosniff',
     },
   });
+}
+
+// GET /api/clips?topic=&cursor=&limit= — paginated clip feed (browse by
+// topic). POST /api/clips { query } — semantic clip search. Both proxy the
+// AYC read API (token stays server-side) and return JSON for the Talks tab.
+async function handleClips(request: Request, env: Env): Promise<Response> {
+  const json = (data: unknown, status = 200) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+    });
+  try {
+    if (request.method === 'GET') {
+      const u = new URL(request.url);
+      const { clips, nextCursor } = await listTalks(env, {
+        topic: u.searchParams.get('topic') ?? undefined,
+        cursor: u.searchParams.get('cursor') ?? undefined,
+        limit: Number(u.searchParams.get('limit')) || 30,
+      });
+      return json({ clips, nextCursor });
+    }
+    if (request.method === 'POST') {
+      let body: { query?: string };
+      try {
+        body = await request.json();
+      } catch {
+        return json({ error: 'invalid JSON' }, 400);
+      }
+      const query = (body.query ?? '').trim();
+      if (!query) return json({ error: 'missing query' }, 400);
+      const clips = await searchTalks(env, query, 24);
+      return json({ clips, nextCursor: null });
+    }
+    return new Response('method not allowed', { status: 405, headers: { allow: 'GET, POST' } });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'clips request failed';
+    return json({ error: message }, 502);
+  }
 }
 
 // Idempotent schema bootstrap. Runs once per Worker isolate the first

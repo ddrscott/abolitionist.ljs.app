@@ -229,6 +229,7 @@ function clipFromMatch(m: AycMatch): ClipSource {
 export async function searchTalks(
   env: AnswerEnv,
   query: string,
+  topK: number = TALKS_MAX,
 ): Promise<ClipSource[]> {
   // Token is channel-scoped, so we omit `channels` and use the full grant.
   const res = await fetch(`${AYC_BASE}/api/v1/search`, {
@@ -237,7 +238,7 @@ export async function searchTalks(
       authorization: `Bearer ${env.AYC_TOKEN}`,
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ query, top_k: TALKS_MAX }),
+    body: JSON.stringify({ query, top_k: topK }),
   });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
@@ -245,6 +246,30 @@ export async function searchTalks(
   }
   const data = (await res.json()) as { matches?: AycMatch[] };
   return (data.matches ?? []).map(clipFromMatch);
+}
+
+/** Paginated clip feed for the /questions Talks tab — browse by `topic`
+ *  (the AYC API filters `topics LIKE`), cursor-paginated. */
+export async function listTalks(
+  env: AnswerEnv,
+  opts: { topic?: string; cursor?: string; limit?: number } = {},
+): Promise<{ clips: ClipSource[]; nextCursor: string | null }> {
+  const params = new URLSearchParams();
+  if (opts.topic) params.set('topic', opts.topic);
+  if (opts.cursor) params.set('cursor', opts.cursor);
+  params.set('limit', String(Math.min(Math.max(opts.limit ?? 30, 1), 100)));
+  const res = await fetch(`${AYC_BASE}/api/v1/chunks?${params.toString()}`, {
+    headers: { authorization: `Bearer ${env.AYC_TOKEN}` },
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`AYC chunks ${res.status}: ${body.slice(0, 200)}`);
+  }
+  const data = (await res.json()) as { chunks?: AycMatch[]; next_cursor?: string | null };
+  return {
+    clips: (data.chunks ?? []).map(clipFromMatch),
+    nextCursor: data.next_cursor ?? null,
+  };
 }
 
 // ---------------------------------------------------------------------------

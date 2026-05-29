@@ -1253,3 +1253,20 @@ body.app {
   background: var(--ar-secondary-cream);
   border-color: var(--ar-tertiary);
 }
+
+/* Conversation header — shows the original question (claude.ai-style). */
+.app-shell .chatbox .chat-bar--titled {
+  border-bottom: 1px solid var(--ar-secondary-cream);
+  padding: 0.55rem 1rem;
+  gap: 0.5rem;
+}
+.app-shell .chatbox .chat-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--ar-font-display);
+  font-size: 1.02rem;
+  color: var(--ar-primary);
+}

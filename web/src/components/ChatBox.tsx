@@ -455,6 +455,8 @@ export function ChatBox() {
 
   const isEmpty = messages.length === 0;
   const composerPlaceholder = readOnly ? 'Ask your own question…' : 'Ask the abolitionist…';
+  // Conversation header text — the original question.
+  const convoTitle = messages.find((m) => m.role === 'user')?.content?.trim() ?? '';
 
   const composer = (
     <div className="composer">
@@ -601,7 +603,7 @@ export function ChatBox() {
       {sidebarOpen && <div className="sidebar-scrim" onClick={() => setSidebarOpen(false)} />}
 
       <div className={`chatbox${isEmpty ? ' is-empty' : ''}`}>
-        <header className="chat-bar">
+        <header className={`chat-bar${convoTitle ? ' chat-bar--titled' : ''}`}>
           <button
             type="button"
             className="icon-btn menu-btn"
@@ -610,6 +612,11 @@ export function ChatBox() {
           >
             <PanelLeft size={20} aria-hidden="true" />
           </button>
+          {convoTitle && (
+            <span className="chat-title" title={convoTitle}>
+              {convoTitle}
+            </span>
+          )}
         </header>
 
         {readOnly && (
@@ -619,7 +626,7 @@ export function ChatBox() {
         {isEmpty ? (
           <div className="empty-hero">
             <div className="empty-hero-inner">
-              <h2 className="greeting">Ask the abolitionist anything.</h2>
+              <h2 className="greeting">Ask the abolitionist</h2>
               <p className="greeting-sub">
                 Straight answers on abortion, drawn from the movement’s writings
                 <em> and</em> its talks — with every source shown, so you can read it or watch it yourself.

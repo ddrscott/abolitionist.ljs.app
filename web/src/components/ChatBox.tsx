@@ -17,6 +17,7 @@ import {
   Loader2,
   AlertTriangle,
   PenLine,
+  MessageCircleQuestion,
 } from 'lucide-react';
 
 // --- Source shapes — mirror worker/answer.ts ------------------------------
@@ -283,6 +284,15 @@ export function ChatBox() {
   useEffect(() => {
     const id = sessionIdFromPath();
     if (id) loadSession(id);
+    else {
+      // Prefill from a ?q= link (e.g. "Ask the abolitionist this" on /questions/).
+      const presetQ = new URLSearchParams(window.location.search).get('q');
+      if (presetQ) {
+        setInput(presetQ);
+        window.history.replaceState({}, '', '/');
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }
+    }
     refreshSessions();
 
     const onPop = () => {
@@ -559,6 +569,9 @@ export function ChatBox() {
         </button>
 
         <nav className="sidebar-nav" aria-label="Resources">
+          <a href="/questions/">
+            <MessageCircleQuestion size={16} className="nav-ico" aria-hidden="true" /> Questions
+          </a>
           <a href="/pages/">
             <FileText size={16} className="nav-ico" aria-hidden="true" /> Articles
           </a>

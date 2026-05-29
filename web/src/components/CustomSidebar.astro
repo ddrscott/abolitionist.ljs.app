@@ -60,8 +60,13 @@ const isCurrent = (id: string) => currentPath === `/${id}`;
   </div>
 
   <div class="section">
-    <div class="section-label">Articles</div>
+    <div class="section-label">Browse</div>
     <ul class="pages">
+      <li>
+        <a href="/questions/" aria-current={currentPath === '/questions' ? 'page' : undefined}>
+          All questions
+        </a>
+      </li>
       <li>
         <a href="/pages/" aria-current={currentPath === '/pages' ? 'page' : undefined}>
           All articles

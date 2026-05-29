@@ -1,0 +1,41 @@
+---
+import SiteHeader from '@/components/SiteHeader.astro';
+import { QuestionsBrowser } from '@/components/QuestionsBrowser';
+import '@/styles/questions.css';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="only light" />
+    <meta name="theme-color" content="#430607" />
+    <title>Questions · Ask the Abolitionist</title>
+    <meta
+      name="description"
+      content="Browse every question the abolitionist movement answers about abortion — 2,000+ curated questions drawn from its writings, with sources."
+    />
+    <meta property="og:title" content="Questions · Ask the Abolitionist" />
+    <meta
+      property="og:description"
+      content="Browse the full question bank — straight answers on abortion from the abolitionist movement, with sources."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://abolitionist.ljs.app/questions/" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/icon-full.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/icon-full.png" />
+    <script
+      defer
+      data-domain="abolitionist.ljs.app"
+      data-api="https://plausible.ljs.app/api/event"
+      src="https://plausible.ljs.app/js/script.js"></script>
+  </head>
+  <body class="app">
+    <header class="topbar"><SiteHeader showSearch={false} /></header>
+    <main class="questions-main">
+      <QuestionsBrowser client:load />
+    </main>
+  </body>
+</html>

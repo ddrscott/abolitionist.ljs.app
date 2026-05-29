@@ -4,6 +4,10 @@
 // lives in the sidebar); content pages keep this bar because Starlight needs
 // it for the mobile menu toggle + search. Single source of truth for the bar.
 import Search from '@astrojs/starlight/components/Search.astro';
+// `showSearch` is true on Starlight routes (pagefind is present); custom
+// routes that aren't Starlight pages pass false to avoid rendering it.
+interface Props { showSearch?: boolean }
+const { showSearch = true } = Astro.props;
 ---
 
 <div class="site-header">
@@ -12,9 +16,10 @@ import Search from '@astrojs/starlight/components/Search.astro';
     <span>Ask the Abolitionist</span>
   </a>
   <nav class="site-nav">
+    <a href="/questions/">Questions</a>
     <a href="/pages/">Articles</a>
     <a href="/pages/journey/">Journey</a>
-    <div class="site-search"><Search /></div>
+    {showSearch && <div class="site-search"><Search /></div>}
     <a
       href="https://github.com/ddrscott/abolitionist.ljs.app"
       class="gh-link"

@@ -20,8 +20,7 @@ import {
 } from 'lucide-react';
 import {
   DetailPanel,
-  mmss,
-  realSpeaker,
+  ClipCard,
   type Source,
   type ArticleSource,
   type ClipSource,
@@ -726,7 +725,7 @@ export function ChatBox() {
                               The `sources` SSE event arrives before tokens, so
                               citations are in place as the answer writes in. */}
                           {m.sources && m.sources.length > 0 && (
-                            <Sources sources={m.sources} idx={i} onOpen={setDetail} />
+                            <Sources sources={m.sources} idx={i} onOpen={setDetail} onTopic={pickTopic} />
                           )}
                           {(m.content || streaming) && (
                             <p className="answer">
@@ -857,10 +856,12 @@ function Sources({
   sources,
   idx,
   onOpen,
+  onTopic,
 }: {
   sources: Source[];
   idx: number;
   onOpen: (d: DetailTarget) => void;
+  onTopic?: (t: string) => void;
 }) {
   const articles = sources.filter((s): s is ArticleSource => s.type === 'article');
   const clips = sources.filter((s): s is ClipSource => s.type === 'clip');
@@ -898,30 +899,14 @@ function Sources({
       {clips.length > 0 && (
         <div className="sources-group">
           <div className="sources-label">Watch the movement say it</div>
-          <div className="clips">
+          <div className="cliplist">
             {clips.map((c, j) => (
-              <a
+              <ClipCard
                 key={`${idx}-c-${j}`}
-                className="clip"
-                href={c.youtubeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={`${c.question}\n\n${c.answer}`}
-                onClick={(e) => {
-                  if (!isPlainClick(e)) return;
-                  e.preventDefault();
-                  onOpen({ kind: 'clip', source: c });
-                }}
-              >
-                <span className="clip-play" aria-hidden="true"><Play size={11} fill="currentColor" /></span>
-                <span className="clip-meta">
-                  <span className="clip-title">{c.videoTitle}</span>
-                  <span className="clip-sub">
-                    {c.channelName} · {mmss(c.startSeconds)}
-                    {realSpeaker(c.speaker) ? ` · ${realSpeaker(c.speaker)}` : ''}
-                  </span>
-                </span>
-              </a>
+                clip={c}
+                onOpen={() => onOpen({ kind: 'clip', source: c })}
+                onTopic={onTopic}
+              />
             ))}
           </div>
         </div>

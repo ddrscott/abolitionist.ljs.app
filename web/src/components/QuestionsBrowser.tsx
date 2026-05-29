@@ -1,14 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Fuse from 'fuse.js';
-import { ChevronRight, Search, MessageSquare, FileText, Play } from 'lucide-react';
-import {
-  DetailPanel,
-  CopyLink,
-  mmss,
-  realSpeaker,
-  type ClipSource,
-  type DetailTarget,
-} from './SourcePanel';
+import { ChevronRight, Search, MessageSquare, FileText } from 'lucide-react';
+import { DetailPanel, ClipCard, type ClipSource, type DetailTarget } from './SourcePanel';
 
 // One curated article Q&A — matches scripts/build-questions-index.mjs output.
 type QA = { q: string; a: string; t: string; u: string; qt?: string };
@@ -303,13 +296,13 @@ function TalksTab() {
 
       {error && <p className="qbrowse-loading">Couldn’t load clips: {error}</p>}
 
-      <ul className="cliplist">
+      <div className="cliplist">
         {clips.map((c) => (
-          <ClipRow key={c.id} clip={c}
+          <ClipCard key={c.id} clip={c}
             onOpen={() => setDetail({ kind: 'clip', source: c })}
             onTopic={(t) => { setQuery(''); pickTopic(t); }} />
         ))}
-      </ul>
+      </div>
 
       {loading && <p className="qbrowse-loading">Loading clips…</p>}
       {!loading && mode === 'feed' && cursor && (
@@ -322,30 +315,3 @@ function TalksTab() {
   );
 }
 
-function ClipRow({ clip, onOpen, onTopic }: {
-  clip: ClipSource; onOpen: () => void; onTopic: (t: string) => void;
-}) {
-  const speaker = realSpeaker(clip.speaker);
-  return (
-    <li className="clipcard">
-      <button type="button" className="clipcard-q" onClick={onOpen}>{clip.question}</button>
-      <p className="clipcard-a">{clip.answer}</p>
-      <div className="clipcard-meta">
-        <button type="button" className="clipcard-watch" onClick={onOpen}>
-          <Play size={13} fill="currentColor" aria-hidden="true" /> Watch at {mmss(clip.startSeconds)}
-        </button>
-        <CopyLink url={clip.youtubeUrl} className="clipcard-copy" label="Copy link" />
-        <span className="clipcard-src">
-          {clip.videoTitle}{speaker ? ` · ${speaker}` : ''} · {clip.channelName}
-        </span>
-      </div>
-      {clip.topics.length > 0 && (
-        <div className="cliptags">
-          {clip.topics.slice(0, 6).map((t) => (
-            <button key={t} type="button" className="cliptag" onClick={() => onTopic(t)}>{t}</button>
-          ))}
-        </div>
-      )}
-    </li>
-  );
-}

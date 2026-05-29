@@ -213,48 +213,7 @@ svg.lucide { vertical-align: middle; }
 .qtopic.active { background: var(--ar-primary); color: var(--ar-blush); border-color: var(--ar-primary); }
 .qtopic.clear { color: var(--ar-secondary); border-style: dashed; }
 
-/* --- clip cards --- */
-.cliplist { list-style: none; padding: 0; margin: 0.5rem 0 0; display: flex; flex-direction: column; gap: 1rem; }
-.clipcard {
-  border: 1px solid var(--ar-secondary-cream);
-  border-left: 3px solid var(--ar-tertiary);
-  border-radius: var(--ar-radius-btn);
-  padding: 0.85rem 1rem;
-}
-.clipcard-q {
-  font-family: var(--ar-font-body);
-  font-weight: var(--ar-weight-bold);
-  color: var(--ar-primary);
-  font-size: 1.05rem;
-  line-height: 1.35;
-  margin-bottom: 0.4rem;
-}
-.clipcard-a { margin: 0 0 0.6rem; font-size: 1.0625rem; line-height: 1.65; max-width: 62ch; }
-.clipcard-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; }
-.clipcard-watch {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: var(--ar-font-caps);
-  font-size: 0.72rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ar-tertiary);
-  text-decoration: none;
-}
-.clipcard-watch:hover { text-decoration: underline; }
-.clipcard-src { font-size: 0.78rem; color: var(--ar-secondary); font-style: italic; }
-.cliptags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.6rem; }
-.cliptag {
-  border: none;
-  background: var(--ar-secondary-cream);
-  color: var(--ar-secondary);
-  border-radius: 999px;
-  padding: 0.1rem 0.55rem;
-  font-size: 0.72rem;
-  cursor: pointer;
-}
-.cliptag:hover { background: var(--ar-blush); color: var(--ar-primary); }
+/* Clip-card styles are shared via source-panel.css (imported at top). */
 
 .qmore {
   display: block;
@@ -268,31 +227,6 @@ svg.lucide { vertical-align: middle; }
   cursor: pointer;
 }
 .qmore:hover { background: var(--ar-secondary-cream); }
-
-/* clip-card controls: question + "Watch" are buttons that open the in-app
-   panel; copy-link shares the YouTube snippet URL. */
-.clipcard-q {
-  display: block;
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-.clipcard-q:hover { text-decoration: underline; }
-.clipcard-watch, .clipcard-copy { background: none; border: none; cursor: pointer; padding: 0; }
-.clipcard-copy {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: var(--ar-font-caps);
-  font-size: 0.72rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ar-secondary);
-}
-.clipcard-copy:hover { color: var(--ar-primary); }
 
 /* topic chip count */
 .qtopic-n { margin-left: 0.35rem; font-size: 0.7rem; color: var(--ar-secondary); font-variant-numeric: tabular-nums; }

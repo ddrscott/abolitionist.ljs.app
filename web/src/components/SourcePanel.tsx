@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Link2, Check } from 'lucide-react';
+import { X, Link2, Check, Play } from 'lucide-react';
 
 // --- Source shapes — mirror worker/answer.ts ------------------------------
 
@@ -95,6 +95,50 @@ export function CopyLink({
         </>
       )}
     </button>
+  );
+}
+
+// --- shared clip card ------------------------------------------------------
+
+/** Canonical video-clip card — question-led, with answer preview, an explicit
+ *  "Watch at m:ss" + Copy link, and topic tags. Used by the chat and the
+ *  /questions Talks tab so clips look identical everywhere. Clicking the
+ *  question or Watch opens the in-app panel (onOpen); tags browse (onTopic). */
+export function ClipCard({
+  clip,
+  onOpen,
+  onTopic,
+}: {
+  clip: ClipSource;
+  onOpen: () => void;
+  onTopic?: (t: string) => void;
+}) {
+  const speaker = realSpeaker(clip.speaker);
+  return (
+    <div className="clipcard">
+      <button type="button" className="clipcard-q" onClick={onOpen}>{clip.question}</button>
+      {clip.answer && <p className="clipcard-a">{clip.answer}</p>}
+      <div className="clipcard-meta">
+        <button type="button" className="clipcard-watch" onClick={onOpen}>
+          <Play size={13} fill="currentColor" aria-hidden="true" /> Watch at {mmss(clip.startSeconds)}
+        </button>
+        <CopyLink url={clip.youtubeUrl} className="clipcard-copy" label="Copy link" />
+        <span className="clipcard-src">
+          {clip.videoTitle}{speaker ? ` · ${speaker}` : ''} · {clip.channelName}
+        </span>
+      </div>
+      {clip.topics.length > 0 && (
+        <div className="cliptags">
+          {clip.topics.slice(0, 6).map((t) =>
+            onTopic ? (
+              <button key={t} type="button" className="cliptag" onClick={() => onTopic(t)}>{t}</button>
+            ) : (
+              <span key={t} className="cliptag">{t}</span>
+            ),
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

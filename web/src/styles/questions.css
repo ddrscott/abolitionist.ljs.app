@@ -2,6 +2,7 @@
    pages. Self-contained (this route doesn't load home.css/custom.css). */
 
 @import './tokens.css';
+@import './source-panel.css'; /* shared in-app source viewer (chat + /questions) */
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700&family=Oswald:wght@400;500&display=swap');
 
 * { box-sizing: border-box; }
@@ -267,3 +268,32 @@ svg.lucide { vertical-align: middle; }
   cursor: pointer;
 }
 .qmore:hover { background: var(--ar-secondary-cream); }
+
+/* clip-card controls: question + "Watch" are buttons that open the in-app
+   panel; copy-link shares the YouTube snippet URL. */
+.clipcard-q {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.clipcard-q:hover { text-decoration: underline; }
+.clipcard-watch, .clipcard-copy { background: none; border: none; cursor: pointer; padding: 0; }
+.clipcard-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--ar-font-caps);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ar-secondary);
+}
+.clipcard-copy:hover { color: var(--ar-primary); }
+
+/* topic chip count */
+.qtopic-n { margin-left: 0.35rem; font-size: 0.7rem; color: var(--ar-secondary); font-variant-numeric: tabular-nums; }
+.qtopic.active .qtopic-n { color: var(--ar-blush); }

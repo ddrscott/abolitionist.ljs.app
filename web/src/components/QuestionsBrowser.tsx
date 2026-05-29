@@ -1,57 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Fuse from 'fuse.js';
 import { ChevronRight, Search, MessageSquare, FileText, Play } from 'lucide-react';
+import {
+  DetailPanel,
+  CopyLink,
+  mmss,
+  realSpeaker,
+  type ClipSource,
+  type DetailTarget,
+} from './SourcePanel';
 
 // One curated article Q&A — matches scripts/build-questions-index.mjs output.
 type QA = { q: string; a: string; t: string; u: string; qt?: string };
 type ArticleGroup = { url: string; title: string; items: QA[] };
 
-// One video clip — matches the ClipSource shape from worker/answer.ts.
-type Clip = {
-  id: string;
-  question: string;
-  answer: string;
-  speaker?: string;
-  topics: string[];
-  videoId: string;
-  startSeconds: number;
-  videoTitle: string;
-  channelName: string;
-  youtubeUrl: string;
-};
+// Distinct topic + count — from scripts/build-clip-topics.mjs.
+type TopicCount = { t: string; n: number };
 
 const MAX_SEARCH_RESULTS = 60;
+const TOPIC_CHIPS = 18;
 
-// Curated entry points into the talks (raw topics are too granular — thousands
-// of free-form tags — so we surface a hand-picked set as browse chips).
-const POPULAR_TOPICS = [
-  'my body my choice',
-  'incrementalism',
-  'personhood',
-  'rape exception',
-  'equal protection',
-  'bodily autonomy',
-  'child sacrifice',
-  'abortion pills',
-  'heartbeat bill',
-  'adoption',
-  'repentance',
-  'pragmatism',
+// Fallback chips if the topic index hasn't loaded.
+const FALLBACK_TOPICS = [
+  'my body my choice', 'incrementalism', 'personhood', 'rape exception',
+  'equal protection', 'bodily autonomy', 'child sacrifice', 'abortion pills',
 ];
-
-function mmss(total: number): string {
-  const s = Math.max(0, Math.floor(total));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
-}
-const GENERIC_SPEAKERS = new Set(['host', 'abolitionist', 'speaker', 'narrator', 'unknown']);
-function realSpeaker(s?: string): string | null {
-  if (!s) return null;
-  return GENERIC_SPEAKERS.has(s.trim().toLowerCase()) ? null : s.trim();
-}
 
 export function QuestionsBrowser() {
   const [tab, setTab] = useState<'writings' | 'talks'>('writings');
@@ -98,9 +71,7 @@ function WritingsTab() {
         setItems(data);
         fuseRef.current = new Fuse(data, {
           keys: [{ name: 'q', weight: 0.8 }, { name: 'a', weight: 0.2 }],
-          ignoreLocation: true,
-          threshold: 0.4,
-          minMatchCharLength: 2,
+          ignoreLocation: true, threshold: 0.4, minMatchCharLength: 2,
         });
       })
       .catch(() => setItems([]));
@@ -219,23 +190,37 @@ function QuestionRow({ qa, open, onToggle, showArticle }: {
 function TalksTab() {
   const [query, setQuery] = useState('');
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
-  const [clips, setClips] = useState<Clip[]>([]);
+  const [clips, setClips] = useState<ClipSource[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'feed' | 'search'>('feed');
+  const [topics, setTopics] = useState<TopicCount[]>([]);
+  const [detail, setDetail] = useState<DetailTarget | null>(null);
+  const topicFuse = useRef<Fuse<TopicCount> | null>(null);
   const reqId = useRef(0);
+
+  // Topic index (for the searchable chips). Falls back to a hardcoded set.
+  useEffect(() => {
+    fetch('/clip-topics.json', { cache: 'force-cache' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((raw: unknown) => {
+        const data = (raw as TopicCount[] | null) ?? FALLBACK_TOPICS.map((t) => ({ t, n: 0 }));
+        setTopics(data);
+        topicFuse.current = new Fuse(data, { keys: ['t'], ignoreLocation: true, threshold: 0.4, minMatchCharLength: 2 });
+      })
+      .catch(() => setTopics(FALLBACK_TOPICS.map((t) => ({ t, n: 0 }))));
+  }, []);
 
   async function loadFeed(topic: string | null, append: boolean) {
     const id = ++reqId.current;
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const params = new URLSearchParams();
       if (topic) params.set('topic', topic);
       if (append && cursor) params.set('cursor', cursor);
       const res = await fetch(`/api/clips?${params.toString()}`);
-      const data = (await res.json()) as { clips?: Clip[]; nextCursor?: string | null; error?: string };
+      const data = (await res.json()) as { clips?: ClipSource[]; nextCursor?: string | null; error?: string };
       if (id !== reqId.current) return;
       if (!res.ok) throw new Error(data.error || `clips ${res.status}`);
       setClips((prev) => (append ? [...prev, ...(data.clips ?? [])] : data.clips ?? []));
@@ -250,21 +235,15 @@ function TalksTab() {
 
   async function runSearch(q: string) {
     const id = ++reqId.current;
-    setLoading(true);
-    setError(null);
-    setActiveTopic(null);
+    setLoading(true); setError(null); setActiveTopic(null);
     try {
       const res = await fetch('/api/clips', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ query: q }),
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: q }),
       });
-      const data = (await res.json()) as { clips?: Clip[]; error?: string };
+      const data = (await res.json()) as { clips?: ClipSource[]; error?: string };
       if (id !== reqId.current) return;
       if (!res.ok) throw new Error(data.error || `clips ${res.status}`);
-      setClips(data.clips ?? []);
-      setCursor(null);
-      setMode('search');
+      setClips(data.clips ?? []); setCursor(null); setMode('search');
     } catch (e) {
       if (id === reqId.current) setError(e instanceof Error ? e.message : 'search failed');
     } finally {
@@ -272,35 +251,41 @@ function TalksTab() {
     }
   }
 
-  // Initial recent feed.
-  useEffect(() => {
-    loadFeed(null, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => { loadFeed(null, false); /* eslint-disable-next-line */ }, []);
 
   function pickTopic(topic: string) {
-    setQuery('');
     setActiveTopic(topic);
-    setClips([]);
-    setCursor(null);
+    setClips([]); setCursor(null);
     loadFeed(topic, false);
   }
 
+  // Topic chips: live fuzzy filter as you type; top-by-count when empty.
+  const q = query.trim();
+  const chips = useMemo<TopicCount[]>(() => {
+    if (q.length >= 2 && topicFuse.current) {
+      return topicFuse.current.search(q, { limit: TOPIC_CHIPS }).map((r) => r.item);
+    }
+    return [...topics].sort((a, b) => b.n - a.n).slice(0, TOPIC_CHIPS);
+  }, [q, topics]);
+
   return (
     <>
-      <p className="qbrowse-count">~12,000 clips from the movement&rsquo;s YouTube channels</p>
+      <p className="qbrowse-count">
+        ~12,000 clips from the movement&rsquo;s YouTube channels
+        {topics.length > 0 && ` · ${topics.length.toLocaleString()} topics`}
+      </p>
 
-      <form className="qbrowse-search" onSubmit={(e) => { e.preventDefault(); if (query.trim().length >= 2) runSearch(query.trim()); }}>
+      <form className="qbrowse-search" onSubmit={(e) => { e.preventDefault(); if (q.length >= 2) runSearch(q); }}>
         <Search size={18} aria-hidden="true" />
         <input type="search" value={query} onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search the talks…" aria-label="Search video clips" />
+          placeholder="Search clips, or type to filter topics →" aria-label="Search clips or filter topics" />
       </form>
 
       <div className="qtopics">
-        {POPULAR_TOPICS.map((t) => (
-          <button key={t} type="button" className={`qtopic${activeTopic === t ? ' active' : ''}`}
-            onClick={() => pickTopic(t)}>
-            {t}
+        {chips.map((t) => (
+          <button key={t.t} type="button" className={`qtopic${activeTopic === t.t ? ' active' : ''}`}
+            onClick={() => { setQuery(''); pickTopic(t.t); }}>
+            {t.t}{t.n ? <span className="qtopic-n">{t.n}</span> : null}
           </button>
         ))}
         {(activeTopic || mode === 'search') && (
@@ -312,44 +297,46 @@ function TalksTab() {
 
       <div className="qbrowse-results-label">
         {mode === 'search'
-          ? `Top matches for “${query.trim()}”`
-          : activeTopic
-            ? `Clips tagged “${activeTopic}”`
-            : 'Recent clips'}
+          ? `Top matches for “${q}”`
+          : activeTopic ? `Clips tagged “${activeTopic}”` : 'Recent clips'}
       </div>
 
       {error && <p className="qbrowse-loading">Couldn’t load clips: {error}</p>}
 
       <ul className="cliplist">
-        {clips.map((c) => <ClipRow key={c.id} clip={c} onTopic={pickTopic} />)}
+        {clips.map((c) => (
+          <ClipRow key={c.id} clip={c}
+            onOpen={() => setDetail({ kind: 'clip', source: c })}
+            onTopic={(t) => { setQuery(''); pickTopic(t); }} />
+        ))}
       </ul>
 
       {loading && <p className="qbrowse-loading">Loading clips…</p>}
       {!loading && mode === 'feed' && cursor && (
-        <button type="button" className="qmore" onClick={() => loadFeed(activeTopic, true)}>
-          Load more
-        </button>
+        <button type="button" className="qmore" onClick={() => loadFeed(activeTopic, true)}>Load more</button>
       )}
-      {!loading && !error && clips.length === 0 && (
-        <p className="qbrowse-loading">No clips found.</p>
-      )}
+      {!loading && !error && clips.length === 0 && <p className="qbrowse-loading">No clips found.</p>}
+
+      <DetailPanel detail={detail} onClose={() => setDetail(null)} />
     </>
   );
 }
 
-function ClipRow({ clip, onTopic }: { clip: Clip; onTopic: (t: string) => void }) {
+function ClipRow({ clip, onOpen, onTopic }: {
+  clip: ClipSource; onOpen: () => void; onTopic: (t: string) => void;
+}) {
   const speaker = realSpeaker(clip.speaker);
   return (
     <li className="clipcard">
-      <div className="clipcard-q">{clip.question}</div>
+      <button type="button" className="clipcard-q" onClick={onOpen}>{clip.question}</button>
       <p className="clipcard-a">{clip.answer}</p>
       <div className="clipcard-meta">
-        <a className="clipcard-watch" href={clip.youtubeUrl} target="_blank" rel="noopener noreferrer">
+        <button type="button" className="clipcard-watch" onClick={onOpen}>
           <Play size={13} fill="currentColor" aria-hidden="true" /> Watch at {mmss(clip.startSeconds)}
-        </a>
+        </button>
+        <CopyLink url={clip.youtubeUrl} className="clipcard-copy" label="Copy link" />
         <span className="clipcard-src">
-          {clip.videoTitle}
-          {speaker ? ` · ${speaker}` : ''} · {clip.channelName}
+          {clip.videoTitle}{speaker ? ` · ${speaker}` : ''} · {clip.channelName}
         </span>
       </div>
       {clip.topics.length > 0 && (

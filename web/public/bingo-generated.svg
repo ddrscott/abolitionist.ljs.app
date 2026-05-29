@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1018" width="720" height="1018" role="img" aria-label="Abolitionist Rising bingo card">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=EB+Garamond:wght@400;500&amp;family=Oswald:wght@500&amp;display=swap');
+    .ink-stroke { stroke: #111; stroke-width: 1.6; }
+    .ink-fill { fill: #111; }
+    text { fill: #111; }
+    .t-title { font-family: 'Playfair Display','EB Garamond',Georgia,serif; font-weight: 700; font-size: 62px; }
+    .t-sub { font-family: 'EB Garamond',Georgia,serif; font-size: 17px; letter-spacing: .2px; }
+    .t-bingo { font-family: 'Playfair Display','EB Garamond',serif; font-weight: 700; font-size: 70px; }
+    .t-cell { font-family: 'EB Garamond',Georgia,serif; font-size: 15px; }
+    .t-free { font-family: 'Oswald','EB Garamond',sans-serif; font-weight: 500; font-size: 21px; letter-spacing: 1px; }
+    .t-trust { font-family: 'EB Garamond',Georgia,serif; font-style: italic; font-size: 13px; }
+    rect, line, path, polyline { stroke: #111; }
+    line, .grid { stroke-width: 1.4; }
+  </style>
+
+  <rect x="0" y="0" width="720" height="1018" fill="#fff"/>
+
+  <!-- decorative frame -->
+  <rect x="14" y="14" width="692" height="990" fill="none" stroke-width="2.4"/>
+  <rect x="22" y="22" width="676" height="974" fill="none" stroke-width="1"/>
+
+  <!-- corner sprigs -->
+  <g class="ink-fill" transform="translate(34 34) scale(0.9 0.9)">
+    <path class="ink-stroke" fill="none" d="M 4 4 C 26 8, 40 22, 46 46"/>
+    <ellipse cx="16" cy="11" rx="6" ry="3" transform="rotate(28 16 11)"/>
+    <ellipse cx="28" cy="20" rx="6.5" ry="3.2" transform="rotate(40 28 20)"/>
+    <ellipse cx="38" cy="32" rx="6" ry="3" transform="rotate(54 38 32)"/>
+    <ellipse cx="11" cy="20" rx="5" ry="2.6" transform="rotate(64 11 20)"/>
+    <ellipse cx="22" cy="31" rx="5.4" ry="2.8" transform="rotate(70 22 31)"/>
+  </g>
+  <g class="ink-fill" transform="translate(686 34) scale(-0.9 0.9)">
+    <path class="ink-stroke" fill="none" d="M 4 4 C 26 8, 40 22, 46 46"/>
+    <ellipse cx="16" cy="11" rx="6" ry="3" transform="rotate(28 16 11)"/>
+    <ellipse cx="28" cy="20" rx="6.5" ry="3.2" transform="rotate(40 28 20)"/>
+    <ellipse cx="38" cy="32" rx="6" ry="3" transform="rotate(54 38 32)"/>
+    <ellipse cx="11" cy="20" rx="5" ry="2.6" transform="rotate(64 11 20)"/>
+    <ellipse cx="22" cy="31" rx="5.4" ry="2.8" transform="rotate(70 22 31)"/>
+  </g>
+  <g class="ink-fill" transform="translate(34 984) scale(0.9 -0.9)">
+    <path class="ink-stroke" fill="none" d="M 4 4 C 26 8, 40 22, 46 46"/>
+    <ellipse cx="16" cy="11" rx="6" ry="3" transform="rotate(28 16 11)"/>
+    <ellipse cx="28" cy="20" rx="6.5" ry="3.2" transform="rotate(40 28 20)"/>
+    <ellipse cx="38" cy="32" rx="6" ry="3" transform="rotate(54 38 32)"/>
+    <ellipse cx="11" cy="20" rx="5" ry="2.6" transform="rotate(64 11 20)"/>
+    <ellipse cx="22" cy="31" rx="5.4" ry="2.8" transform="rotate(70 22 31)"/>
+  </g>
+  <g class="ink-fill" transform="translate(686 984) scale(-0.9 -0.9)">
+    <path class="ink-stroke" fill="none" d="M 4 4 C 26 8, 40 22, 46 46"/>
+    <ellipse cx="16" cy="11" rx="6" ry="3" transform="rotate(28 16 11)"/>
+    <ellipse cx="28" cy="20" rx="6.5" ry="3.2" transform="rotate(40 28 20)"/>
+    <ellipse cx="38" cy="32" rx="6" ry="3" transform="rotate(54 38 32)"/>
+    <ellipse cx="11" cy="20" rx="5" ry="2.6" transform="rotate(64 11 20)"/>
+    <ellipse cx="22" cy="31" rx="5.4" ry="2.8" transform="rotate(70 22 31)"/>
+  </g>
+
+  <!-- top motifs -->
+  <circle cx="349" cy="28" r="2.6"/><circle cx="360" cy="28" r="2.6"/><circle cx="371" cy="28" r="2.6"/>
+  <g class="ink-stroke">
+    <path d="M 336 86 A 24 24 0 0 1 384 86" fill="none"/>
+    <line x1="326" y1="86" x2="394" y2="86"/>
+    <line x1="371.8" y1="73.8" x2="382.9" y2="62.3"/><line x1="369.3" y1="71.7" x2="378.0" y2="58.3"/><line x1="366.4" y1="70.2" x2="372.4" y2="55.4"/><line x1="363.2" y1="69.3" x2="366.3" y2="53.6"/><line x1="360.0" y1="69.0" x2="360.0" y2="53.0"/><line x1="356.8" y1="69.3" x2="353.7" y2="53.6"/><line x1="353.6" y1="70.2" x2="347.6" y2="55.4"/><line x1="350.7" y1="71.7" x2="342.0" y2="58.3"/><line x1="348.2" y1="73.8" x2="337.1" y2="62.3"/>
+  </g>
+  <g class="ink-fill"><g transform="translate(-9 0) rotate(-14 98 96)">
+    <ellipse cx="98" cy="105" rx="6.5" ry="9.5"/>
+    <ellipse cx="98" cy="92" rx="7.5" ry="6"/>
+    <circle cx="92" cy="85" r="1.7"/>
+    <circle cx="96" cy="83" r="1.9"/>
+    <circle cx="100" cy="83" r="1.9"/>
+    <circle cx="104" cy="85" r="1.7"/>
+  </g><g transform="translate(9 0) rotate(12 98 96)">
+    <ellipse cx="98" cy="105" rx="6.5" ry="9.5"/>
+    <ellipse cx="98" cy="92" rx="7.5" ry="6"/>
+    <circle cx="92" cy="85" r="1.7"/>
+    <circle cx="96" cy="83" r="1.9"/>
+    <circle cx="100" cy="83" r="1.9"/>
+    <circle cx="104" cy="85" r="1.7"/>
+  </g></g>
+  <g class="ink-fill"><g transform="translate(-9 0) rotate(-14 622 96)">
+    <ellipse cx="622" cy="105" rx="6.5" ry="9.5"/>
+    <ellipse cx="622" cy="92" rx="7.5" ry="6"/>
+    <circle cx="616" cy="85" r="1.7"/>
+    <circle cx="620" cy="83" r="1.9"/>
+    <circle cx="624" cy="83" r="1.9"/>
+    <circle cx="628" cy="85" r="1.7"/>
+  </g><g transform="translate(9 0) rotate(12 622 96)">
+    <ellipse cx="622" cy="105" rx="6.5" ry="9.5"/>
+    <ellipse cx="622" cy="92" rx="7.5" ry="6"/>
+    <circle cx="616" cy="85" r="1.7"/>
+    <circle cx="620" cy="83" r="1.9"/>
+    <circle cx="624" cy="83" r="1.9"/>
+    <circle cx="628" cy="85" r="1.7"/>
+  </g></g>
+
+  <!-- title -->
+  <text class="t-title" x="360" y="166" text-anchor="middle">Abolitionist Rising</text>
+
+  <!-- subtitle with heartbeats -->
+  <polyline points="70.0,208.0 85.0,208.0 90.0,205.0 95.0,214.0 102.5,194.0 110.0,218.0 115.0,204.0 120.0,208.0 140.0,208.0" fill="none"/>
+  <text class="t-sub" x="360" y="213" text-anchor="middle">Typical Arguments Abortion Abolitionists Constantly Hear.</text>
+  <polyline points="650.0,208.0 635.0,208.0 630.0,205.0 625.0,214.0 617.5,194.0 610.0,218.0 605.0,204.0 600.0,208.0 580.0,208.0" fill="none"/>
+
+  <!-- table -->
+  <g class="grid" fill="none" stroke="#111"><line x1="42" y1="346" x2="42" y2="959"/><line x1="169.2" y1="346" x2="169.2" y2="959"/><line x1="296.4" y1="346" x2="296.4" y2="959"/><line x1="423.6" y1="346" x2="423.6" y2="959"/><line x1="550.8" y1="346" x2="550.8" y2="959"/><line x1="678" y1="346" x2="678" y2="959"/><line x1="42" y1="346" x2="678" y2="346"/><line x1="42" y1="468.6" x2="678" y2="468.6"/><line x1="42" y1="591.2" x2="678" y2="591.2"/><line x1="42" y1="713.8" x2="678" y2="713.8"/><line x1="42" y1="836.4" x2="678" y2="836.4"/><line x1="42" y1="959" x2="678" y2="959"/><rect x="42" y="246" width="636" height="713" fill="none"/><line x1="169.2" y1="246" x2="169.2" y2="346"/><line x1="296.4" y1="246" x2="296.4" y2="346"/><line x1="423.6" y1="246" x2="423.6" y2="346"/><line x1="550.8" y1="246" x2="550.8" y2="346"/></g>
+  <text class="t-bingo" x="105.6" y="322" text-anchor="middle">B</text><text class="t-bingo" x="232.8" y="322" text-anchor="middle">I</text><text class="t-bingo" x="360" y="322" text-anchor="middle">N</text><text class="t-bingo" x="487.2" y="322" text-anchor="middle">G</text><text class="t-bingo" x="614.4" y="322" text-anchor="middle">O</text>
+  <g>
+    <text class="t-cell" text-anchor="middle"><tspan x="105.6" y="395.3">Don't impose</tspan><tspan x="105.6" y="413.3">your</tspan><tspan x="105.6" y="431.3">religion.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="232.8" y="395.3">You're</tspan><tspan x="232.8" y="413.3">forcing</tspan><tspan x="232.8" y="431.3">birth.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="360" y="386.3">They'll just</tspan><tspan x="360" y="404.3">do it</tspan><tspan x="360" y="422.3">illegally</tspan><tspan x="360" y="440.3">anyway.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="487.2" y="395.3">You're</tspan><tspan x="487.2" y="413.3">punishing</tspan><tspan x="487.2" y="431.3">women.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="614.4" y="395.3">Separation of</tspan><tspan x="614.4" y="413.3">church and</tspan><tspan x="614.4" y="431.3">state.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="105.6" y="526.9">You're just</tspan><tspan x="105.6" y="544.9">pro-birth.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="232.8" y="508.9">What about</tspan><tspan x="232.8" y="526.9">the mother's</tspan><tspan x="232.8" y="544.9">life or</tspan><tspan x="232.8" y="562.9">health?</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="360" y="526.9">People can't</tspan><tspan x="360" y="544.9">afford kids.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="487.2" y="526.9">The fetus is</tspan><tspan x="487.2" y="544.9">a parasite.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="614.4" y="508.9">Consent to</tspan><tspan x="614.4" y="526.9">sex isn't</tspan><tspan x="614.4" y="544.9">consent to</tspan><tspan x="614.4" y="562.9">pregnancy.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="105.6" y="649.5">It's not a</tspan><tspan x="105.6" y="667.5">person yet.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="232.8" y="649.5">They're not</tspan><tspan x="232.8" y="667.5">viable.</tspan></text>
+    <g class="ink-stroke" stroke-width="1"><line x1="404.0" y1="646.5" x2="412.0" y2="646.5"/><line x1="400.7" y1="663.3" x2="408.0" y2="666.4"/><line x1="391.1" y1="677.6" x2="396.8" y2="683.3"/><line x1="376.8" y1="687.2" x2="379.9" y2="694.5"/><line x1="360.0" y1="690.5" x2="360.0" y2="698.5"/><line x1="343.2" y1="687.2" x2="340.1" y2="694.5"/><line x1="328.9" y1="677.6" x2="323.2" y2="683.3"/><line x1="319.3" y1="663.3" x2="312.0" y2="666.4"/><line x1="316.0" y1="646.5" x2="308.0" y2="646.5"/><line x1="319.3" y1="629.7" x2="312.0" y2="626.6"/><line x1="328.9" y1="615.4" x2="323.2" y2="609.7"/><line x1="343.2" y1="605.8" x2="340.1" y2="598.5"/><line x1="360.0" y1="602.5" x2="360.0" y2="594.5"/><line x1="376.8" y1="605.8" x2="379.9" y2="598.5"/><line x1="391.1" y1="615.4" x2="396.8" y2="609.7"/><line x1="400.7" y1="629.7" x2="408.0" y2="626.6"/></g>
+    <text class="t-free" x="360" y="643.5" text-anchor="middle">FREE</text>
+    <text class="t-free" x="360" y="666.5" text-anchor="middle">SPACE</text>
+    <text class="t-trust" x="360" y="688.5" text-anchor="middle">Trust women.</text>
+    <text class="t-cell" text-anchor="middle"><tspan x="487.2" y="649.5">Abortion is</tspan><tspan x="487.2" y="667.5">healthcare.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="614.4" y="640.5">You can't</tspan><tspan x="614.4" y="658.5">legislate</tspan><tspan x="614.4" y="676.5">morality.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="105.6" y="772.1">It's a matter</tspan><tspan x="105.6" y="790.1">of privacy.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="232.8" y="772.1">You only care</tspan><tspan x="232.8" y="790.1">until birth.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="360" y="763.1">The baby</tspan><tspan x="360" y="781.1">would have a</tspan><tspan x="360" y="799.1">bad life.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="487.2" y="763.1">Adoption</tspan><tspan x="487.2" y="781.1">isn't an</tspan><tspan x="487.2" y="799.1">alternative.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="614.4" y="763.1">Banning</tspan><tspan x="614.4" y="781.1">abortion</tspan><tspan x="614.4" y="799.1">kills women.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="105.6" y="885.7">It's between</tspan><tspan x="105.6" y="903.7">a woman and</tspan><tspan x="105.6" y="921.7">her doctor.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="232.8" y="885.7">The unborn</tspan><tspan x="232.8" y="903.7">aren't</tspan><tspan x="232.8" y="921.7">conscious.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="360" y="876.7">Everyone has</tspan><tspan x="360" y="894.7">a right to</tspan><tspan x="360" y="912.7">sex without</tspan><tspan x="360" y="930.7">consequences.</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="487.2" y="894.7">What about</tspan><tspan x="487.2" y="912.7">rape?</tspan></text>
+    <text class="t-cell" text-anchor="middle"><tspan x="614.4" y="885.7">It's just a</tspan><tspan x="614.4" y="903.7">clump of</tspan><tspan x="614.4" y="921.7">cells.</tspan></text>
+  </g>
+
+  <!-- side + bottom dots -->
+  <circle cx="26" cy="498" r="2.6"/><circle cx="26" cy="509" r="2.6"/><circle cx="26" cy="520" r="2.6"/>
+  <circle cx="694" cy="498" r="2.6"/><circle cx="694" cy="509" r="2.6"/><circle cx="694" cy="520" r="2.6"/>
+  <circle cx="349" cy="988" r="2.6"/><circle cx="360" cy="988" r="2.6"/><circle cx="371" cy="988" r="2.6"/>
+</svg>

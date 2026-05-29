@@ -65,7 +65,7 @@ html[data-theme='dark'] {
   --sl-color-text-accent:      var(--ar-tertiary);
   --sl-color-text-invert:      var(--ar-paper);
   --sl-color-bg:               var(--ar-paper);
-  --sl-color-bg-nav:           var(--ar-primary);
+  --sl-color-bg-nav:           var(--ar-paper);
   --sl-color-bg-sidebar:       var(--ar-secondary-cream);
   --sl-color-bg-inline-code:   var(--ar-secondary-cream);
 
@@ -81,22 +81,21 @@ html[data-theme='dark'] {
   --sl-line-height-headings:   var(--ar-leading-heading);
 }
 
-/* Header — two-tone oxblood → black gradient, matches AR live site. */
+/* Header — light, to match the chat app shell (see SiteHeader.astro). */
 :root header.header {
-  background: linear-gradient(90deg, var(--ar-primary) 5%, var(--ar-base));
-  color: var(--ar-paper);
-  box-shadow: var(--ar-shadow-sticky);
+  background: var(--ar-paper);
+  color: var(--ar-ink);
+  box-shadow: none;
   border-bottom: none;
 }
 
-/* Site title in header */
+/* Site title in header (hidden by SiteHeader, kept consistent regardless). */
 .site-title,
 a.site-title {
-  font-family: var(--ar-font-caps) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-family: var(--ar-font-display) !important;
+  letter-spacing: 0.01em;
   font-size: 1.1rem;
-  color: var(--ar-paper);
+  color: var(--ar-primary);
 }
 .site-title:hover { color: var(--ar-secondary); }
 
@@ -133,14 +132,13 @@ article h1 {
   color: var(--ar-tertiary-hover);
 }
 
-/* Body sizing + reading measure. Body is 20px at 1.55 so paragraphs
-   feel like prose, not a wall. `--ar-reading-max: 72ch` caps line
-   length to ~65 chars at EB Garamond's actual glyph width — the
-   panel critics' target. Figures (journey map, code blocks) opt out
-   so they can span the full content column. */
+/* Body sizing + reading measure. Matches the chat answer's readability
+   scale (~19px / 1.72) so prose feels the same across surfaces. The
+   measure caps line length per `--ar-reading-max`; figures (journey map,
+   code blocks, tables) opt out so they span the full content column. */
 .sl-markdown-content {
-  font-size: var(--ar-text-body);
-  line-height: var(--ar-leading-body);
+  font-size: 1.1875rem;
+  line-height: 1.72;
 }
 .sl-markdown-content :is(p, li, blockquote, h1, h2, h3, h4, h5, h6) {
   max-width: var(--ar-reading-max);
@@ -156,14 +154,10 @@ article h1 {
   max-width: 15rem;
 }
 
-/* Responsive priority: at tighter widths, collapse the LEFT nav
-   first (it's navigation) and keep the RIGHT column (reading
-   content). Starlight's mobile toggle still handles <800px. */
-@media (max-width: 72rem) {
-  :root { --sl-sidebar-width: 0; }
-  .sidebar-pane { display: none !important; }
-  .main-frame { grid-template-columns: 1fr !important; }
-}
+/* Responsive: let Starlight handle it natively — the left nav becomes a
+   column on md screens and collapses behind the header's menu button below
+   ~800px. (A previous `display:none` here broke the mobile menu: the toggle
+   fired but the force-hidden sidebar never appeared.) */
 
 /* Cards / code blocks — hard corners, paper background, tan hairline. */
 .sl-markdown-content pre,

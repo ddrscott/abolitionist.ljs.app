@@ -1,10 +1,12 @@
 ---
-// Shared header used on every page (custom home + Starlight article
-// routes via the `components.Header` override in astro.config.mjs).
-// Keep this the single source of truth for the top bar.
+// Top bar for Starlight content routes (Articles / Journey / future pages).
+// Light, to match the chat app shell. The chat home has no header (its brand
+// lives in the sidebar); content pages keep this bar because Starlight needs
+// it for the mobile menu toggle + search. Single source of truth for the bar.
+import Search from '@astrojs/starlight/components/Search.astro';
 ---
 
-<header class="site-header">
+<div class="site-header">
   <a href="/" class="brand">
     <img src="/icon-full.png" alt="" class="brand-mark" />
     <span>Ask the Abolitionist</span>
@@ -12,6 +14,7 @@
   <nav class="site-nav">
     <a href="/pages/">Articles</a>
     <a href="/pages/journey/">Journey</a>
+    <div class="site-search"><Search /></div>
     <a
       href="https://github.com/ddrscott/abolitionist.ljs.app"
       class="gh-link"
@@ -19,12 +22,7 @@
       aria-label="View source on GitHub"
       title="View source on GitHub"
     >
-      <svg
-        viewBox="0 0 16 16"
-        width="20"
-        height="20"
-        aria-hidden="true"
-        focusable="false"
+      <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" focusable="false"
         ><path
           fill="currentColor"
           d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"
@@ -32,7 +30,7 @@
       >
     </a>
   </nav>
-</header>
+</div>
 
 <style is:global>
   .site-header {
@@ -41,15 +39,14 @@
     align-items: center;
     gap: 1rem;
     padding: 0 1.25rem;
-    /* Match Starlight's default nav height (4rem / 64px) on the homepage
-       too so the bar is the same size on every route. */
     min-height: var(--sl-nav-height, 4rem);
     height: 100%;
     box-sizing: border-box;
-    background: linear-gradient(90deg, #430607 5%, #230102);
-    color: #fde8e8;
-    border-bottom: 1px solid #c49a6e;
-    box-shadow: rgba(0, 0, 0, 0.7) 5px 5px 30px 1px;
+    /* Light, to match the chat app shell. */
+    background: var(--ar-paper);
+    color: var(--ar-ink);
+    border-bottom: 1px solid var(--ar-secondary);
+    box-shadow: none;
     position: sticky;
     top: 0;
     z-index: 50;
@@ -57,58 +54,55 @@
   .site-header .brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
-    font-family: 'Oswald', Impact, sans-serif;
+    gap: 0.55rem;
+    font-family: var(--ar-font-display, 'Cinzel Decorative', serif);
     font-size: 1.1rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #ffffff;
+    color: var(--ar-primary);
     text-decoration: none;
+    white-space: nowrap;
   }
-  .site-header .brand:hover { color: #c49a6e; }
-  .site-header .brand-mark {
-    width: 34px;
-    height: 34px;
-    display: block;
-  }
+  .site-header .brand:hover { color: var(--ar-tertiary); }
+  .site-header .brand-mark { width: 28px; height: 28px; display: block; border-radius: 4px; }
   .site-header .site-nav {
     display: inline-flex;
-    gap: 1.25rem;
-    font-family: 'EB Garamond', Georgia, serif;
-    font-size: 1rem;
+    align-items: center;
+    gap: 1.1rem;
+    font-family: var(--ar-font-caps, 'Oswald', sans-serif);
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
-  .site-header .site-nav a {
-    color: #fde8e8;
+  .site-header .site-nav > a {
+    color: var(--ar-primary);
     text-decoration: none;
   }
-  .site-header .site-nav a:hover { color: #c49a6e; }
+  .site-header .site-nav > a:hover { color: var(--ar-tertiary); }
   .site-header .site-nav a.gh-link {
     display: inline-flex;
     align-items: center;
-    color: #fde8e8;
-    opacity: 0.85;
+    color: var(--ar-secondary);
   }
-  .site-header .site-nav a.gh-link:hover { opacity: 1; color: #ffffff; }
+  .site-header .site-nav a.gh-link:hover { color: var(--ar-primary); }
+  .site-header .site-search { display: inline-flex; align-items: center; }
 
-  /* When rendered inside Starlight's layout, neutralize the default
-     site-title + link chrome so we don't double up. Starlight's outer
-     <header class="header"> already pins fixed at top; we just need
-     to make sure our SiteHeader fills it cleanly and no extra
-     separator/hairline/shadow from Starlight leaks through. */
-  :root .header > .site-header {
-    flex: 1;
-  }
+  /* Neutralize Starlight's default header chrome so only our bar shows, but
+     KEEP the mobile menu toggle (Starlight renders it as a sibling). */
+  :root .header > .site-header { flex: 1; }
   :root header.header {
     padding: 0 !important;
     border-bottom: 0 !important;
-    background: transparent !important;
+    background: var(--ar-paper) !important;
   }
-  :root header.header > *:not(.site-header) {
+  :root header.header > *:not(.site-header):not(starlight-menu-button) {
     display: none !important;
   }
-  /* Starlight draws a 1px hairline under the nav via the `.header +
-     .main-frame` boundary; hide it so only our oxblood gradient edge
-     shows. */
+  :root header.header starlight-menu-button { color: var(--ar-primary); }
   :root .page > .main-frame { border-top: 0 !important; }
+
+  /* Narrow screens: hide the inline header search (the page still has search
+     elsewhere) and tighten nav so it doesn't crowd the menu button. */
+  @media (max-width: 50rem) {
+    .site-header .site-search { display: none; }
+    .site-header .site-nav { gap: 0.8rem; font-size: 0.72rem; }
+  }
 </style>

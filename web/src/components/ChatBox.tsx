@@ -588,9 +588,9 @@ export function ChatBox() {
         </div>
 
         <div className="sidebar-foot">
-          <p>
-            Independent project — draws on the public writings &amp; talks of
-            <code>abolitionistsrising.com</code> and <code>freethestates.org</code>.
+          <p className="sidebar-tagline">
+            Saving babies with data by{' '}
+            <a href="https://askscottpierce.com" rel="noopener">Scott Pierce</a>
           </p>
           <div className="sidebar-foot-links">
             <a href="/pages/legal/privacy/">Privacy</a>

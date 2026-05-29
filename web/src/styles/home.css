@@ -755,13 +755,16 @@ body.app {
 .sidebar .sidebar-foot {
   flex: none;
   border-top: 1px solid var(--ar-secondary);
-  padding-top: 0.7rem;
-  font-size: 0.72rem;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
   color: var(--ar-secondary);
-  line-height: 1.45;
+  line-height: 1.6;
 }
-.sidebar .sidebar-foot code { font-size: 0.7rem; color: var(--ar-primary); }
-.sidebar .sidebar-foot-links { margin-top: 0.4rem; display: flex; gap: 0.4rem; }
+.sidebar .sidebar-tagline { margin: 0; }
+.sidebar .sidebar-tagline a { color: var(--ar-tertiary); text-decoration: none; }
+.sidebar .sidebar-tagline a:hover { text-decoration: underline; }
+.sidebar .sidebar-foot-links { margin-top: 0.7rem; display: flex; gap: 0.5rem; }
 .sidebar .sidebar-foot-links a { color: var(--ar-secondary); }
 
 .sidebar-scrim { display: none; }

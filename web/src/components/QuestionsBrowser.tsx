@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Fuse from 'fuse.js';
 import { ChevronRight, Search, MessageSquare, FileText } from 'lucide-react';
 import { DetailPanel, ClipCard, type ClipSource, type DetailTarget } from './SourcePanel';
+import { useDebouncedValue } from './use-debounced-value';
 
 // One curated article Q&A — matches scripts/build-questions-index.mjs output.
 type QA = { q: string; a: string; t: string; u: string; qt?: string };
@@ -81,7 +82,8 @@ function WritingsTab() {
     return [...byUrl.values()].sort((a, b) => a.title.localeCompare(b.title));
   }, [items]);
 
-  const trimmed = query.trim();
+  // Filter off a debounced copy so big Fuse searches don't run per keystroke.
+  const trimmed = useDebouncedValue(query, 170).trim();
   const results = useMemo<QA[]>(() => {
     if (trimmed.length < 2 || !fuseRef.current) return [];
     return fuseRef.current.search(trimmed, { limit: MAX_SEARCH_RESULTS }).map((r) => r.item);
@@ -252,14 +254,15 @@ function TalksTab() {
     loadFeed(topic, false);
   }
 
-  // Topic chips: live fuzzy filter as you type; top-by-count when empty.
+  // Topic chips: fuzzy filter as you type (debounced); top-by-count when empty.
   const q = query.trim();
+  const dq = useDebouncedValue(query, 170).trim();
   const chips = useMemo<TopicCount[]>(() => {
-    if (q.length >= 2 && topicFuse.current) {
-      return topicFuse.current.search(q, { limit: TOPIC_CHIPS }).map((r) => r.item);
+    if (dq.length >= 2 && topicFuse.current) {
+      return topicFuse.current.search(dq, { limit: TOPIC_CHIPS }).map((r) => r.item);
     }
     return [...topics].sort((a, b) => b.n - a.n).slice(0, TOPIC_CHIPS);
-  }, [q, topics]);
+  }, [dq, topics]);
 
   return (
     <>

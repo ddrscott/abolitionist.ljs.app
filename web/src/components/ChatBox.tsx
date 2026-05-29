@@ -101,6 +101,7 @@ export function ChatBox() {
   // Clip-topic typeahead → jump straight to video snippets in the chat.
   const topicsFuseRef = useRef<Fuse<TopicCount> | null>(null);
   const [topicSuggestions, setTopicSuggestions] = useState<TopicCount[]>([]);
+  const suggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [feedback, setFeedback] = useState<Record<number, 'up' | 'down'>>({});
 
   // --- session + shell state ---
@@ -334,17 +335,24 @@ export function ChatBox() {
 
   function updateSuggestions(value: string) {
     const v = value.trim();
+    if (suggestTimer.current) clearTimeout(suggestTimer.current);
     setSelectedIdx(-1);
     if (v.length < 2) {
       setSuggestions([]);
       setTopicSuggestions([]);
       return;
     }
-    setSuggestions(fuseRef.current ? fuseRef.current.search(v, { limit: MAX_SUGGESTIONS }).map((h) => h.item) : []);
-    setTopicSuggestions(topicsFuseRef.current ? topicsFuseRef.current.search(v, { limit: 4 }).map((h) => h.item) : []);
+    // Debounce the Fuse searches (questions + topics) so they don't run on
+    // every keystroke — the textarea stays instant.
+    suggestTimer.current = setTimeout(() => {
+      setSuggestions(fuseRef.current ? fuseRef.current.search(v, { limit: MAX_SUGGESTIONS }).map((h) => h.item) : []);
+      setTopicSuggestions(topicsFuseRef.current ? topicsFuseRef.current.search(v, { limit: 4 }).map((h) => h.item) : []);
+      setSelectedIdx(-1);
+    }, 170);
   }
 
   function clearSuggest() {
+    if (suggestTimer.current) clearTimeout(suggestTimer.current);
     setSuggestions([]);
     setTopicSuggestions([]);
     setSelectedIdx(-1);
